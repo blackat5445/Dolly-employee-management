@@ -26,7 +26,7 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 - **Dashboard:** today's attendance, latest requests, open anomalies, a calendar and an attendance chart.
 - **Employees:** create, edit and deactivate employees, reset passwords and set device limits.
 - **Schedules:** full-time, part-time and on-call contracts, with history. A schedule can be one fixed timetable or different times for each weekday.
-- **Workplaces:** address, coordinates and GPS radius, plus a per-site late tolerance and employee assignments.
+- **Workplaces:** address and an interactive map (OpenStreetMap) to place the workplace: it shows your current position, you tap the map, drag the pin or search for an address, and a circle shows the GPS radius. Plus a per-site late tolerance and employee assignments.
 - **Requests:** approve and revoke requests. On-call shifts can be approved automatically below a threshold.
 - **Attendance:** daily and monthly views, with audited corrections.
 - **Analytics:** hours, overtime, presence, absences, lateness and anomalies.
@@ -36,6 +36,8 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 - **Exports:** a monthly Excel attendance sheet, an employees CSV, a monthly attendance ZIP and an hours summary CSV.
 - **Appearance (white label):** brand name, logos, app icon, colours, dark mode, fonts, shapes, login page, email sender and custom CSS, with a live preview.
 - **Settings:** clock-in rules, notifications, certificates, reminders, a system-status panel and an audit log.
+- **Guided setup:** opens right after activation. It walks through the settings category by category, explaining for each option what it is for and what happens when it is turned on, off or changed, then creates the first workplace and the first employee. Progress is saved, so it resumes where it stopped, and it can be restarted from *Impostazioni › Configurazione guidata*.
+- **Interactive tutorial:** a spotlight tour of every section of the panel (dashboard, workplaces, employees, requests, attendance, analytics, anomalies, broadcasts, exports, appearance and settings). It starts at the end of the guided setup. Administrators added later, once the setup is done, are only offered the tutorial. It can be watched again from *Impostazioni*.
 
 ## Requirements
 
@@ -52,10 +54,10 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 
 1. Download or clone this repository into `wp-content/plugins/dolly-employee-management`.
 2. Activate **Dolly Employee Management** under *Plugins*.
-3. Go to *Gestione Dipendenti › Impostazioni* and review the settings.
-4. Go to *Gestione Dipendenti › Aspetto* to apply your brand.
-5. Create your workplaces (*Sedi*), then your employees (*Dipendenti*).
-6. Set up the scheduler as described below.
+3. The guided setup opens: follow it to configure the settings, create the first workplace and the first employee, then take the tutorial.
+4. Go to *Gestione Dipendenti › Aspetto* to complete your brand (logo, icon, fonts).
+5. Set up the scheduler as described below.
+6. Optional: install the latest version of the companion theme **Dolly Portal** for a dedicated portal site. Until it is installed, the plugin shows a reminder in wp-admin (dismissible per administrator).
 
 ## Scheduler
 
@@ -168,6 +170,11 @@ Helpers for theme templates: `Dolly_Frontend::skip_link()`, `Dolly_Frontend::the
 Other filters you can use:
 
 - `dolly_redirect_front_page`: return `false` to stop the plugin redirecting the site's front page to the portal or login page.
+- `dolly_map`: map tiles and address search used to place the workplaces. Return an array with `tiles` (URL template), `attribution` (HTML) and `geocoder` (a Nominatim-compatible search URL).
+
+## Map and privacy
+
+The workplace map is shown only in wp-admin. The administrator's browser loads map tiles from OpenStreetMap (`tile.openstreetmap.org`) and, when the address search is used, queries Nominatim (`nominatim.openstreetmap.org`). The administrator's position is only used in the browser to centre the map; it is never sent to the server unless it is saved as the workplace position. Employees' devices never contact these services. Use the `dolly_map` filter to switch to another tile or search provider, for example one covered by your data processing agreements.
 
 ## REST API
 
@@ -188,6 +195,7 @@ These are bundled in `assets/vendor/`, so nothing is loaded from a CDN at runtim
 | [jsQR](https://github.com/cozmo/jsQR) | 1.4.0 | Apache-2.0 |
 | [Chart.js](https://www.chartjs.org) | 4.4.4 | MIT |
 | [FullCalendar](https://fullcalendar.io) | 6.1.15 | MIT |
+| [Leaflet](https://leafletjs.com) | 1.9.4 | BSD-2-Clause |
 
 ## License
 

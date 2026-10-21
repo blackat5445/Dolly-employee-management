@@ -33,6 +33,7 @@ class Dolly_Install {
 		Dolly_Hours::rename_old_codes(); // Also after a deactivate / replace files / activate upgrade.
 		update_option( 'dolly_db_version', DOLLY_DB_VERSION, false );
 		Dolly_Cron::schedule();
+		Dolly_Onboarding::on_activation();
 		Dolly_Frontend::add_rewrites();
 		flush_rewrite_rules();
 	}

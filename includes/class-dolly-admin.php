@@ -25,6 +25,15 @@ class Dolly_Admin {
 		'dolly-settings'     => array( 'Impostazioni', 'settings' ),
 	);
 
+	/** Pages outside the menus: the guided setup is opened after activation and from Impostazioni. */
+	const HIDDEN = array(
+		'dolly-onboarding' => array( 'Configurazione guidata', 'onboarding' ),
+	);
+
+	private static function page_info( $page ) {
+		return self::PAGES[ $page ] ?? self::HIDDEN[ $page ] ?? null;
+	}
+
 	private static $hooks = array();
 
 	public static function init() {
@@ -53,11 +62,14 @@ class Dolly_Admin {
 		foreach ( self::PAGES as $slug => $p ) {
 			self::$hooks[] = add_submenu_page( 'dolly-dashboard', Dolly_I18n::t( $p[0] ) . ' · ' . $title, Dolly_I18n::t( $p[0] ), 'dolly_manage', $slug, array( __CLASS__, 'render' ) );
 		}
+		foreach ( self::HIDDEN as $slug => $p ) {
+			self::$hooks[] = add_submenu_page( '', Dolly_I18n::t( $p[0] ) . ' · ' . $title, Dolly_I18n::t( $p[0] ), 'dolly_manage', $slug, array( __CLASS__, 'render' ) );
+		}
 	}
 
 	private static function current_page() {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore
-		return isset( self::PAGES[ $page ] ) ? $page : '';
+		return self::page_info( $page ) ? $page : '';
 	}
 
 	public static function body_class( $classes ) {
@@ -83,12 +95,18 @@ class Dolly_Admin {
 		if ( 'dolly-analytics' === $page ) {
 			$deps[] = 'dolly-chartjs';
 		}
-		if ( 'dolly-appearance' === $page ) {
+		if ( 'dolly-appearance' === $page || 'dolly-onboarding' === $page ) {
 			wp_enqueue_media();
+		}
+		if ( 'dolly-workplaces' === $page || 'dolly-onboarding' === $page ) {
+			// Map for the position of the workplaces.
+			wp_enqueue_style( 'dolly-leaflet', DOLLY_URL . 'assets/vendor/leaflet/leaflet.css', array(), '1.9.4' );
+			wp_enqueue_script( 'dolly-leaflet', DOLLY_URL . 'assets/vendor/leaflet/leaflet.js', array(), '1.9.4', true );
+			$deps[] = 'dolly-leaflet';
 		}
 		wp_enqueue_script( 'dolly-admin', DOLLY_URL . 'assets/js/dolly-admin.js', $deps, DOLLY_VERSION, true );
 		$pages = array();
-		foreach ( self::PAGES as $slug => $p ) {
+		foreach ( array_merge( self::PAGES, self::HIDDEN ) as $slug => $p ) {
 			$pages[ $p[1] ] = admin_url( 'admin.php?page=' . $slug );
 		}
 		wp_localize_script(
@@ -97,7 +115,8 @@ class Dolly_Admin {
 			Dolly_Frontend::js_config(
 				array(
 					'view'       => 'admin',
-					'page'       => self::PAGES[ $page ][1],
+					'page'       => self::page_info( $page )[1],
+					'onboarding' => Dolly_Onboarding::client_config(),
 					'pages'      => $pages,
 					'workplaces' => array_map( array( 'Dolly_Workplaces', 'format' ), Dolly_Workplaces::all() ),
 					'today'      => Dolly_Time::today(),
@@ -107,7 +126,23 @@ class Dolly_Admin {
 					'lateTolerance' => (int) Dolly_Settings::get( 'late_tolerance' ),
 					'holidayIncrease' => (int) Dolly_Settings::get( 'holiday_increase' ),
 					'firmwareUrl'     => 'https://github.com/blackat5445/Dolly-employee-management/tree/main/firmware',
+					'map'             => self::map_config(),
 				)
+			)
+		);
+	}
+
+	/**
+	 * Map tiles and address search used to place the workplaces (OpenStreetMap by default).
+	 * Filter dolly_map: array( 'tiles' => URL template, 'attribution' => HTML, 'geocoder' => Nominatim-compatible URL ).
+	 */
+	private static function map_config() {
+		return apply_filters(
+			'dolly_map',
+			array(
+				'tiles'       => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+				'attribution' => '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+				'geocoder'    => 'https://nominatim.openstreetmap.org/search',
 			)
 		);
 	}
@@ -117,16 +152,16 @@ class Dolly_Admin {
 		if ( ! current_user_can( 'dolly_manage' ) || ! $page ) {
 			wp_die( esc_html__( 'Non autorizzato.', 'dolly-employee-management' ) );
 		}
-		$title = Dolly_I18n::t( self::PAGES[ $page ][0] );
+		$title = Dolly_I18n::t( self::page_info( $page )[0] );
 		?>
 		<div class="wrap dolly-wrap">
-			<div class="dolly-app dolly-admin" id="dolly-admin-app" data-page="<?php echo esc_attr( self::PAGES[ $page ][1] ); ?>">
+			<div class="dolly-app dolly-admin" id="dolly-admin-app" data-page="<?php echo esc_attr( self::page_info( $page )[1] ); ?>">
 				<header class="dolly-admin__header">
 					<button type="button" class="dolly-btn dolly-btn--ghost dolly-btn--icon dolly-admin__menu-toggle" id="dolly-menu-toggle" aria-controls="adminmenumain" aria-pressed="false" aria-label="<?php esc_attr_e( 'Nascondi il menu laterale', 'dolly-employee-management' ); ?>" title="<?php esc_attr_e( 'Nascondi il menu laterale', 'dolly-employee-management' ); ?>"><i data-lucide="panel-left-close" aria-hidden="true"></i></button>
 					<div class="dolly-admin__brand"><?php Dolly_Frontend::brand( Dolly_Appearance::get( 'admin_title' ), true ); ?></div>
 					<h1 class="dolly-admin__title"><?php echo esc_html( $title ); ?></h1>
 				</header>
-				<nav class="dolly-admin__nav" aria-label="<?php echo esc_attr( __( 'Sezioni ', 'dolly-employee-management' ) . Dolly_Appearance::get( 'admin_title' ) ); ?>">
+				<nav class="dolly-admin__nav"<?php echo isset( self::HIDDEN[ $page ] ) ? ' hidden' : ''; ?> aria-label="<?php echo esc_attr( __( 'Sezioni ', 'dolly-employee-management' ) . Dolly_Appearance::get( 'admin_title' ) ); ?>">
 					<?php
 					$icons = array(
 						'dolly-dashboard'    => 'layout-dashboard',

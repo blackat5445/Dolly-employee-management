@@ -7,5 +7,6 @@
 | jsQR (`jsqr/jsQR.js`) | 1.4.0 | Apache-2.0, Copyright Cosmo Wolfe | Lettura QR dalla fotocamera |
 | Chart.js (`chartjs/chart.umd.js`) | 4.4.4 | MIT (vedi `chartjs/LICENSE.md`) | Grafico presenze |
 | FullCalendar (`fullcalendar/*.js`) | 6.1.15 | MIT (vedi `fullcalendar/LICENSE.md`) | Calendari italiani |
+| Leaflet (`leaflet/leaflet.js`, `leaflet/leaflet.css`, `leaflet/images/`) | 1.9.4 | BSD-2-Clause (vedi `leaflet/LICENSE`) | Mappa per la posizione delle sedi |
 
-Scaricate da cdn.jsdelivr.net (registro npm). Non modificare questi file.
+Scaricate da cdn.jsdelivr.net o dal registro npm. Non modificare questi file.
