@@ -124,16 +124,16 @@
 }
 
 /* ---------- Brand ---------- */
-.dolly-app .dolly-brand { display: flex; align-items: baseline; gap: var(--dolly-s1); flex-wrap: wrap; }
+.dolly-app .dolly-brand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .dolly-app .dolly-brand__wordmark {
-	font-weight: 800; letter-spacing: .02em; font-size: 1.375rem; color: var(--dolly-primary);
+	font-weight: 800; letter-spacing: .02em; font-size: 1.375rem; line-height: 1.15; color: var(--dolly-primary);
 }
 .dolly-app .dolly-brand__wordmark::after {
 	content: ""; display: var(--dolly-wordmark-mark); width: 8px; height: 8px; margin-left: 4px;
 	background: var(--dolly-accent); border-radius: 2px; vertical-align: baseline;
 }
 .dolly-app .dolly-brand__logo { max-height: var(--dolly-logo-height); width: auto; display: block; }
-.dolly-app .dolly-brand__sub { font-size: .875rem; color: var(--dolly-muted); }
+.dolly-app .dolly-brand__sub { font-size: .8125rem; line-height: 1.3; color: var(--dolly-muted); }
 
 /* ---------- Buttons ---------- */
 .dolly-app .dolly-btn {
