@@ -1,0 +1,8 @@
+# Files left out of the WordPress.org package (wp dist-archive / deploy).
+/.git
+/.github
+/.gitignore
+/.gitattributes
+/.distignore
+/tools
+/README.md

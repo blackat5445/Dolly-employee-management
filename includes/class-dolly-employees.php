@@ -179,7 +179,7 @@ class Dolly_Employees {
 				'role'       => Dolly_Install::ROLE_EMPLOYEE,
 				'fields'     => 'ID',
 				'number'     => -1,
-				'meta_query' => array( // phpcs:ignore
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- plugin tables ($wpdb->prefix), values prepared or cast.
 					'relation' => 'OR',
 					array(
 						'key'     => 'dolly_active',
@@ -429,7 +429,7 @@ class Dolly_Employees {
 			'role'        => Dolly_Install::ROLE_EMPLOYEE,
 			'number'      => $per,
 			'paged'       => $page,
-			'meta_query'  => array( // phpcs:ignore
+			'meta_query'  => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- plugin tables ($wpdb->prefix), values prepared or cast.
 				'relation' => 'AND',
 				'dolly_ln' => array( 'key' => 'last_name', 'compare' => 'EXISTS' ),
 				'dolly_fn' => array( 'key' => 'first_name', 'compare' => 'EXISTS' ),
@@ -513,7 +513,7 @@ class Dolly_Employees {
 			$new_bank = self::bank( $user_id );
 			$name     = self::display_name( $user_id );
 			$body     = sprintf(
-				__( "%s ha modificato l'IBAN dal proprio profilo.\nPrecedente: %s\nNuovo: %s\nBeneficiario: %s\nBanca: %s\nBIC: %s\nVerifica i dati completi in Gestione Dipendenti › Dipendenti.", 'dolly-employee-management' ),
+				__( "%1\$s ha modificato l'IBAN dal proprio profilo.\nPrecedente: %2\$s\nNuovo: %3\$s\nBeneficiario: %4\$s\nBanca: %5\$s\nBIC: %6\$s\nVerifica i dati completi in Gestione Dipendenti › Dipendenti.", 'dolly-employee-management' ),
 				$name,
 				'' !== $old_bank['iban'] ? self::mask_iban( $old_bank['iban'] ) : __( 'non indicato', 'dolly-employee-management' ),
 				'' !== $new_bank['iban'] ? self::mask_iban( $new_bank['iban'] ) : 'rimosso',

@@ -39,7 +39,7 @@ class Dolly_Schedules {
 		$t = Dolly_Install::t( 'schedules' );
 		return $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM $t WHERE user_id = %d AND valid_from <= %s AND (valid_to IS NULL OR valid_to >= %s) AND (valid_to IS NULL OR valid_to >= valid_from) ORDER BY valid_from DESC, id DESC LIMIT 1", // phpcs:ignore
+				"SELECT * FROM $t WHERE user_id = %d AND valid_from <= %s AND (valid_to IS NULL OR valid_to >= %s) AND (valid_to IS NULL OR valid_to >= valid_from) ORDER BY valid_from DESC, id DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 				$user_id,
 				$date,
 				$date
@@ -53,7 +53,7 @@ class Dolly_Schedules {
 			// A schedule may start in the future.
 			global $wpdb;
 			$t = Dolly_Install::t( 'schedules' );
-			$s = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND valid_to IS NULL ORDER BY valid_from DESC, id DESC LIMIT 1", $user_id ) ); // phpcs:ignore
+			$s = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND valid_to IS NULL ORDER BY valid_from DESC, id DESC LIMIT 1", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		}
 		return $s;
 	}
@@ -61,7 +61,7 @@ class Dolly_Schedules {
 	public static function history( $user_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'schedules' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND (valid_to IS NULL OR valid_to >= valid_from) ORDER BY valid_from DESC, id DESC", $user_id ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND (valid_to IS NULL OR valid_to >= valid_from) ORDER BY valid_from DESC, id DESC", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		return array_map( array( __CLASS__, 'format' ), $rows );
 	}
 
@@ -141,7 +141,7 @@ class Dolly_Schedules {
 
 	private static function times_label( $t ) {
 		if ( 'mixed' === $t['mode'] ) {
-			return sprintf( __( 'presenza %1$s, smart working %2$s', 'dolly-employee-management' ), $t['office_start'] . '–' . $t['office_end'], $t['smart_start'] . '–' . $t['smart_end'] );
+			return sprintf( /* translators: %1$s: on-site time range, %2$s: smart-working time range (HH:MM–HH:MM). */ __( 'presenza %1$s, smart working %2$s', 'dolly-employee-management' ), $t['office_start'] . '–' . $t['office_end'], $t['smart_start'] . '–' . $t['smart_end'] );
 		}
 		return $t['start'] . '–' . $t['end'] . ( $t['lunch_start'] ? __( ' (pausa ', 'dolly-employee-management' ) . $t['lunch_start'] . '–' . $t['lunch_end'] . ')' : '' )
 			. ( 'smart' === $t['mode'] ? __( ' · smart working', 'dolly-employee-management' ) : '' );
@@ -416,7 +416,7 @@ class Dolly_Schedules {
 		}
 		$prev = Dolly_Time::add_days( $from, -1 );
 		// Close schedules that are open on/after $from.
-		$wpdb->query( $wpdb->prepare( "UPDATE $t SET valid_to = %s WHERE user_id = %d AND (valid_to IS NULL OR valid_to >= %s)", $prev, $user_id, $from ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( "UPDATE $t SET valid_to = %s WHERE user_id = %d AND (valid_to IS NULL OR valid_to >= %s)", $prev, $user_id, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$wpdb->insert(
 			$t,
 			array_merge(

@@ -20,7 +20,7 @@ class Dolly_Reports {
 		}
 		$t    = Dolly_Install::t( 'schedules' );
 		$in   = implode( ',', array_map( 'intval', $user_ids ) );
-		$rows = $wpdb->get_results( "SELECT * FROM $t WHERE user_id IN ($in) AND (valid_to IS NULL OR valid_to >= valid_from) ORDER BY valid_from DESC, id DESC" ); // phpcs:ignore
+		$rows = $wpdb->get_results( "SELECT * FROM $t WHERE user_id IN ($in) AND (valid_to IS NULL OR valid_to >= valid_from) ORDER BY valid_from DESC, id DESC" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $r ) {
 			$out[ (int) $r->user_id ][] = $r;
 		}
@@ -232,7 +232,7 @@ class Dolly_Reports {
 				if ( 'smart' === $plan['work_mode'] ) {
 					$sched_label .= __( ' · smart working', 'dolly-employee-management' );
 				} elseif ( 'mixed' === $plan['work_mode'] ) {
-					$sched_label .= ' · ' . sprintf( __( 'presenza %1$s, smart working %2$s', 'dolly-employee-management' ), $plan['office_start'] . '–' . $plan['office_end'], $plan['smart_start'] . '–' . $plan['smart_end'] );
+					$sched_label .= ' · ' . sprintf( /* translators: %1$s: on-site time range, %2$s: smart-working time range (HH:MM–HH:MM). */ __( 'presenza %1$s, smart working %2$s', 'dolly-employee-management' ), $plan['office_start'] . '–' . $plan['office_end'], $plan['smart_start'] . '–' . $plan['smart_end'] );
 				}
 			}
 			$pending_labels = array();
@@ -447,7 +447,7 @@ class Dolly_Reports {
 		$p     = Dolly_Attendance::punches_range( $users, $from, $to );
 		$out   = array( 'labels' => array(), 'present' => array(), 'absent' => array(), 'leave' => array(), 'sick' => array() );
 		for ( $d = $from; $d <= $to; $d = Dolly_Time::add_days( $d, 1 ) ) {
-			$pr = $ab = $lv = $sk = 0; // phpcs:ignore
+			$pr = $ab = $lv = $sk = 0;
 			foreach ( $users as $uid ) {
 				$x = $m[ $uid ][ $d ];
 				$has = isset( $p[ $uid ][ $d ]['entrata'] );
@@ -594,7 +594,7 @@ class Dolly_Reports {
 
 	/** Employee information CSV (no passwords, certificates or medical notes). */
 	public static function employees_csv() {
-		$q    = new WP_User_Query( array( 'role' => Dolly_Install::ROLE_EMPLOYEE, 'number' => -1, 'meta_key' => 'last_name', 'orderby' => 'meta_value', 'order' => 'ASC' ) ); // phpcs:ignore
+		$q    = new WP_User_Query( array( 'role' => Dolly_Install::ROLE_EMPLOYEE, 'number' => -1, 'meta_key' => 'last_name', 'orderby' => 'meta_value', 'order' => 'ASC' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$rows = array();
 		foreach ( $q->get_results() as $u ) {
 			$e = Dolly_Employees::format( $u );
@@ -715,7 +715,7 @@ class Dolly_Reports {
 			return new WP_Error( 'dolly_invalid', __( 'Seleziona almeno un dipendente.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 300 ); // phpcs:ignore
+			@set_time_limit( 300 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
 		}
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		$names = self::filenames( $user_ids, $year, $month );
@@ -736,18 +736,18 @@ class Dolly_Reports {
 			$files = array();
 			foreach ( $user_ids as $uid ) {
 				$f = $dir . '/' . $names[ $uid ];
-				file_put_contents( $f, self::attendance_csv( $uid, $year, $month ) ); // phpcs:ignore
+				file_put_contents( $f, self::attendance_csv( $uid, $year, $month ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- private files of the plugin.
 				$files[] = $f;
 			}
-			@unlink( $tmp ); // phpcs:ignore
+			@unlink( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- private files of the plugin.
 			$zip = new PclZip( $tmp );
 			if ( 0 === $zip->create( $files, PCLZIP_OPT_REMOVE_PATH, $dir ) ) {
 				return new WP_Error( 'dolly_zip', __( 'Impossibile creare il file ZIP.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 			}
 			foreach ( $files as $f ) {
-				@unlink( $f ); // phpcs:ignore
+				@unlink( $f ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- private files of the plugin.
 			}
-			@rmdir( $dir ); // phpcs:ignore
+			@rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- private files of the plugin.
 		}
 		return $tmp;
 	}
@@ -759,11 +759,11 @@ class Dolly_Reports {
 		header( 'X-Content-Type-Options: nosniff' );
 		if ( $is_path ) {
 			header( 'Content-Length: ' . filesize( $content_or_path ) );
-			readfile( $content_or_path ); // phpcs:ignore
-			@unlink( $content_or_path ); // phpcs:ignore
+			readfile( $content_or_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- private files of the plugin.
+			@unlink( $content_or_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- private files of the plugin.
 		} else {
 			header( 'Content-Length: ' . strlen( $content_or_path ) );
-			echo $content_or_path; // phpcs:ignore
+			echo $content_or_path; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- file or JSON output, not HTML.
 		}
 		exit;
 	}

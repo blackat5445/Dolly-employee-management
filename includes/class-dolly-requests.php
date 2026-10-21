@@ -67,7 +67,7 @@ class Dolly_Requests {
 	public static function get( $id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'requests' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function format( $r ) {
@@ -174,7 +174,7 @@ class Dolly_Requests {
 	public static function pending_amendment( $parent_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'requests' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE parent_id = %d AND status = 'pending' LIMIT 1", $parent_id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE parent_id = %d AND status = 'pending' LIMIT 1", $parent_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/**
@@ -326,7 +326,7 @@ class Dolly_Requests {
 		$exclude = $exclude_ids ? ' AND id NOT IN (' . implode( ',', array_map( 'intval', $exclude_ids ) ) . ')' : '';
 		$rows    = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM $t WHERE user_id = %d AND type IN ('ferie','permesso','donazione') AND status IN ('pending','approved') AND " . self::EFFECTIVE_ROW . " AND start_date <= %s AND end_date >= %s $exclude", // phpcs:ignore
+				"SELECT * FROM $t WHERE user_id = %d AND type IN ('ferie','permesso','donazione') AND status IN ('pending','approved') AND " . self::EFFECTIVE_ROW . " AND start_date <= %s AND end_date >= %s $exclude", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 				$user_id,
 				$clean['end_date'],
 				$clean['start_date']
@@ -339,12 +339,12 @@ class Dolly_Requests {
 			}
 			// A pending amendment's parent is being replaced, but stays in force until approved: still a conflict source
 			// only if it isn't the parent of this request (handled via $exclude_ids).
-			return sprintf( __( 'Esiste già una richiesta %s: %s.', 'dolly-employee-management' ), 'pending' === $r->status ? __( 'in attesa', 'dolly-employee-management' ) : 'approvata', self::summary( $r ) );
+			return sprintf( /* translators: %1$s: request status (pending or approved), %2$s: request summary. */ __( 'Esiste già una richiesta %1$s: %2$s.', 'dolly-employee-management' ), 'pending' === $r->status ? __( 'in attesa', 'dolly-employee-management' ) : 'approvata', self::summary( $r ) );
 		}
 		$s   = Dolly_Install::t( 'sickness' );
-		$sick = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $s WHERE user_id = %d AND status = 'active' AND start_date <= %s AND end_date >= %s LIMIT 1", $user_id, $clean['end_date'], $clean['start_date'] ) ); // phpcs:ignore
+		$sick = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $s WHERE user_id = %d AND status = 'active' AND start_date <= %s AND end_date >= %s LIMIT 1", $user_id, $clean['end_date'], $clean['start_date'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( $sick ) {
-			return sprintf( __( 'Nel periodo risulta %s (%s – %s).', 'dolly-employee-management' ), 'infortunio' === Dolly_Sickness::kind_of( $sick ) ? __( 'un infortunio', 'dolly-employee-management' ) : __( 'una malattia', 'dolly-employee-management' ), Dolly_Time::fmt_date( $sick->start_date ), Dolly_Time::fmt_date( $sick->end_date ) );
+			return sprintf( /* translators: %1$s: sickness or injury, %2$s: start date, %3$s: end date. */ __( 'Nel periodo risulta %1$s (%2$s – %3$s).', 'dolly-employee-management' ), 'infortunio' === Dolly_Sickness::kind_of( $sick ) ? __( 'un infortunio', 'dolly-employee-management' ) : __( 'una malattia', 'dolly-employee-management' ), Dolly_Time::fmt_date( $sick->start_date ), Dolly_Time::fmt_date( $sick->end_date ) );
 		}
 		return null;
 	}
@@ -377,7 +377,7 @@ class Dolly_Requests {
 				return new WP_Error( 'dolly_conflict', $conflict, array( 'status' => 409 ) );
 			}
 			if ( 'straordinario' === $clean['type'] ) {
-				$dup = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Dolly_Install::t( 'requests' ) . " WHERE user_id = %d AND type = 'straordinario' AND status IN ('pending','approved') AND " . self::EFFECTIVE_ROW . ' AND start_date = %s LIMIT 1', $user_id, $clean['start_date'] ) ); // phpcs:ignore
+				$dup = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Dolly_Install::t( 'requests' ) . " WHERE user_id = %d AND type = 'straordinario' AND status IN ('pending','approved') AND " . self::EFFECTIVE_ROW . ' AND start_date = %s LIMIT 1', $user_id, $clean['start_date'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 				if ( $dup ) {
 					return new WP_Error( 'dolly_conflict', __( 'Esiste già una richiesta di straordinario per questa data. Modificala invece di crearne una nuova.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 				}
@@ -685,7 +685,7 @@ class Dolly_Requests {
 			return new WP_Error( 'dolly_invalid_state', __( 'La richiesta è già stata gestita.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		// A modification or cancellation still waiting for a decision has nothing left to change.
-		$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'cancelled', updated_at = %s WHERE parent_id = %d AND status = 'pending'", $now, $id ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'cancelled', updated_at = %s WHERE parent_id = %d AND status = 'pending'", $now, $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( Dolly_Donations::TYPE === $r->type ) {
 			Dolly_Donations::on_cancelled( $id );
 		}
@@ -700,7 +700,7 @@ class Dolly_Requests {
 	public static function oncall_range( $user_id, $from, $to ) {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'requests' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'turno' AND status IN ('pending','approved','rejected') AND start_date BETWEEN %s AND %s ORDER BY id ASC", $user_id, $from, $to ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'turno' AND status IN ('pending','approved','rejected') AND start_date BETWEEN %s AND %s ORDER BY id ASC", $user_id, $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$out  = array();
 		foreach ( $rows as $r ) {
 			$out[ $r->start_date ] = $r;
@@ -722,7 +722,7 @@ class Dolly_Requests {
 		}
 		$t   = Dolly_Install::t( 'requests' );
 		$p   = Dolly_Attendance::punches_for( $user_id, $date );
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'turno' AND start_date = %s AND status IN ('pending','approved','rejected') ORDER BY id DESC LIMIT 1", $user_id, $date ) ); // phpcs:ignore
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'turno' AND start_date = %s AND status IN ('pending','approved','rejected') ORDER BY id DESC LIMIT 1", $user_id, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$now = Dolly_Time::now_utc();
 		if ( ! isset( $p['entrata'], $p['uscita'] ) ) {
 			if ( $row && 'pending' === $row->status ) {
@@ -735,8 +735,8 @@ class Dolly_Requests {
 		$worked    = Dolly_Attendance::compute( $date, $p, $plan )['worked'];
 		$threshold = (int) Dolly_Settings::get( 'oncall_threshold' );
 		$auto      = Dolly_Settings::get( 'oncall_auto' ) && $worked <= $threshold;
-		$notes     = sprintf( __( 'Turno a chiamata %s–%s: %s ore lavorate.', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $worked ) );
-		$auto_note = sprintf( __( 'Approvato automaticamente: turno entro %s ore.', 'dolly-employee-management' ), Dolly_Time::min_to_hm( $threshold ) );
+		$notes     = sprintf( /* translators: %1$s: clock-in time, %2$s: clock-out time, %3$s: hours worked (H:MM). */ __( 'Turno a chiamata %1$s–%2$s: %3$s ore lavorate.', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $worked ) );
+		$auto_note = sprintf( /* translators: %s: automatic approval threshold (H:MM). */ __( 'Approvato automaticamente: turno entro %s ore.', 'dolly-employee-management' ), Dolly_Time::min_to_hm( $threshold ) );
 
 		if ( $row ) {
 			if ( Dolly_Time::hm( $row->start_time ) === $in && Dolly_Time::hm( $row->end_time ) === $out ) {
@@ -782,7 +782,7 @@ class Dolly_Requests {
 	public static function smart_range( $user_id, $from, $to ) {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'requests' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'smart' AND status IN ('pending','approved','rejected') AND start_date BETWEEN %s AND %s ORDER BY id ASC", $user_id, $from, $to ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'smart' AND status IN ('pending','approved','rejected') AND start_date BETWEEN %s AND %s ORDER BY id ASC", $user_id, $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$out  = array();
 		foreach ( $rows as $r ) {
 			$out[ $r->start_date ] = $r;
@@ -800,7 +800,7 @@ class Dolly_Requests {
 		global $wpdb;
 		$plan = Dolly_Schedules::day_plan( $user_id, $date );
 		$t    = Dolly_Install::t( 'requests' );
-		$row  = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'smart' AND start_date = %s AND status IN ('pending','approved','rejected') ORDER BY id DESC LIMIT 1", $user_id, $date ) ); // phpcs:ignore
+		$row  = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'smart' AND start_date = %s AND status IN ('pending','approved','rejected') ORDER BY id DESC LIMIT 1", $user_id, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$p    = Dolly_Attendance::punches_for( $user_id, $date );
 		$now  = Dolly_Time::now_utc();
 		$calc = isset( $p['entrata'], $p['uscita'] ) ? Dolly_Attendance::compute( $date, $p, $plan ) : null;
@@ -814,8 +814,8 @@ class Dolly_Requests {
 		$out   = Dolly_Time::utc_to_local( $p['uscita']->punched_at, 'H:i' );
 		$auto  = (bool) Dolly_Settings::get( 'smart_auto' );
 		$notes = 'mixed' === $plan['work_mode']
-			? sprintf( __( 'Giornata mista %1$s–%2$s: %3$s ore in smart working (%4$s ore in totale).', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $calc['smart'] ), Dolly_Time::min_to_hm( $calc['worked'] ) )
-			: sprintf( __( 'Smart working %1$s–%2$s: %3$s ore lavorate.', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $calc['smart'] ) );
+			? sprintf( /* translators: %1$s: clock-in time, %2$s: clock-out time, %3$s: smart-working hours, %4$s: total hours (H:MM). */ __( 'Giornata mista %1$s–%2$s: %3$s ore in smart working (%4$s ore in totale).', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $calc['smart'] ), Dolly_Time::min_to_hm( $calc['worked'] ) )
+			: sprintf( /* translators: %1$s: clock-in time, %2$s: clock-out time, %3$s: hours worked (H:MM). */ __( 'Smart working %1$s–%2$s: %3$s ore lavorate.', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $calc['smart'] ) );
 		$auto_note = __( 'Approvato automaticamente (Impostazioni › Smart working).', 'dolly-employee-management' );
 
 		if ( $row ) {
@@ -868,7 +868,7 @@ class Dolly_Requests {
 	public static function sync_auto_overtime( $user_id, $date ) {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'requests' );
-		$auto = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'straordinario' AND status = 'pending' AND source = 'auto' AND start_date = %s LIMIT 1", $user_id, $date ) ); // phpcs:ignore
+		$auto = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'straordinario' AND status = 'pending' AND source = 'auto' AND start_date = %s LIMIT 1", $user_id, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 
 		$punches = Dolly_Attendance::punches_for( $user_id, $date );
 		$plan    = Dolly_Schedules::day_plan( $user_id, $date );
@@ -903,8 +903,8 @@ class Dolly_Requests {
 		}
 		// A pending request of the employee for the same day is decided as it is; an automatic request
 		// the administrator already rejected (or the employee withdrew) for this exit is not recreated.
-		$pending = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $t WHERE user_id = %d AND type = 'straordinario' AND status = 'pending' AND start_date = %s LIMIT 1", $user_id, $date ) ); // phpcs:ignore
-		$decided = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $t WHERE user_id = %d AND type = 'straordinario' AND source = 'auto' AND status IN ('rejected','cancelled') AND start_date = %s AND end_time = %s LIMIT 1", $user_id, $date, $exit_hm . ':00' ) ); // phpcs:ignore
+		$pending = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $t WHERE user_id = %d AND type = 'straordinario' AND status = 'pending' AND start_date = %s LIMIT 1", $user_id, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
+		$decided = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $t WHERE user_id = %d AND type = 'straordinario' AND source = 'auto' AND status IN ('rejected','cancelled') AND start_date = %s AND end_time = %s LIMIT 1", $user_id, $date, $exit_hm . ':00' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( $pending || $decided ) {
 			return;
 		}
@@ -912,7 +912,7 @@ class Dolly_Requests {
 			return; // Evaluated again at the next punch or correction.
 		}
 		try {
-			$approved = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'straordinario' AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date = %s LIMIT 1', $user_id, $date ) ); // phpcs:ignore
+			$approved = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'straordinario' AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date = %s LIMIT 1', $user_id, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			if ( $approved && self::pending_amendment( (int) $approved->id ) ) {
 				return;
 			}
@@ -953,19 +953,19 @@ class Dolly_Requests {
 	public static function approved_extra_for( $user_id, $date ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'requests' );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'straordinario' AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date = %s', $user_id, $date ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'straordinario' AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date = %s', $user_id, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function full_day_leave( $user_id, $date ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'requests' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type IN ('ferie','donazione') AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s LIMIT 1', $user_id, $date, $date ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type IN ('ferie','donazione') AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s LIMIT 1', $user_id, $date, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function hourly_leaves( $user_id, $date ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'requests' );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'permesso' AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s', $user_id, $date, $date ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'permesso' AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s', $user_id, $date, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/** Approved effective requests of given types for many users overlapping a range. */
@@ -977,7 +977,7 @@ class Dolly_Requests {
 		$t     = Dolly_Install::t( 'requests' );
 		$in    = implode( ',', array_map( 'intval', $user_ids ) );
 		$types = "'" . implode( "','", array_map( 'esc_sql', $types ) ) . "'";
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id IN ($in) AND type IN ($types) AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s ORDER BY start_date', $to, $from ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id IN ($in) AND type IN ($types) AND status = 'approved' AND " . self::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s ORDER BY start_date', $to, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/**
@@ -1010,7 +1010,7 @@ class Dolly_Requests {
 		$w     = implode( ' AND ', $where );
 		$per   = max( 1, min( 100, (int) ( $args['per_page'] ?? 10 ) ) );
 		$page  = max( 1, (int) ( $args['page'] ?? 1 ) );
-		$count = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t r WHERE $w", $params ) ) : $wpdb->get_var( "SELECT COUNT(*) FROM $t r WHERE $w" ) ); // phpcs:ignore
+		$count = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t r WHERE $w", $params ) ) : $wpdb->get_var( "SELECT COUNT(*) FROM $t r WHERE $w" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$params[] = $per;
 		$params[] = ( $page - 1 ) * $per;
 		$join     = '';
@@ -1023,7 +1023,7 @@ class Dolly_Requests {
 		} else {
 			$order = 'r.created_at DESC';
 		}
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT r.* FROM $t r $join WHERE $w ORDER BY $order, r.id DESC LIMIT %d OFFSET %d", $params ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT r.* FROM $t r $join WHERE $w ORDER BY $order, r.id DESC LIMIT %d OFFSET %d", $params ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- plugin tables ($wpdb->prefix), values prepared or cast.
 		return array(
 			'items' => array_map( array( __CLASS__, 'format' ), $rows ),
 			'total' => $count,
@@ -1039,8 +1039,8 @@ class Dolly_Requests {
 			if ( ! $user_ids ) {
 				return 0;
 			}
-			return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE status = 'pending' AND user_id IN (" . implode( ',', array_map( 'intval', $user_ids ) ) . ')' ); // phpcs:ignore
+			return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE status = 'pending' AND user_id IN (" . implode( ',', array_map( 'intval', $user_ids ) ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		}
-		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE status = 'pending'" ); // phpcs:ignore
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE status = 'pending'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 }

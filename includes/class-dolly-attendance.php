@@ -33,7 +33,7 @@ class Dolly_Attendance {
 	public static function punches_for( $user_id, $date ) {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'punches' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND work_date = %s AND is_active = 1 ORDER BY punched_at ASC", $user_id, $date ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND work_date = %s AND is_active = 1 ORDER BY punched_at ASC", $user_id, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$out  = array();
 		foreach ( $rows as $r ) {
 			$out[ $r->action ] = $r;
@@ -50,7 +50,7 @@ class Dolly_Attendance {
 		}
 		$t   = Dolly_Install::t( 'punches' );
 		$in  = implode( ',', array_map( 'intval', $user_ids ) );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id IN ($in) AND work_date BETWEEN %s AND %s AND is_active = 1", $from, $to ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id IN ($in) AND work_date BETWEEN %s AND %s AND is_active = 1", $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $r ) {
 			$out[ (int) $r->user_id ][ $r->work_date ][ $r->action ] = $r;
 		}
@@ -131,17 +131,19 @@ class Dolly_Attendance {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'punches' );
 		$from = Dolly_Time::add_days( $date, -31 );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Plugin tables (\$wpdb->prefix); values are prepared.
 		return $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT e.work_date FROM $t e
 				LEFT JOIN $t u ON u.user_id = e.user_id AND u.work_date = e.work_date AND u.action = 'uscita' AND u.is_active = 1
 				WHERE e.user_id = %d AND e.action = 'entrata' AND e.is_active = 1 AND e.work_date >= %s AND e.work_date < %s AND u.id IS NULL
-				ORDER BY e.work_date DESC", // phpcs:ignore
+				ORDER BY e.work_date DESC",
 				$user_id,
 				$from,
 				$date
 			)
 		);
+		// phpcs:enable
 	}
 
 	/** Full state for the employee dashboard. */
@@ -205,14 +207,14 @@ class Dolly_Attendance {
 		$t = Dolly_Install::t( 'punches' );
 
 		// Idempotency: network retries or repeated taps with the same key return the original result.
-		$existing = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE request_key = %s", $key ) ); // phpcs:ignore
+		$existing = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE request_key = %s", $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( $existing ) {
 			if ( (int) $existing->user_id !== (int) $user_id ) {
 				return new WP_Error( 'dolly_invalid', __( 'Richiesta non valida.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 			}
 			return array(
 				'duplicate' => true,
-				'message'   => sprintf( __( '%s già registrata alle %s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $existing->action ] ), Dolly_Time::utc_to_local( $existing->punched_at, 'H:i' ) ),
+				'message'   => sprintf( /* translators: %1$s: punch type (e.g. Entry), %2$s: time (HH:MM). */ __( '%1$s già registrata alle %2$s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $existing->action ] ), Dolly_Time::utc_to_local( $existing->punched_at, 'H:i' ) ),
 				'state'     => self::state( $user_id ),
 			);
 		}
@@ -234,11 +236,11 @@ class Dolly_Attendance {
 			$next = self::next_actions( $punches, $plan );
 			if ( $action !== $next['primary'] && $action !== $next['secondary'] ) {
 				if ( isset( $punches[ $action ] ) ) {
-					$msg = sprintf( __( '%s già registrata alle %s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ), Dolly_Time::utc_to_local( $punches[ $action ]->punched_at, 'H:i' ) );
+					$msg = sprintf( /* translators: %1$s: punch type (e.g. Entry), %2$s: time (HH:MM). */ __( '%1$s già registrata alle %2$s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ), Dolly_Time::utc_to_local( $punches[ $action ]->punched_at, 'H:i' ) );
 				} elseif ( $next['completed'] ) {
 					$msg = __( 'La giornata è già chiusa con l\'uscita.', 'dolly-employee-management' );
 				} else {
-					$msg = sprintf( __( 'Operazione non consentita: la prossima azione è "%s".', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $next['primary'] ] ) );
+					$msg = sprintf( /* translators: %s: expected punch type. */ __( 'Operazione non consentita: la prossima azione è "%s".', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $next['primary'] ] ) );
 				}
 				return new WP_Error( 'dolly_invalid_transition', $msg, array( 'status' => 409, 'state' => self::state( $user_id ) ) );
 			}
@@ -272,7 +274,7 @@ class Dolly_Attendance {
 			$wpdb->suppress_errors( $suppress );
 			if ( ! $ok ) {
 				// Unique constraints caught a concurrent duplicate.
-				return new WP_Error( 'dolly_duplicate', sprintf( __( '%s già registrata.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ) ), array( 'status' => 409, 'state' => self::state( $user_id ) ) );
+				return new WP_Error( 'dolly_duplicate', sprintf( /* translators: %s: punch type (e.g. Entry). */ __( '%s già registrata.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ) ), array( 'status' => 409, 'state' => self::state( $user_id ) ) );
 			}
 			$punch_id = (int) $wpdb->insert_id;
 			if ( isset( $verified['exception'] ) ) {
@@ -294,7 +296,7 @@ class Dolly_Attendance {
 		$w = 'smart' === $verified['method'] ? null : Dolly_Workplaces::get( (int) $verified['workplace_id'] );
 		return array(
 			'duplicate' => false,
-			'message'   => sprintf( __( '%s registrata alle %s%s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ), Dolly_Time::utc_to_local( $row['punched_at'], 'H:i' ), $w ? __( ' presso ', 'dolly-employee-management' ) . $w->name : ( 'smart' === $verified['method'] ? __( ' in smart working', 'dolly-employee-management' ) : '' ) ),
+			'message'   => sprintf( /* translators: %1$s: punch type, %2$s: time (HH:MM), %3$s: " at <workplace>" or " remotely" (may be empty). */ __( '%1$s registrata alle %2$s%3$s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ), Dolly_Time::utc_to_local( $row['punched_at'], 'H:i' ), $w ? __( ' presso ', 'dolly-employee-management' ) . $w->name : ( 'smart' === $verified['method'] ? __( ' in smart working', 'dolly-employee-management' ) : '' ) ),
 			'state'     => self::state( $user_id ),
 		);
 	}
@@ -364,7 +366,7 @@ class Dolly_Attendance {
 			}
 			$d = Dolly_Workplaces::distance( $g['lat'], $g['lng'], (float) $w->lat, (float) $w->lng );
 			if ( $d > (int) $w->radius_m ) {
-				return new WP_Error( 'dolly_gps_out_of_range', sprintf( __( 'La tua posizione non corrisponde alla sede %s (circa %d m).', 'dolly-employee-management' ), $w->name, (int) round( $d ) ), array( 'status' => 403 ) );
+				return new WP_Error( 'dolly_gps_out_of_range', sprintf( /* translators: %1$s: workplace name, %2$d: distance in meters. */ __( 'La tua posizione non corrisponde alla sede %1$s (circa %2$d m).', 'dolly-employee-management' ), $w->name, (int) round( $d ) ), array( 'status' => 403 ) );
 			}
 			return array_merge(
 				$g,
@@ -442,7 +444,7 @@ class Dolly_Attendance {
 				);
 				foreach ( $dependents[ $action ] ?? array() as $later ) {
 					if ( isset( $punches[ $later ] ) ) {
-						return new WP_Error( 'dolly_invalid', sprintf( __( 'Annulla prima la timbratura "%s", che dipende da questa.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $later ] ) ), array( 'status' => 400, 'fields' => array( 'action' => __( 'Esistono timbrature successive.', 'dolly-employee-management' ) ) ) );
+						return new WP_Error( 'dolly_invalid', sprintf( /* translators: %s: punch type. */ __( 'Annulla prima la timbratura "%s", che dipende da questa.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $later ] ) ), array( 'status' => 400, 'fields' => array( 'action' => __( 'Esistono timbrature successive.', 'dolly-employee-management' ) ) ) );
 					}
 				}
 			}

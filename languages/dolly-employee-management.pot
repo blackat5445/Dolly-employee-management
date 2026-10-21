@@ -232,7 +232,7 @@ msgstr ""
 msgid "Dom"
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:51 includes/class-dolly-anomalies.php:488
+#: includes/class-dolly-anomalies.php:51 includes/class-dolly-anomalies.php:490
 msgid " (scaduto)"
 msgstr ""
 
@@ -249,80 +249,80 @@ msgid "Straordinario approvato."
 msgstr ""
 
 #: includes/class-dolly-anomalies.php:179
-msgid "Uscita non registrata entro le 23:59 del %s (entrata alle %s)."
+msgid "Uscita non registrata entro le 23:59 del %1$s (entrata alle %2$s)."
 msgstr ""
 
 #: includes/class-dolly-anomalies.php:232
-msgid "Nessuna entrata registrata entro le %s (inizio previsto %s%s). Se la presenza c'è stata, invia una richiesta di correzione timbratura."
+msgid "Nessuna entrata registrata entro le %1$s (inizio previsto %2$s%3$s). Se la presenza c'è stata, invia una richiesta di correzione timbratura."
 msgstr ""
 
 #: includes/class-dolly-anomalies.php:235 assets/js/dolly-admin.js:2074 assets/js/dolly-employee.js:1279
 msgid " minuti"
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:282 includes/class-dolly-anomalies.php:297
+#: includes/class-dolly-anomalies.php:284 includes/class-dolly-anomalies.php:299
 msgid "Anomalia non trovata."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:300
+#: includes/class-dolly-anomalies.php:302
 msgid "L'anomalia è già risolta."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:314
+#: includes/class-dolly-anomalies.php:316
 msgid "Manca l'uscita: inserisci prima l'orario di uscita corretto (l'approvazione non crea timbrature)."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:318
+#: includes/class-dolly-anomalies.php:320
 msgid "Per i giorni di riposo modifica la richiesta di straordinario o correggi l'uscita."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:322 includes/class-dolly-anomalies.php:356 includes/class-dolly-anomalies.php:377 includes/class-dolly-anomalies.php:380
-#: includes/class-dolly-attendance.php:420 includes/class-dolly-schedules.php:269
+#: includes/class-dolly-anomalies.php:324 includes/class-dolly-anomalies.php:358 includes/class-dolly-anomalies.php:379 includes/class-dolly-anomalies.php:382
+#: includes/class-dolly-attendance.php:422 includes/class-dolly-schedules.php:269
 msgid "Orario non valido."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:326
+#: includes/class-dolly-anomalies.php:328
 msgid "Esiste già uno straordinario approvato per questa data: modificalo dalla sezione Richieste."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:335
+#: includes/class-dolly-anomalies.php:337
 msgid "Approvato dalla gestione anomalie."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:345
+#: includes/class-dolly-anomalies.php:347
 msgid "Straordinario approvato fino alle "
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:358
+#: includes/class-dolly-anomalies.php:360
 msgid "Correzione uscita da gestione anomalie."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:377
+#: includes/class-dolly-anomalies.php:379
 msgid "Orario di entrata non valido."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:380
+#: includes/class-dolly-anomalies.php:382
 msgid "Orario di uscita non valido."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:382
+#: includes/class-dolly-anomalies.php:384
 msgid "Entrata inserita dalla gestione anomalie."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:411
+#: includes/class-dolly-anomalies.php:413
 msgid "Il certificato mancante si risolve solo con il caricamento del certificato o disattivando il requisito nelle impostazioni."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:414
+#: includes/class-dolly-anomalies.php:416
 msgid "Indica il motivo della chiusura."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:414 includes/class-dolly-attendance.php:416 includes/class-dolly-employees.php:397 includes/class-dolly-verification.php:256
+#: includes/class-dolly-anomalies.php:416 includes/class-dolly-attendance.php:418 includes/class-dolly-employees.php:397 includes/class-dolly-verification.php:256
 #: assets/js/dolly-admin.js:950 assets/js/dolly-admin.js:967 assets/js/dolly-admin.js:1840
 msgid "Indica il motivo."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:419
+#: includes/class-dolly-anomalies.php:421
 msgid "Azione non valida per questo tipo di anomalia."
 msgstr ""
 
@@ -525,158 +525,158 @@ msgstr ""
 msgid "Risulti in ferie per oggi."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:200 includes/class-dolly-attendance.php:412
+#: includes/class-dolly-attendance.php:202 includes/class-dolly-attendance.php:414
 msgid "Azione non valida."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:203
+#: includes/class-dolly-attendance.php:205
 msgid "Richiesta non valida. Aggiorna la pagina."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:211
+#: includes/class-dolly-attendance.php:213
 msgid "Richiesta non valida."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:215 includes/class-dolly-attendance.php:237
-msgid "%s già registrata alle %s."
+#: includes/class-dolly-attendance.php:217 includes/class-dolly-attendance.php:239
+msgid "%1$s già registrata alle %2$s."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:222
+#: includes/class-dolly-attendance.php:224
 msgid "Un'altra timbratura è in corso. Attendi qualche secondo."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:239
+#: includes/class-dolly-attendance.php:241
 msgid "La giornata è già chiusa con l'uscita."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:241
+#: includes/class-dolly-attendance.php:243
 msgid "Operazione non consentita: la prossima azione è \"%s\"."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:275
+#: includes/class-dolly-attendance.php:277
 msgid "%s già registrata."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:286
+#: includes/class-dolly-attendance.php:288
 msgid "Entrata registrata alle "
 msgstr ""
 
-#: includes/class-dolly-attendance.php:297
-msgid "%s registrata alle %s%s."
+#: includes/class-dolly-attendance.php:299
+msgid "%1$s registrata alle %2$s%3$s."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:297
+#: includes/class-dolly-attendance.php:299
 msgid " presso "
 msgstr ""
 
-#: includes/class-dolly-attendance.php:297
+#: includes/class-dolly-attendance.php:299
 msgid " in smart working"
 msgstr ""
 
-#: includes/class-dolly-attendance.php:351
+#: includes/class-dolly-attendance.php:353
 msgid "Questo metodo di verifica non è attivo. Usa uno dei metodi indicati nell'app."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:363
+#: includes/class-dolly-attendance.php:365
 msgid "La sede non ha coordinate configurate."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:367
-msgid "La tua posizione non corrisponde alla sede %s (circa %d m)."
+#: includes/class-dolly-attendance.php:369
+msgid "La tua posizione non corrisponde alla sede %1$s (circa %2$d m)."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:380
+#: includes/class-dolly-attendance.php:382
 msgid "Sono richiesti la posizione GPS e un codice della sede ("
 msgstr ""
 
-#: includes/class-dolly-attendance.php:386
+#: includes/class-dolly-attendance.php:388
 msgid "Verifica la presenza con "
 msgstr ""
 
-#: includes/class-dolly-attendance.php:388
+#: includes/class-dolly-attendance.php:390
 msgid "Verifica la presenza: "
 msgstr ""
 
-#: includes/class-dolly-attendance.php:395
+#: includes/class-dolly-attendance.php:397
 msgid "QR, PIN o Bluetooth"
 msgstr ""
 
-#: includes/class-dolly-attendance.php:395
+#: includes/class-dolly-attendance.php:397
 msgid "QR o PIN"
 msgstr ""
 
-#: includes/class-dolly-attendance.php:406 includes/class-dolly-devices.php:323 includes/class-dolly-documents.php:333 includes/class-dolly-employees.php:336
+#: includes/class-dolly-attendance.php:408 includes/class-dolly-devices.php:323 includes/class-dolly-documents.php:333 includes/class-dolly-employees.php:336
 #: includes/class-dolly-employees.php:393 includes/class-dolly-employees.php:414 includes/class-dolly-rest.php:488 includes/class-dolly-rest.php:858
 #: includes/class-dolly-verification.php:252
 msgid "Dipendente non trovato."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:409
+#: includes/class-dolly-attendance.php:411
 msgid "Data non valida (non sono ammesse date future)."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:409 includes/class-dolly-closures.php:144 includes/class-dolly-closures.php:147 includes/class-dolly-requests.php:205
+#: includes/class-dolly-attendance.php:411 includes/class-dolly-closures.php:144 includes/class-dolly-closures.php:147 includes/class-dolly-requests.php:205
 #: includes/class-dolly-requests.php:210 includes/class-dolly-rest.php:694
 msgid "Data non valida."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:416
+#: includes/class-dolly-attendance.php:418
 msgid "Indica il motivo della correzione."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:423
+#: includes/class-dolly-attendance.php:425
 msgid "Non puoi inserire un orario futuro."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:423
+#: includes/class-dolly-attendance.php:425
 msgid "Orario futuro."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:429
+#: includes/class-dolly-attendance.php:431
 msgid "Operazione in corso, riprova."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:435
+#: includes/class-dolly-attendance.php:437
 msgid "Non c'è nessuna timbratura da annullare."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:435
+#: includes/class-dolly-attendance.php:437
 msgid "Timbratura assente."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:445
+#: includes/class-dolly-attendance.php:447
 msgid "Annulla prima la timbratura \"%s\", che dipende da questa."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:445
+#: includes/class-dolly-attendance.php:447
 msgid "Esistono timbrature successive."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:462
+#: includes/class-dolly-attendance.php:464
 msgid "Gli orari devono rispettare l'ordine Entrata → Inizio pausa → Fine pausa → Uscita."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:462
+#: includes/class-dolly-attendance.php:464
 msgid "Orario fuori sequenza."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:468
+#: includes/class-dolly-attendance.php:470
 msgid "Inserisci prima l'entrata."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:468
+#: includes/class-dolly-attendance.php:470
 msgid "Manca l'entrata."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:471
+#: includes/class-dolly-attendance.php:473
 msgid "Inserisci prima l'inizio pausa."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:471
+#: includes/class-dolly-attendance.php:473
 msgid "Manca l'inizio pausa."
 msgstr ""
 
-#: includes/class-dolly-attendance.php:521
+#: includes/class-dolly-attendance.php:523
 msgid " (richiesta #"
 msgstr ""
 
@@ -894,7 +894,7 @@ msgstr ""
 msgid "Requisiti certificato di donazione annullati"
 msgstr ""
 
-#: includes/class-dolly-auth.php:29 includes/class-dolly-frontend.php:242
+#: includes/class-dolly-auth.php:29 includes/class-dolly-frontend.php:246
 msgid "Account disattivato. Contatta l'amministratore."
 msgstr ""
 
@@ -1042,7 +1042,7 @@ msgid "» (collegato il "
 msgstr ""
 
 #: includes/class-dolly-devices.php:154
-msgid "Questo account è già collegato %s: %s. Per accedere da questo dispositivo chiedi all'amministrazione di scollegare il dispositivo precedente."
+msgid "Questo account è già collegato %1$s: %2$s. Per accedere da questo dispositivo chiedi all'amministrazione di scollegare il dispositivo precedente."
 msgstr ""
 
 #: includes/class-dolly-devices.php:155
@@ -1300,12 +1300,12 @@ msgstr ""
 
 #: includes/class-dolly-employees.php:516
 msgid ""
-"%s ha modificato l'IBAN dal proprio profilo.\n"
-"Precedente: %s\n"
-"Nuovo: %s\n"
-"Beneficiario: %s\n"
-"Banca: %s\n"
-"BIC: %s\n"
+"%1$s ha modificato l'IBAN dal proprio profilo.\n"
+"Precedente: %2$s\n"
+"Nuovo: %3$s\n"
+"Beneficiario: %4$s\n"
+"Banca: %5$s\n"
+"BIC: %6$s\n"
 "Verifica i dati completi in Gestione Dipendenti › Dipendenti."
 msgstr ""
 
@@ -1329,143 +1329,143 @@ msgstr ""
 msgid "La nuova password deve avere almeno 8 caratteri."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:89
+#: includes/class-dolly-frontend.php:93
 msgid "Vai al contenuto"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:109 assets/js/dolly-admin.js:3219 assets/js/dolly-admin.js:3664
+#: includes/class-dolly-frontend.php:113 assets/js/dolly-admin.js:3219 assets/js/dolly-admin.js:3664
 msgid "Benvenuto"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:110
+#: includes/class-dolly-frontend.php:114
 msgid "Accedi per timbrare, consultare le presenze e inviare richieste."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:111 includes/class-dolly-frontend.php:131 includes/class-dolly-frontend.php:503
+#: includes/class-dolly-frontend.php:115 includes/class-dolly-frontend.php:135 includes/class-dolly-frontend.php:508
 msgid "Accesso dipendenti"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:113 includes/class-dolly-frontend.php:132 includes/class-dolly-frontend.php:470 includes/class-dolly-frontend.php:501
+#: includes/class-dolly-frontend.php:117 includes/class-dolly-frontend.php:136 includes/class-dolly-frontend.php:475 includes/class-dolly-frontend.php:506
 msgid "Accesso sede"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:133 includes/class-dolly-frontend.php:534
+#: includes/class-dolly-frontend.php:137 includes/class-dolly-frontend.php:539
 msgid "Recupero password"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:134 includes/class-dolly-appearance.php:defaults assets/js/dolly-admin.js:2211
+#: includes/class-dolly-frontend.php:138 includes/class-dolly-appearance.php:defaults assets/js/dolly-admin.js:2211
 msgid "Portale dipendenti"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:135
+#: includes/class-dolly-frontend.php:139
 msgid "Codice presenze sede"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:227 includes/class-dolly-frontend.php:270
+#: includes/class-dolly-frontend.php:231 includes/class-dolly-frontend.php:275
 msgid "Sessione del modulo scaduta. Riprova."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:234
+#: includes/class-dolly-frontend.php:238
 msgid "Inserisci nome utente e password."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:247
+#: includes/class-dolly-frontend.php:251
 msgid "Nome utente o password non corretti."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:253
+#: includes/class-dolly-frontend.php:257
 msgid "Questa pagina è riservata agli account sede. I dipendenti accedono dalla pagina Accesso dipendenti."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:257
+#: includes/class-dolly-frontend.php:261
 msgid "Gli account sede accedono dalla pagina Accesso sede."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:275
+#: includes/class-dolly-frontend.php:280
 msgid "Inserisci il nome utente o l'email."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:283
+#: includes/class-dolly-frontend.php:288
 msgid "Troppe richieste. Riprova tra 15 minuti."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:292
+#: includes/class-dolly-frontend.php:297
 msgid "Se i dati corrispondono a un account attivo, riceverai un'email con il link per impostare una nuova password."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:298
+#: includes/class-dolly-frontend.php:303
 msgid "Sei uscito dal portale."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:301
+#: includes/class-dolly-frontend.php:306
 msgid "Connessione non sicura: il portale richiede HTTPS per la posizione e la fotocamera."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:452
+#: includes/class-dolly-frontend.php:457
 msgid "Caricamento del portale…"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:453
+#: includes/class-dolly-frontend.php:458
 msgid "Per usare il portale è necessario JavaScript."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:456
+#: includes/class-dolly-frontend.php:461
 msgid "Caricamento del codice…"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:457
+#: includes/class-dolly-frontend.php:462
 msgid "Per mostrare il codice è necessario JavaScript."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:469
+#: includes/class-dolly-frontend.php:474
 msgid "Schermo sede"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:471
+#: includes/class-dolly-frontend.php:476
 msgid "Accedi con l'account dedicato della sede per mostrare QR e PIN."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:480 includes/class-dolly-reports.php:625 assets/js/dolly-admin.js:713
+#: includes/class-dolly-frontend.php:485 includes/class-dolly-reports.php:625 assets/js/dolly-admin.js:713
 msgid "Nome utente"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:484 assets/js/dolly-admin.js:955 assets/js/dolly-employee.js:1177
+#: includes/class-dolly-frontend.php:489 assets/js/dolly-admin.js:955 assets/js/dolly-employee.js:1177
 msgid "Password"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:487 assets/js/dolly-core.js:435 assets/js/dolly-core.js:1376
+#: includes/class-dolly-frontend.php:492 assets/js/dolly-core.js:435 assets/js/dolly-core.js:1376
 msgid "Mostra password"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:493
+#: includes/class-dolly-frontend.php:498
 msgid "Resta connesso su questo dispositivo"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:496 includes/class-dolly-appearance.php:defaults
+#: includes/class-dolly-frontend.php:501 includes/class-dolly-appearance.php:defaults
 msgid "Accedi"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:500
+#: includes/class-dolly-frontend.php:505
 msgid "Password dimenticata?"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:518 assets/js/dolly-admin.js:2208 assets/js/dolly-employee.js:1175
+#: includes/class-dolly-frontend.php:523 assets/js/dolly-admin.js:2208 assets/js/dolly-employee.js:1175
 msgid "Lingua"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:535
+#: includes/class-dolly-frontend.php:540
 msgid "Inserisci il tuo nome utente o l'email: riceverai un link per impostare una nuova password."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:540
+#: includes/class-dolly-frontend.php:545
 msgid "Nome utente o email"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:543
+#: includes/class-dolly-frontend.php:548
 msgid "Invia link"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:546
+#: includes/class-dolly-frontend.php:551
 msgid "Torna all'accesso"
 msgstr ""
 
@@ -1659,7 +1659,7 @@ msgstr ""
 msgid "Se vedi questo messaggio sul telefono, le notifiche push funzionano."
 msgstr ""
 
-#: includes/class-dolly-push.php:469
+#: includes/class-dolly-push.php:470
 msgid "Hai una nuova notifica nel portale."
 msgstr ""
 
@@ -2065,7 +2065,7 @@ msgid "Spiega il motivo della correzione."
 msgstr ""
 
 #: includes/class-dolly-requests.php:342
-msgid "Esiste già una richiesta %s: %s."
+msgid "Esiste già una richiesta %1$s: %2$s."
 msgstr ""
 
 #: includes/class-dolly-requests.php:342
@@ -2073,7 +2073,7 @@ msgid "in attesa"
 msgstr ""
 
 #: includes/class-dolly-requests.php:347
-msgid "Nel periodo risulta %s (%s – %s)."
+msgid "Nel periodo risulta %1$s (%2$s – %3$s)."
 msgstr ""
 
 #: includes/class-dolly-requests.php:347
@@ -2209,7 +2209,7 @@ msgid "Turno non più completo (timbrature modificate)."
 msgstr ""
 
 #: includes/class-dolly-requests.php:738
-msgid "Turno a chiamata %s–%s: %s ore lavorate."
+msgid "Turno a chiamata %1$s–%2$s: %3$s ore lavorate."
 msgstr ""
 
 #: includes/class-dolly-requests.php:739
@@ -2940,7 +2940,7 @@ msgid "Nessuna sede assegnata ha coordinate configurate. Usa il QR/PIN o contatt
 msgstr ""
 
 #: includes/class-dolly-verification.php:156
-msgid "Sei a circa %d m da %s (raggio consentito %d m)."
+msgid "Sei a circa %1$d m da %2$s (raggio consentito %3$d m)."
 msgstr ""
 
 #: includes/class-dolly-verification.php:158

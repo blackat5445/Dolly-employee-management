@@ -63,7 +63,7 @@ class Dolly_Verification {
 			$raw = $q['mc'] ?? '';
 		}
 		if ( ! preg_match( '/^(\d+)\.(\d+)\.([a-f0-9]{24})$/', $raw, $m ) ) {
-			return new WP_Error( 'dolly_qr_invalid', sprintf( __( 'Il codice QR non è un codice presenze %s valido.', 'dolly-employee-management' ), Dolly_Appearance::brand() ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_qr_invalid', sprintf( /* translators: %s: brand name. */ __( 'Il codice QR non è un codice presenze %s valido.', 'dolly-employee-management' ), Dolly_Appearance::brand() ), array( 'status' => 400 ) );
 		}
 		$wid    = (int) $m[1];
 		$window = (int) $m[2];
@@ -94,7 +94,7 @@ class Dolly_Verification {
 		$locked   = get_transient( $lock_key );
 		if ( $locked ) {
 			$mins = max( 1, (int) ceil( ( (int) $locked - time() ) / 60 ) );
-			return new WP_Error( 'dolly_pin_locked', sprintf( __( 'Troppi PIN errati. Riprova tra %d minuti oppure usa il QR.', 'dolly-employee-management' ), $mins ), array( 'status' => 429 ) );
+			return new WP_Error( 'dolly_pin_locked', sprintf( /* translators: %d: minutes before a new attempt. */ __( 'Troppi PIN errati. Riprova tra %d minuti oppure usa il QR.', 'dolly-employee-management' ), $mins ), array( 'status' => 429 ) );
 		}
 		$pin = preg_replace( '/\D/', '', (string) $pin );
 		if ( 6 !== strlen( $pin ) ) {
@@ -120,9 +120,9 @@ class Dolly_Verification {
 		if ( $fails >= $max ) {
 			set_transient( $lock_key, time() + $mins * MINUTE_IN_SECONDS, $mins * MINUTE_IN_SECONDS );
 			delete_transient( $fail_key );
-			return new WP_Error( 'dolly_pin_locked', sprintf( __( 'Troppi PIN errati. Riprova tra %d minuti oppure usa il QR.', 'dolly-employee-management' ), $mins ), array( 'status' => 429 ) );
+			return new WP_Error( 'dolly_pin_locked', sprintf( /* translators: %d: minutes before a new attempt. */ __( 'Troppi PIN errati. Riprova tra %d minuti oppure usa il QR.', 'dolly-employee-management' ), $mins ), array( 'status' => 429 ) );
 		}
-		return new WP_Error( 'dolly_pin_invalid', sprintf( __( 'PIN errato o scaduto. Tentativi rimasti: %d.', 'dolly-employee-management' ), $max - $fails ), array( 'status' => 400 ) );
+		return new WP_Error( 'dolly_pin_invalid', sprintf( /* translators: %d: attempts left. */ __( 'PIN errato o scaduto. Tentativi rimasti: %d.', 'dolly-employee-management' ), $max - $fails ), array( 'status' => 400 ) );
 	}
 
 	/**
@@ -153,9 +153,9 @@ class Dolly_Verification {
 			if ( ! $nearest ) {
 				return new WP_Error( 'dolly_gps_no_workplace', __( 'Nessuna sede assegnata ha coordinate configurate. Usa il QR/PIN o contatta l\'amministratore.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 			}
-			$msg = sprintf( __( 'Sei a circa %d m da %s (raggio consentito %d m).', 'dolly-employee-management' ), (int) round( $nearest['distance'] ), $nearest['w']->name, (int) $nearest['w']->radius_m );
+			$msg = sprintf( /* translators: %1$d: distance in meters, %2$s: workplace name, %3$d: allowed radius in meters. */ __( 'Sei a circa %1$d m da %2$s (raggio consentito %3$d m).', 'dolly-employee-management' ), (int) round( $nearest['distance'] ), $nearest['w']->name, (int) $nearest['w']->radius_m );
 			if ( $accuracy && $accuracy > (int) $nearest['w']->radius_m ) {
-				$msg .= sprintf( __( ' La precisione del GPS è bassa (±%d m): riprova all\'aperto o usa il QR/PIN.', 'dolly-employee-management' ), $accuracy );
+				$msg .= sprintf( /* translators: %d: GPS accuracy in meters. */ __( ' La precisione del GPS è bassa (±%d m): riprova all\'aperto o usa il QR/PIN.', 'dolly-employee-management' ), $accuracy );
 			}
 			return new WP_Error( 'dolly_gps_out_of_range', $msg, array( 'status' => 403 ) );
 		}
@@ -182,7 +182,7 @@ class Dolly_Verification {
 		);
 		$json = wp_json_encode( $payload );
 		$sig  = hash_hmac( 'sha256', $json, self::secret() . '|ticket' );
-		return rtrim( strtr( base64_encode( $json ), '+/', '-_' ), '=' ) . '.' . $sig;
+		return rtrim( strtr( base64_encode( $json ), '+/', '-_' ), '=' ) . '.' . $sig; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Signed verification ticket (base64url JSON + HMAC).
 	}
 
 	public static function read_ticket( $user_id, $ticket ) {
@@ -190,7 +190,7 @@ class Dolly_Verification {
 		if ( 2 !== count( $parts ) ) {
 			return new WP_Error( 'dolly_ticket_invalid', __( 'Verifica QR/PIN non valida. Ripeti la verifica.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
-		$json = base64_decode( strtr( $parts[0], '-_', '+/' ) ); // phpcs:ignore
+		$json = base64_decode( strtr( $parts[0], '-_', '+/' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- binary encoding, not code.
 		if ( ! $json || ! hash_equals( hash_hmac( 'sha256', $json, self::secret() . '|ticket' ), $parts[1] ) ) {
 			return new WP_Error( 'dolly_ticket_invalid', __( 'Verifica QR/PIN non valida. Ripeti la verifica.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
@@ -216,7 +216,7 @@ class Dolly_Verification {
 	public static function active_exception( $user_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'exceptions' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND revoked_at IS NULL AND expires_at > %s ORDER BY expires_at DESC LIMIT 1", $user_id, Dolly_Time::now_utc() ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND revoked_at IS NULL AND expires_at > %s ORDER BY expires_at DESC LIMIT 1", $user_id, Dolly_Time::now_utc() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function format_exception( $e ) {
@@ -239,7 +239,7 @@ class Dolly_Verification {
 	public static function exceptions_for( $user_id, $limit = 10 ) {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'exceptions' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d ORDER BY id DESC LIMIT %d", $user_id, $limit ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d ORDER BY id DESC LIMIT %d", $user_id, $limit ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		return array_map( array( __CLASS__, 'format_exception' ), $rows );
 	}
 
@@ -278,13 +278,13 @@ class Dolly_Verification {
 		);
 		$id = (int) $wpdb->insert_id;
 		Dolly_Audit::log( 'exception_created', 'exception', $id, $user_id, $reason, null, array( 'expires_at' => Dolly_Time::utc_to_local( $expires, 'd/m/Y H:i' ) ) );
-		return self::format_exception( $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . Dolly_Install::t( 'exceptions' ) . ' WHERE id = %d', $id ) ) ); // phpcs:ignore
+		return self::format_exception( $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . Dolly_Install::t( 'exceptions' ) . ' WHERE id = %d', $id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function revoke_exception( $id, $reason = '' ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'exceptions' );
-		$e = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore
+		$e = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( ! $e ) {
 			return new WP_Error( 'dolly_not_found', __( 'Eccezione non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
@@ -298,7 +298,7 @@ class Dolly_Verification {
 	public static function mark_exception_used( $exception, $punch_id, $action ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'exceptions' );
-		$wpdb->query( $wpdb->prepare( "UPDATE $t SET use_count = use_count + 1 WHERE id = %d", $exception->id ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( "UPDATE $t SET use_count = use_count + 1 WHERE id = %d", $exception->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		Dolly_Audit::log( 'exception_used', 'punch', $punch_id, (int) $exception->user_id, $exception->reason, null, array( 'exception_id' => (int) $exception->id, 'action' => $action ) );
 	}
 }

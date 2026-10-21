@@ -69,7 +69,7 @@ class Dolly_Admin {
 	}
 
 	private static function current_page() {
-		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only request parameter.
 		return self::page_info( $page ) ? $page : '';
 	}
 

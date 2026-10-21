@@ -360,7 +360,7 @@ class Dolly_Xlsx {
 				$zip->addFromString( $name, $content );
 			}
 			if ( ! $zip->close() ) {
-				@unlink( $tmp ); // phpcs:ignore
+				@unlink( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- private files of the plugin.
 				return new WP_Error( 'dolly_xlsx', __( 'Impossibile creare il file Excel.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 			}
 			return $tmp;
@@ -372,17 +372,17 @@ class Dolly_Xlsx {
 		foreach ( $parts as $name => $content ) {
 			$path = $dir . '/' . $name;
 			wp_mkdir_p( dirname( $path ) );
-			file_put_contents( $path, $content ); // phpcs:ignore
+			file_put_contents( $path, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- private files of the plugin.
 			$files[] = $path;
 		}
-		@unlink( $tmp ); // phpcs:ignore
+		@unlink( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- private files of the plugin.
 		$zip = new PclZip( $tmp );
 		$ok  = $zip->create( $files, PCLZIP_OPT_REMOVE_PATH, $dir );
 		foreach ( $files as $f ) {
-			@unlink( $f ); // phpcs:ignore
+			@unlink( $f ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- private files of the plugin.
 		}
 		foreach ( array( '/xl/worksheets', '/xl/_rels', '/xl', '/_rels', '' ) as $sub ) {
-			@rmdir( $dir . $sub ); // phpcs:ignore
+			@rmdir( $dir . $sub ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- private files of the plugin.
 		}
 		if ( 0 === $ok ) {
 			return new WP_Error( 'dolly_xlsx', __( 'Impossibile creare il file Excel.', 'dolly-employee-management' ), array( 'status' => 500 ) );

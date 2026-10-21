@@ -63,6 +63,7 @@ def unescape_js(raw):
 def unescape_php(raw, quote):
     if quote == "'":
         return re.sub(r"\\([\\'])", r'\1', raw)
+    raw = raw.replace('\\$', '$')  # "\$" is a literal dollar sign in PHP double-quoted strings.
     return raw.encode('latin-1', 'backslashreplace').decode('unicode_escape') if '\\' in raw else raw
 
 

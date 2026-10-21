@@ -42,12 +42,12 @@ class Dolly_Push {
 	}
 
 	private static function b64u( $s ) {
-		return rtrim( strtr( base64_encode( $s ), '+/', '-_' ), '=' );
+		return rtrim( strtr( base64_encode( $s ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64url encoding required by Web Push (RFC 8291 / VAPID).
 	}
 
 	private static function b64u_decode( $s ) {
 		$s = strtr( (string) $s, '-_', '+/' );
-		return (string) base64_decode( $s . str_repeat( '=', ( 4 - strlen( $s ) % 4 ) % 4 ), true );
+		return (string) base64_decode( $s . str_repeat( '=', ( 4 - strlen( $s ) % 4 ) % 4 ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Base64url keys of the browser push subscription.
 	}
 
 	/* ---------- Keys ---------- */
@@ -79,13 +79,13 @@ class Dolly_Push {
 
 	/** New P-256 key: array( key => resource, pem => private PEM, public => 65-byte uncompressed point ). */
 	private static function new_ec_key() {
-		$res = @openssl_pkey_new( array( 'private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1' ) ); // phpcs:ignore
+		$res = @openssl_pkey_new( array( 'private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
 		if ( ! $res ) {
 			return null;
 		}
 		$pem = '';
 		$d   = openssl_pkey_get_details( $res );
-		if ( ! @openssl_pkey_export( $res, $pem ) || empty( $d['ec']['x'] ) || empty( $d['ec']['y'] ) ) { // phpcs:ignore
+		if ( ! @openssl_pkey_export( $res, $pem ) || empty( $d['ec']['x'] ) || empty( $d['ec']['y'] ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
 			return null;
 		}
 		return array(
@@ -150,14 +150,14 @@ class Dolly_Push {
 	public static function subscriptions( $user_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'push_subs' );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d", $user_id ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function has_subscription( $user_id ) {
 		global $wpdb;
 		if ( ! isset( self::$has_sub[ $user_id ] ) ) {
 			$t                          = Dolly_Install::t( 'push_subs' );
-			self::$has_sub[ $user_id ] = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM $t WHERE user_id = %d LIMIT 1", $user_id ) ); // phpcs:ignore
+			self::$has_sub[ $user_id ] = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM $t WHERE user_id = %d LIMIT 1", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		}
 		return self::$has_sub[ $user_id ];
 	}
@@ -182,7 +182,7 @@ class Dolly_Push {
 		}
 		ignore_user_abort( true );
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 120 ); // phpcs:ignore
+			@set_time_limit( 120 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
 		}
 		self::process_queue( 60 );
 		Dolly_Notifications::process_queue( 30 );
@@ -249,7 +249,7 @@ class Dolly_Push {
 		}
 		// Subscriber key as SubjectPublicKeyInfo (P-256) for OpenSSL.
 		$spki = hex2bin( '3059301306072a8648ce3d020106082a8648ce3d030107034200' ) . $ua_public;
-		$pem  = "-----BEGIN PUBLIC KEY-----\n" . chunk_split( base64_encode( $spki ), 64, "\n" ) . "-----END PUBLIC KEY-----\n";
+		$pem  = "-----BEGIN PUBLIC KEY-----\n" . chunk_split( base64_encode( $spki ), 64, "\n" ) . "-----END PUBLIC KEY-----\n"; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- PEM encoding of a public key.
 		$peer = openssl_pkey_get_public( $pem );
 		if ( ! $peer ) {
 			return null;
@@ -348,7 +348,7 @@ class Dolly_Push {
 		$n    = Dolly_Install::t( 'notifications' );
 		$sql  = "SELECT id, user_id, title, body, link FROM $n WHERE push_state = %d" . ( $user_id ? ' AND user_id = %d' : '' ) . ' ORDER BY id ASC LIMIT %d';
 		$args = $user_id ? array( self::STATE_QUEUED, (int) $user_id, (int) $limit ) : array( self::STATE_QUEUED, (int) $limit );
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( ! $rows ) {
 			return array();
 		}
@@ -407,10 +407,10 @@ class Dolly_Push {
 	/* ---------- Front-end endpoints ---------- */
 
 	public static function handle_request() {
-		if ( empty( $_GET['dolly_pwa'] ) ) { // phpcs:ignore
+		if ( empty( $_GET['dolly_pwa'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only request parameter.
 			return;
 		}
-		$what = sanitize_key( wp_unslash( $_GET['dolly_pwa'] ) ); // phpcs:ignore
+		$what = sanitize_key( wp_unslash( $_GET['dolly_pwa'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only request parameter.
 		if ( 'manifest' === $what ) {
 			self::manifest();
 		} elseif ( 'sw' === $what ) {
@@ -462,46 +462,16 @@ class Dolly_Push {
 	private static function service_worker() {
 		header( 'Content-Type: application/javascript; charset=utf-8' );
 		header( 'Cache-Control: no-cache' );
-		$feed   = wp_json_encode( self::url( 'feed' ), JSON_UNESCAPED_SLASHES );
-		$portal = wp_json_encode( Dolly_Frontend::url( 'portale' ), JSON_UNESCAPED_SLASHES );
-		$icon   = wp_json_encode( self::icon_url( 192 ), JSON_UNESCAPED_SLASHES );
-		$brand  = wp_json_encode( Dolly_Appearance::brand(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG );
-		$note   = wp_json_encode( __( 'Hai una nuova notifica nel portale.', 'dolly-employee-management' ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG );
-		echo <<<JS
-'use strict';
-/* Portal service worker (v2): shows push notifications and opens the portal when one is tapped. */
-var FEED = {$feed}, PORTAL = {$portal}, ICON = {$icon}, BRAND = {$brand}, NOTE = {$note};
-self.addEventListener('install', function () { self.skipWaiting(); });
-self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
-function show(n) {
-	return self.registration.showNotification(n.title || BRAND, { body: n.body || '', tag: 'dolly-' + (n.id || 0), icon: ICON, badge: ICON, data: { url: n.url || PORTAL } });
-}
-self.addEventListener('push', function (e) {
-	var data = null;
-	try { data = e.data ? e.data.json() : null; } catch (err) { data = null; }
-	if (data && data.title) { e.waitUntil(show(data)); return; }
-	// Empty push (server without encryption support): ask the site for the new notifications.
-	e.waitUntil(fetch(FEED, { credentials: 'include', cache: 'no-store' })
-		.then(function (r) { return r.ok ? r.json() : { items: [] }; })
-		.catch(function () { return { items: [] }; })
-		.then(function (d) {
-			var items = d && d.items && d.items.length ? d.items : [{ id: 0, title: BRAND, body: NOTE, url: PORTAL + '#notifiche' }];
-			return Promise.all(items.map(show));
-		}));
-});
-self.addEventListener('notificationclick', function (e) {
-	e.notification.close();
-	var url = (e.notification.data && e.notification.data.url) || PORTAL;
-	e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
-		for (var i = 0; i < list.length; i++) {
-			if (list[i].url.indexOf(PORTAL) === 0 && 'focus' in list[i]) {
-				return list[i].focus().then(function (w) { return w && w.navigate ? w.navigate(url) : w; });
-			}
-		}
-		return self.clients.openWindow(url);
-	}));
-});
-JS;
+		$config = array(
+			'feed'   => self::url( 'feed' ),
+			'portal' => Dolly_Frontend::url( 'portale' ),
+			'icon'   => self::icon_url( 192 ),
+			'brand'  => Dolly_Appearance::brand(),
+			'note'   => __( 'Hai una nuova notifica nel portale.', 'dolly-employee-management' ),
+		);
+		// A JavaScript file: the settings are JSON (wp_json_encode escapes "<", ">" and "&" with JSON_HEX_*).
+		echo 'self.DOLLY_SW = ' . wp_json_encode( $config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) . ";\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		readfile( DOLLY_DIR . 'assets/js/dolly-sw.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
 		exit;
 	}
 
@@ -514,11 +484,11 @@ JS;
 		$items = array();
 		if ( $uid ) {
 			$n    = Dolly_Install::t( 'notifications' );
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, body, link FROM $n WHERE user_id = %d AND push_state = %d ORDER BY id DESC LIMIT 5", $uid, self::STATE_SENT ) ); // phpcs:ignore
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, body, link FROM $n WHERE user_id = %d AND push_state = %d ORDER BY id DESC LIMIT 5", $uid, self::STATE_SENT ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			if ( $rows ) {
-				$wpdb->query( "UPDATE $n SET push_state = " . self::STATE_SHOWN . ' WHERE id IN (' . implode( ',', array_map( 'intval', wp_list_pluck( $rows, 'id' ) ) ) . ')' ); // phpcs:ignore
+				$wpdb->query( "UPDATE $n SET push_state = " . self::STATE_SHOWN . ' WHERE id IN (' . implode( ',', array_map( 'intval', wp_list_pluck( $rows, 'id' ) ) ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			} else {
-				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, body, link FROM $n WHERE user_id = %d AND read_at IS NULL ORDER BY id DESC LIMIT 1", $uid ) ); // phpcs:ignore
+				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, body, link FROM $n WHERE user_id = %d AND read_at IS NULL ORDER BY id DESC LIMIT 1", $uid ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			}
 			foreach ( $rows as $r ) {
 				$items[] = array(
@@ -554,8 +524,8 @@ JS;
 		return array(
 			'available'    => (bool) self::keys(),
 			'encrypted'    => function_exists( 'openssl_pkey_derive' ),
-			'devices'      => (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t" ), // phpcs:ignore
-			'employees'    => (int) $wpdb->get_var( "SELECT COUNT(DISTINCT user_id) FROM $t" ), // phpcs:ignore
+			'devices'      => (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t" ), // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
+			'employees'    => (int) $wpdb->get_var( "SELECT COUNT(DISTINCT user_id) FROM $t" ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			'last_success' => $last ? Dolly_Time::iso( gmdate( 'Y-m-d H:i:s', $last ) ) : null,
 			'last_error'   => (string) get_option( 'dolly_push_last_error', '' ),
 		);

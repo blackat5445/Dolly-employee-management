@@ -105,7 +105,7 @@ class Dolly_Timesheet {
 	 */
 	public static function build( $year, $month ) {
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 300 ); // phpcs:ignore
+			@set_time_limit( 300 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
 		}
 		$dates = Dolly_Time::month_dates( $year, $month );
 		$from  = $dates[0];

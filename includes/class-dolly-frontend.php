@@ -68,8 +68,12 @@ class Dolly_Frontend {
 	}
 
 	/** The portal pages are private: never indexed by search engines. */
+	/**
+	 * The portal views are never indexed. With the Dolly Portal theme active the site is a dedicated
+	 * portal, so no page is indexed (filter dolly_noindex_site to change it).
+	 */
 	public static function robots( $robots ) {
-		if ( self::current_view() ) {
+		if ( self::current_view() || apply_filters( 'dolly_noindex_site', defined( 'DOLLY_PORTAL_VERSION' ) ) ) {
 			$robots['noindex']  = true;
 			$robots['nofollow'] = true;
 		}
@@ -172,11 +176,11 @@ class Dolly_Frontend {
 
 			case 'login':
 			case 'login-sede':
-				if ( $user->exists() && ! ( 'POST' === $_SERVER['REQUEST_METHOD'] ) ) { // phpcs:ignore
+				if ( $user->exists() && ! ( 'POST' === $_SERVER['REQUEST_METHOD'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- value validated or unslashed before use.
 					wp_safe_redirect( Dolly_Auth::home_for( $user ) );
 					exit;
 				}
-				if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) { // phpcs:ignore
+				if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- value validated or unslashed before use.
 					self::handle_login( 'login-sede' === $view ? 'workplace' : 'employee' );
 				} elseif ( 'login' === $view ) {
 					// The session on this device was closed because the account is linked to another device.
@@ -188,7 +192,7 @@ class Dolly_Frontend {
 				break;
 
 			case 'recupero-password':
-				if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) { // phpcs:ignore
+				if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- value validated or unslashed before use.
 					self::handle_lostpassword();
 				}
 				break;
@@ -228,7 +232,7 @@ class Dolly_Frontend {
 			return;
 		}
 		$login    = isset( $_POST['log'] ) ? sanitize_user( wp_unslash( $_POST['log'] ) ) : '';
-		$password = isset( $_POST['pwd'] ) ? (string) wp_unslash( $_POST['pwd'] ) : ''; // phpcs:ignore
+		$password = isset( $_POST['pwd'] ) ? (string) wp_unslash( $_POST['pwd'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- value validated or unslashed before use.
 		$remember = 'workplace' === $type || ! empty( $_POST['rememberme'] );
 		if ( '' === $login || '' === $password ) {
 			self::$messages[] = array( 'error', __( 'Inserisci nome utente e password.', 'dolly-employee-management' ) );
@@ -258,9 +262,10 @@ class Dolly_Frontend {
 			return;
 		}
 		wp_set_auth_cookie( $user->ID, $remember, is_ssl() );
-		do_action( 'wp_login', $user->user_login, $user ); // phpcs:ignore
+		do_action( 'wp_login', $user->user_login, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core hook.
 		$requested = isset( $_POST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_POST['redirect_to'] ) ) : '';
-		$target    = apply_filters( 'login_redirect', Dolly_Auth::home_for( $user ), $requested, $user );
+		// Core filter, applied as wp-login.php does, so other plugins can still change the destination.
+		$target    = apply_filters( 'login_redirect', Dolly_Auth::home_for( $user ), $requested, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		wp_safe_redirect( $target );
 		exit;
 	}
@@ -294,7 +299,7 @@ class Dolly_Frontend {
 
 	public static function messages() {
 		$out = self::$messages;
-		if ( isset( $_GET['uscito'] ) ) { // phpcs:ignore
+		if ( isset( $_GET['uscito'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only request parameter.
 			$out[] = array( 'success', __( 'Sei uscito dal portale.', 'dolly-employee-management' ) );
 		}
 		if ( ! is_ssl() && ! in_array( wp_get_environment_type(), array( 'local', 'development' ), true ) ) {
@@ -461,8 +466,8 @@ class Dolly_Frontend {
 
 	private static function render_login( $type ) {
 		$is_wp    = 'workplace' === $type;
-		$redirect = isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : ''; // phpcs:ignore
-		$posted   = isset( $_POST['log'] ) ? sanitize_user( wp_unslash( $_POST['log'] ) ) : ''; // phpcs:ignore
+		$redirect = isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only request parameter.
+		$posted   = isset( $_POST['log'] ) ? sanitize_user( wp_unslash( $_POST['log'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only request parameter.
 		?>
 		<div class="dolly-app dolly-auth">
 			<div class="dolly-card dolly-auth__card">

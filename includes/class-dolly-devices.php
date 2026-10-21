@@ -51,18 +51,18 @@ class Dolly_Devices {
 	public static function active( $user_id ) {
 		global $wpdb;
 		$t = self::table();
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND revoked_at IS NULL ORDER BY created_at ASC, id ASC", $user_id ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND revoked_at IS NULL ORDER BY created_at ASC, id ASC", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/** Device of this browser/app for the user, or null. */
 	private static function current( $user_id ) {
 		global $wpdb;
-		$token = isset( $_COOKIE[ self::COOKIE ] ) ? (string) wp_unslash( $_COOKIE[ self::COOKIE ] ) : ''; // phpcs:ignore
+		$token = isset( $_COOKIE[ self::COOKIE ] ) ? (string) wp_unslash( $_COOKIE[ self::COOKIE ] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- value validated or unslashed before use.
 		if ( ! preg_match( '/^[a-f0-9]{64}$/', $token ) ) {
 			return null;
 		}
 		$t = self::table();
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE token_hash = %s AND user_id = %d AND revoked_at IS NULL", hash( 'sha256', $token ), $user_id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE token_hash = %s AND user_id = %d AND revoked_at IS NULL", hash( 'sha256', $token ), $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	private static function set_cookie( $name, $value, $expires, $http_only = true ) {
@@ -151,7 +151,7 @@ class Dolly_Devices {
 			$names[] = '«' . $d->name . __( '» (collegato il ', 'dolly-employee-management' ) . Dolly_Time::utc_to_local( $d->created_at, 'd/m/Y' ) . ')';
 		}
 		return sprintf(
-			__( 'Questo account è già collegato %s: %s. Per accedere da questo dispositivo chiedi all\'amministrazione di scollegare il dispositivo precedente.', 'dolly-employee-management' ),
+			/* translators: %1$s: number of devices (e.g. to one device), %2$s: list of registered devices. */ __( 'Questo account è già collegato %1$s: %2$s. Per accedere da questo dispositivo chiedi all\'amministrazione di scollegare il dispositivo precedente.', 'dolly-employee-management' ),
 			count( $names ) > 1 ? __( 'al numero massimo di dispositivi', 'dolly-employee-management' ) : __( 'a un altro dispositivo', 'dolly-employee-management' ),
 			implode( ', ', $names )
 		);
@@ -187,7 +187,7 @@ class Dolly_Devices {
 			$wpdb->update( self::table(), array( 'last_seen_at' => Dolly_Time::now_utc() ), array( 'id' => (int) $dev->id ) );
 			// Browsers cap the cookie lifetime (Chrome: 400 days): renew it while the device is in use,
 			// otherwise the main device would stop being recognised after about a year.
-			$token = isset( $_COOKIE[ self::COOKIE ] ) ? (string) wp_unslash( $_COOKIE[ self::COOKIE ] ) : ''; // phpcs:ignore
+			$token = isset( $_COOKIE[ self::COOKIE ] ) ? (string) wp_unslash( $_COOKIE[ self::COOKIE ] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- value validated or unslashed before use.
 			if ( preg_match( '/^[a-f0-9]{64}$/', $token ) ) {
 				self::set_cookie( self::COOKIE, $token, time() + 2 * YEAR_IN_SECONDS );
 			}
@@ -242,7 +242,7 @@ class Dolly_Devices {
 
 	/** Message for the sign-in page when the session of this device has just been closed (shown once). */
 	public static function take_blocked_message() {
-		$v = isset( $_COOKIE[ self::COOKIE_BLOCKED ] ) ? (string) wp_unslash( $_COOKIE[ self::COOKIE_BLOCKED ] ) : ''; // phpcs:ignore
+		$v = isset( $_COOKIE[ self::COOKIE_BLOCKED ] ) ? (string) wp_unslash( $_COOKIE[ self::COOKIE_BLOCKED ] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- value validated or unslashed before use.
 		// Signed value: the device names of an account are shown only to the browser that was just signed out.
 		if ( ! preg_match( '/^(\d+)\|([a-f0-9]+)$/', $v, $m ) || ! hash_equals( wp_hash( 'dolly_device_blocked|' . (int) $m[1] ), $m[2] ) ) {
 			return '';
@@ -281,7 +281,7 @@ class Dolly_Devices {
 		if ( $users ) {
 			$t  = self::table();
 			$in = implode( ',', array_map( 'intval', $users ) );
-			foreach ( $wpdb->get_results( "SELECT * FROM $t WHERE user_id IN ($in) AND revoked_at IS NULL ORDER BY created_at ASC, id ASC" ) as $d ) { // phpcs:ignore
+			foreach ( $wpdb->get_results( "SELECT * FROM $t WHERE user_id IN ($in) AND revoked_at IS NULL ORDER BY created_at ASC, id ASC" ) as $d ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 				$by[ (int) $d->user_id ][] = self::format( $d );
 			}
 		}
@@ -308,7 +308,7 @@ class Dolly_Devices {
 	public static function revoke( $device_id ) {
 		global $wpdb;
 		$t = self::table();
-		$d = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $device_id ) ); // phpcs:ignore
+		$d = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $device_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( ! $d || $d->revoked_at ) {
 			return new WP_Error( 'dolly_not_found', __( 'Dispositivo non trovato o già scollegato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}

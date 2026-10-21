@@ -12,20 +12,20 @@ class Dolly_Workplaces {
 	public static function get( $id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'workplaces' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function all( $active_only = false ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'workplaces' );
 		$w = $active_only ? 'WHERE active = 1' : '';
-		return $wpdb->get_results( "SELECT * FROM $t $w ORDER BY name ASC" ); // phpcs:ignore
+		return $wpdb->get_results( "SELECT * FROM $t $w ORDER BY name ASC" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function by_account( $user_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'workplaces' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE account_user_id = %d AND active = 1", $user_id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE account_user_id = %d AND active = 1", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function format( $w ) {
@@ -201,16 +201,18 @@ class Dolly_Workplaces {
 		$date = $date ? $date : Dolly_Time::today();
 		$a    = Dolly_Install::t( 'assignments' );
 		$w    = Dolly_Install::t( 'workplaces' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Plugin tables (\$wpdb->prefix); values are prepared.
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT w.* FROM $a a INNER JOIN $w w ON w.id = a.workplace_id
 				WHERE a.user_id = %d AND a.valid_from <= %s AND (a.valid_to IS NULL OR a.valid_to >= %s) AND w.active = 1
-				ORDER BY w.name", // phpcs:ignore
+				ORDER BY w.name",
 				$user_id,
 				$date,
 				$date
 			)
 		);
+		// phpcs:enable
 	}
 
 	public static function ids_for_user( $user_id, $date = null ) {
@@ -226,7 +228,7 @@ class Dolly_Workplaces {
 			'intval',
 			$wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT DISTINCT user_id FROM $a WHERE workplace_id = %d AND valid_from <= %s AND (valid_to IS NULL OR valid_to >= %s)", // phpcs:ignore
+					"SELECT DISTINCT user_id FROM $a WHERE workplace_id = %d AND valid_from <= %s AND (valid_to IS NULL OR valid_to >= %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 					$workplace_id,
 					$date,
 					$date
@@ -243,7 +245,7 @@ class Dolly_Workplaces {
 			'intval',
 			$wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT DISTINCT user_id FROM $a WHERE workplace_id = %d AND valid_from <= %s AND (valid_to IS NULL OR valid_to >= %s)", // phpcs:ignore
+					"SELECT DISTINCT user_id FROM $a WHERE workplace_id = %d AND valid_from <= %s AND (valid_to IS NULL OR valid_to >= %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 					$workplace_id,
 					$to,
 					$from
@@ -270,9 +272,9 @@ class Dolly_Workplaces {
 		$prev = Dolly_Time::add_days( $from, -1 );
 		// Close open assignments that are not kept.
 		foreach ( array_diff( $current, $new ) as $wid ) {
-			$wpdb->query( $wpdb->prepare( "UPDATE $t SET valid_to = %s WHERE user_id = %d AND workplace_id = %d AND valid_from < %s AND (valid_to IS NULL OR valid_to >= %s)", $prev, $user_id, $wid, $from, $from ) ); // phpcs:ignore
+			$wpdb->query( $wpdb->prepare( "UPDATE $t SET valid_to = %s WHERE user_id = %d AND workplace_id = %d AND valid_from < %s AND (valid_to IS NULL OR valid_to >= %s)", $prev, $user_id, $wid, $from, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			// Assignments that start on/after $from are removed entirely (never effective).
-			$wpdb->query( $wpdb->prepare( "UPDATE $t SET valid_to = %s WHERE user_id = %d AND workplace_id = %d AND valid_from >= %s AND valid_to IS NULL", $prev, $user_id, $wid, $from ) ); // phpcs:ignore
+			$wpdb->query( $wpdb->prepare( "UPDATE $t SET valid_to = %s WHERE user_id = %d AND workplace_id = %d AND valid_from >= %s AND valid_to IS NULL", $prev, $user_id, $wid, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		}
 		foreach ( array_diff( $new, $current ) as $wid ) {
 			$wpdb->insert(

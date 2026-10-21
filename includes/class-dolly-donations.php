@@ -33,7 +33,7 @@ class Dolly_Donations {
 	public static function certificates( $request_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'certificates' );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE request_id = %d ORDER BY uploaded_at ASC", $request_id ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE request_id = %d ORDER BY uploaded_at ASC", $request_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/** Certificate fields of a donation request for the REST output. */
@@ -81,7 +81,7 @@ class Dolly_Donations {
 
 	private static function close_requirement( $request_id, $note ) {
 		global $wpdb;
-		$wpdb->query( $wpdb->prepare( 'UPDATE ' . self::table() . " SET certificate_status = 'cleared' WHERE id = %d AND certificate_status IN ('waiting','missing','overdue')", $request_id ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( 'UPDATE ' . self::table() . " SET certificate_status = 'cleared' WHERE id = %d AND certificate_status IN ('waiting','missing','overdue')", $request_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		Dolly_Anomalies::resolve_by_key( 'doncert-' . $request_id, 'dismissed', $note );
 	}
 
@@ -97,7 +97,7 @@ class Dolly_Donations {
 		}
 		$t     = self::table();
 		$today = Dolly_Time::today();
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE type = %s AND status = 'approved' AND certificate_status = 'waiting' AND " . Dolly_Requests::EFFECTIVE_ROW . ' AND end_date < %s', self::TYPE, $today ) ); // phpcs:ignore
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE type = %s AND status = 'approved' AND certificate_status = 'waiting' AND " . Dolly_Requests::EFFECTIVE_ROW . ' AND end_date < %s', self::TYPE, $today ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $r ) {
 			$due = 'deadline' === $mode ? Dolly_Time::add_days( $today, (int) Dolly_Settings::get( 'donation_certificate_days' ) ) : null;
 			// Conditional update: only one run sends the request.
@@ -121,7 +121,7 @@ class Dolly_Donations {
 			return;
 		}
 		$t    = self::table();
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE type = %s AND certificate_status = 'missing' AND certificate_due IS NOT NULL AND certificate_due < %s", self::TYPE, Dolly_Time::today() ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE type = %s AND certificate_status = 'missing' AND certificate_due IS NOT NULL AND certificate_due < %s", self::TYPE, Dolly_Time::today() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $r ) {
 			if ( ! $wpdb->update( $t, array( 'certificate_status' => 'overdue' ), array( 'id' => (int) $r->id, 'certificate_status' => 'missing' ) ) ) {
 				continue;
@@ -183,11 +183,11 @@ class Dolly_Donations {
 	public static function clear_outstanding_requirements() {
 		global $wpdb;
 		$t   = self::table();
-		$ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT id FROM $t WHERE type = %s AND certificate_status IN ('waiting','missing','overdue')", self::TYPE ) ) ); // phpcs:ignore
+		$ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT id FROM $t WHERE type = %s AND certificate_status IN ('waiting','missing','overdue')", self::TYPE ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( ! $ids ) {
 			return 0;
 		}
-		$wpdb->query( "UPDATE $t SET certificate_status = 'cleared' WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore
+		$wpdb->query( "UPDATE $t SET certificate_status = 'cleared' WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $ids as $id ) {
 			Dolly_Anomalies::resolve_by_key( 'doncert-' . $id, 'certificates_disabled', __( 'Requisito certificato di donazione disattivato dalle impostazioni.', 'dolly-employee-management' ) );
 		}
@@ -200,6 +200,6 @@ class Dolly_Donations {
 		global $wpdb;
 		$t   = self::table();
 		$due = Dolly_Time::add_days( Dolly_Time::today(), (int) Dolly_Settings::get( 'donation_certificate_days' ) );
-		$wpdb->query( $wpdb->prepare( "UPDATE $t SET certificate_due = %s WHERE type = %s AND certificate_status = 'missing'", $due, self::TYPE ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( "UPDATE $t SET certificate_due = %s WHERE type = %s AND certificate_status = 'missing'", $due, self::TYPE ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 }

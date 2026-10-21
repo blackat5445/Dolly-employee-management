@@ -86,7 +86,7 @@ class Dolly_Documents {
 		global $wpdb;
 		$t      = Dolly_Install::t( 'documents' );
 		$counts = array();
-		foreach ( $wpdb->get_results( "SELECT category, COUNT(*) AS n FROM $t GROUP BY category" ) as $r ) { // phpcs:ignore
+		foreach ( $wpdb->get_results( "SELECT category, COUNT(*) AS n FROM $t GROUP BY category" ) as $r ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			$counts[ $r->category ] = (int) $r->n;
 		}
 		$out = array();
@@ -162,7 +162,7 @@ class Dolly_Documents {
 		$dir = $root . '/u' . (int) $user_id . '-' . $tok;
 		if ( $create && ! is_dir( $dir ) ) {
 			wp_mkdir_p( $dir );
-			@chmod( $dir, 0750 ); // phpcs:ignore
+			@chmod( $dir, 0750 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- failure handled by the caller; private files of the plugin.
 			Dolly_Install::protect_dir( $root );
 			Dolly_Install::protect_dir( $dir );
 		}
@@ -205,10 +205,10 @@ class Dolly_Documents {
 		}
 		$dir  = self::user_dir( $user_id, true );
 		$name = bin2hex( random_bytes( 20 ) );
-		if ( ! $dir || ! @move_uploaded_file( $file['tmp_name'], $dir . '/' . $name ) ) { // phpcs:ignore
+		if ( ! $dir || ! @move_uploaded_file( $file['tmp_name'], $dir . '/' . $name ) ) {
 			return new WP_Error( 'dolly_upload', __( 'Impossibile salvare il file. Controlla i permessi della cartella privata.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 		}
-		@chmod( $dir . '/' . $name, 0640 ); // phpcs:ignore
+		@chmod( $dir . '/' . $name, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- failure handled by the caller; private files of the plugin.
 		return array(
 			'file_name'     => $name,
 			'original_name' => sanitize_file_name( $file['name'] ),
@@ -222,7 +222,7 @@ class Dolly_Documents {
 	public static function get( $id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'documents' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function format( $d ) {
@@ -250,7 +250,7 @@ class Dolly_Documents {
 	public static function grouped( $user_id ) {
 		global $wpdb;
 		$t      = Dolly_Install::t( 'documents' );
-		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d ORDER BY uploaded_at DESC, id DESC", $user_id ) ); // phpcs:ignore
+		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d ORDER BY uploaded_at DESC, id DESC", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$groups = array();
 		foreach ( self::categories() as $k => $label ) {
 			$groups[ $k ] = array(
@@ -276,7 +276,7 @@ class Dolly_Documents {
 	public static function unread_count( $user_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'documents' );
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d AND viewed_at IS NULL", $user_id ) ); // phpcs:ignore
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d AND viewed_at IS NULL", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/** Employees with their number of documents (Documenti page): search + pagination. */
@@ -295,7 +295,7 @@ class Dolly_Documents {
 		if ( $ids ) {
 			$t  = Dolly_Install::t( 'documents' );
 			$in = implode( ',', array_map( 'intval', $ids ) );
-			foreach ( $wpdb->get_results( "SELECT user_id, COUNT(*) AS n, MAX(uploaded_at) AS last_at FROM $t WHERE user_id IN ($in) GROUP BY user_id" ) as $r ) { // phpcs:ignore
+			foreach ( $wpdb->get_results( "SELECT user_id, COUNT(*) AS n, MAX(uploaded_at) AS last_at FROM $t WHERE user_id IN ($in) GROUP BY user_id" ) as $r ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 				$cnt[ (int) $r->user_id ] = $r;
 			}
 		}
@@ -366,8 +366,8 @@ class Dolly_Documents {
 			$uid,
 			'document_received',
 			fn () => array(
-				sprintf( __( 'Nuovo documento: %s', 'dolly-employee-management' ), $doc->title ),
-				sprintf( __( 'Categoria: %s. Lo trovi nella sezione Documenti del portale.', 'dolly-employee-management' ), self::categories()[ $doc->category ] ?? $doc->category ) . ( $doc->description ? "\n" . $doc->description : '' ),
+				sprintf( /* translators: %s: document title. */ __( 'Nuovo documento: %s', 'dolly-employee-management' ), $doc->title ),
+				sprintf( /* translators: %s: document category. */ __( 'Categoria: %s. Lo trovi nella sezione Documenti del portale.', 'dolly-employee-management' ), self::categories()[ $doc->category ] ?? $doc->category ) . ( $doc->description ? "\n" . $doc->description : '' ),
 			),
 			null,
 			'documenti'
@@ -423,7 +423,7 @@ class Dolly_Documents {
 		header( 'Content-Disposition: ' . ( $inline ? 'inline' : 'attachment' ) . '; filename="' . rawurlencode( $d->original_name ) . '"; filename*=UTF-8\'\'' . rawurlencode( $d->original_name ) );
 		header( 'X-Content-Type-Options: nosniff' );
 		header( 'Referrer-Policy: no-referrer' );
-		readfile( $path ); // phpcs:ignore
+		readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- private files of the plugin.
 		exit;
 	}
 }
