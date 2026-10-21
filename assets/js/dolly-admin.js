@@ -141,7 +141,7 @@
 		});
 
 		DOLLY.render(main, [
-			h('div', { class: 'dolly-toolbar dolly-dash__toolbar' }, [dateEl, h('div', { class: 'dolly-toolbar__spacer' }), wpF, h('div', { class: 'dolly-dash__updated' }, [DOLLY.icon('refresh-cw'), updated])]),
+			h('div', { class: 'dolly-toolbar dolly-dash__toolbar' }, [h('div', { class: 'dolly-dash__when' }, [dateEl, h('div', { class: 'dolly-dash__updated' }, [DOLLY.icon('refresh-cw'), updated])]), h('div', { class: 'dolly-toolbar__spacer' }), wpF]),
 			kpis,
 			h('div', { class: 'dolly-grid dolly-grid--2' }, [
 				DOLLY.card(__('Today\'s attendance'), 'clock', attBox),
