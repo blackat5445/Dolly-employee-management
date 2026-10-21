@@ -64,7 +64,7 @@ class Dolly_Timesheet {
 				$week -= Dolly_Time::hm_to_min( $t['lunch_end'] ) - Dolly_Time::hm_to_min( $t['lunch_start'] );
 			}
 		}
-		return $week > 0 ? $label . ' - ' . self::hours_text( $week ) . __( ' ore settimanali', 'dolly-employee-management' ) : $label;
+		return $week > 0 ? $label . ' - ' . self::hours_text( $week ) . __( ' hours per week', 'dolly-employee-management' ) : $label;
 	}
 
 	/**
@@ -112,7 +112,7 @@ class Dolly_Timesheet {
 		$to    = end( $dates );
 		$ids   = self::employees( $from, $to );
 		if ( ! $ids ) {
-			return new WP_Error( 'dolly_empty', __( 'Nessun dipendente nel mese scelto.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_empty', __( 'No employees in the selected month.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 
 		// Coloured as public holidays: the national ones, plus the closures for a holiday of the whole company.
@@ -132,7 +132,7 @@ class Dolly_Timesheet {
 
 	/** Suggested file name: Foglio_presenze_Ottobre_2026.xlsx */
 	public static function filename( $year, $month ) {
-		return __( 'Foglio_presenze_', 'dolly-employee-management' ) . Dolly_I18n::t( Dolly_Time::MONTHS[ (int) $month ] ) . '_' . (int) $year . '.xlsx';
+		return __( 'Timesheet_', 'dolly-employee-management' ) . Dolly_I18n::t( Dolly_Time::MONTHS[ (int) $month ] ) . '_' . (int) $year . '.xlsx';
 	}
 
 	private static function sheet( Dolly_Xlsx $x, $title, $year, $month, array $dates, array $festive, array $user_ids ) {
@@ -162,10 +162,10 @@ class Dolly_Timesheet {
 		// Rows 1-2: year and month.
 		$cap  = array( 'bold' => true, 'align' => 'center' );
 		$big  = array( 'bold' => true, 'size' => 18, 'align' => 'center', 'valign' => 'center', 'border' => true );
-		$x->set( $s, 1, 2, __( 'Anno', 'dolly-employee-management' ), $cap );
+		$x->set( $s, 1, 2, __( 'Year', 'dolly-employee-management' ), $cap );
 		$x->set( $s, 2, 2, (int) $year, $big );
 		$x->merge( $s, 1, 8, 1, 20 );
-		$x->set( $s, 1, 8, __( 'Mese', 'dolly-employee-management' ), $cap );
+		$x->set( $s, 1, 8, __( 'Month', 'dolly-employee-management' ), $cap );
 		$x->style_range( $s, 2, 8, 2, 20, $big );
 		$x->merge( $s, 2, 8, 2, 20 );
 		$x->set( $s, 2, 8, strtolower( Dolly_I18n::t( Dolly_Time::MONTHS[ $month ] ) ), $big );
@@ -179,12 +179,12 @@ class Dolly_Timesheet {
 			// Initial of the weekday in the current language (L M M G V S D, or M T W T F S S).
 			$x->set( $s, 5, $col, mb_strtoupper( mb_substr( Dolly_I18n::t( Dolly_Time::WEEKDAYS[ Dolly_Time::weekday( $d ) ] ), 0, 1 ) ), $st );
 		}
-		$x->set( $s, 4, $total, __( 'Totale del mese', 'dolly-employee-management' ), array( 'border' => true, 'align' => 'center', 'bold' => true, 'size' => 9, 'fill' => self::FILL_HEAD ) );
-		$x->set( $s, 5, $total, __( 'ore', 'dolly-employee-management' ), array( 'border' => true, 'align' => 'center', 'bold' => true, 'size' => 9, 'fill' => self::FILL_HEAD ) );
+		$x->set( $s, 4, $total, __( 'Total for the month', 'dolly-employee-management' ), array( 'border' => true, 'align' => 'center', 'bold' => true, 'size' => 9, 'fill' => self::FILL_HEAD ) );
+		$x->set( $s, 5, $total, __( 'hours', 'dolly-employee-management' ), array( 'border' => true, 'align' => 'center', 'bold' => true, 'size' => 9, 'fill' => self::FILL_HEAD ) );
 
 		// Row 6: headings of the employee columns.
 		$x->set( $s, 6, self::COL_NUM, 'n°', array( 'bold' => true, 'align' => 'center' ) );
-		$x->set( $s, 6, self::COL_NAME, __( 'Dipendente', 'dolly-employee-management' ), array( 'bold' => true ) );
+		$x->set( $s, 6, self::COL_NAME, __( 'Employee', 'dolly-employee-management' ), array( 'bold' => true ) );
 
 		$row   = 7;
 		$codes = array_keys( Dolly_Hours::CODES );
@@ -242,9 +242,9 @@ class Dolly_Timesheet {
 				}
 			}
 			$lab = array( 'border' => true, 'valign' => 'center', 'size' => 9 );
-			$x->set( $s, $row, $label, __( 'ore lavoro effettive', 'dolly-employee-management' ), $lab );
+			$x->set( $s, $row, $label, __( 'actual working hours', 'dolly-employee-management' ), $lab );
 			$x->set( $s, $row + 1, $label, 'giustificativi', $lab );
-			$x->set( $s, $row + 2, $label, __( 'ore per giustificativi', 'dolly-employee-management' ), $lab );
+			$x->set( $s, $row + 2, $label, __( 'hours for absence codes', 'dolly-employee-management' ), $lab );
 
 			$x->set( $s, $row, $total, $tot_work ? self::hours( $tot_work ) : null, array( 'border' => true, 'align' => 'center', 'valign' => 'center', 'bold' => true, 'size' => 9 ) );
 			$sum = array();
@@ -267,13 +267,13 @@ class Dolly_Timesheet {
 		// Legend and notes.
 		$row += 2;
 		$legend = array(
-			array( __( 'FS = Festivo', 'dolly-employee-management' ), __( 'EO = Ex festività', 'dolly-employee-management' ) ),
-			array( __( 'FER = Sabato', 'dolly-employee-management' ), __( 'Pn = Permesso non retribuito', 'dolly-employee-management' ) ),
-			array( __( 'O = Ordinario', 'dolly-employee-management' ), __( 'PL = Permesso Legge 104', 'dolly-employee-management' ) ),
-			array( __( 'S = Straordinario', 'dolly-employee-management' ), __( 'M = Malattia', 'dolly-employee-management' ) ),
-			array( __( 'FE = Ferie', 'dolly-employee-management' ), __( 'I = Infortunio', 'dolly-employee-management' ) ),
-			array( __( 'P = Permesso', 'dolly-employee-management' ), __( 'Av = Donazione sangue', 'dolly-employee-management' ) ),
-			array( __( 'ROL = Permesso retribuito per riduzione dell\'orario', 'dolly-employee-management' ), __( 'A = Assenza non retribuita', 'dolly-employee-management' ) ),
+			array( __( 'FS = Holiday', 'dolly-employee-management' ), __( 'EO = Former public holidays', 'dolly-employee-management' ) ),
+			array( __( 'FER = Saturday', 'dolly-employee-management' ), __( 'Pn = Unpaid leave', 'dolly-employee-management' ) ),
+			array( __( 'O = Regular', 'dolly-employee-management' ), __( 'PL = Law 104 leave', 'dolly-employee-management' ) ),
+			array( __( 'S = Overtime', 'dolly-employee-management' ), __( 'M = Sickness', 'dolly-employee-management' ) ),
+			array( __( 'FE = Vacation', 'dolly-employee-management' ), __( 'I = Injury', 'dolly-employee-management' ) ),
+			array( __( 'P = Leave', 'dolly-employee-management' ), __( 'Av = Blood donation', 'dolly-employee-management' ) ),
+			array( __( 'ROL = Paid leave for reduced working hours', 'dolly-employee-management' ), __( 'A = Unpaid absence', 'dolly-employee-management' ) ),
 		);
 		foreach ( $legend as $i => $pair ) {
 			$x->set( $s, $row + $i, 2, $pair[0], array( 'size' => 9 ) );
@@ -281,17 +281,17 @@ class Dolly_Timesheet {
 		}
 		$after = $row + count( $legend ) + 1;
 		$x->set( $s, $after, 2, '', array( 'fill' => self::FILL_WEEKEND, 'border' => true ) );
-		$x->set( $s, $after, 3, __( 'Sabato e domenica', 'dolly-employee-management' ), array( 'size' => 9 ) );
+		$x->set( $s, $after, 3, __( 'Saturday and Sunday', 'dolly-employee-management' ), array( 'size' => 9 ) );
 		$x->set( $s, $after + 1, 2, '', array( 'fill' => self::FILL_HOLIDAY, 'border' => true ) );
-		$x->set( $s, $after + 1, 3, __( 'Festività', 'dolly-employee-management' ) . ( $festive ? ': ' . implode( ', ', array_map( function ( $d, $name ) {
+		$x->set( $s, $after + 1, 3, __( 'Public holiday', 'dolly-employee-management' ) . ( $festive ? ': ' . implode( ', ', array_map( function ( $d, $name ) {
 			return (int) substr( $d, 8, 2 ) . ' ' . $name;
-		}, array_keys( $festive ), $festive ) ) : __( ' (nessuna nel mese)', 'dolly-employee-management' ) ), array( 'size' => 9 ) );
+		}, array_keys( $festive ), $festive ) ) : __( ' (none this month)', 'dolly-employee-management' ) ), array( 'size' => 9 ) );
 		// "Note" box next to the legend, as in the model.
 		$note_c1 = min( 20, $last );
 		$note    = array( 'border' => true, 'valign' => 'top', 'size' => 12, 'wrap' => true );
 		$x->style_range( $s, $row + 1, $note_c1, $row + 4, $last, $note );
 		$x->merge( $s, $row + 1, $note_c1, $row + 4, $last );
-		$x->set( $s, $row + 1, $note_c1, __( 'Note :', 'dolly-employee-management' ), $note );
+		$x->set( $s, $row + 1, $note_c1, __( 'Notes :', 'dolly-employee-management' ), $note );
 
 		$x->freeze( $s, 3, 6 );
 	}

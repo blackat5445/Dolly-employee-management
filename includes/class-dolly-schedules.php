@@ -20,18 +20,18 @@ defined( 'ABSPATH' ) || exit;
 class Dolly_Schedules {
 
 	const TYPES = array(
-		'full_time' => 'Tempo pieno',
+		'full_time' => 'Full-time',
 		'part_time' => 'Part-time',
-		'on_call'   => 'Contratto a chiamata',
+		'on_call'   => 'On-call contract',
 	);
 
-	const SHORT_DAYS = array( 1 => 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom' );
+	const SHORT_DAYS = array( 1 => 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
 
 	/** How a working day is worked. */
 	const MODES = array(
-		'office' => 'In presenza',
-		'smart'  => 'Smart working',
-		'mixed'  => 'Misto (presenza e smart working)',
+		'office' => 'On site',
+		'smart'  => 'Remote work',
+		'mixed'  => 'Mixed (on site and remote)',
 	);
 
 	public static function for_date( $user_id, $date ) {
@@ -141,10 +141,10 @@ class Dolly_Schedules {
 
 	private static function times_label( $t ) {
 		if ( 'mixed' === $t['mode'] ) {
-			return sprintf( /* translators: %1$s: on-site time range, %2$s: smart-working time range (HH:MM–HH:MM). */ __( 'presenza %1$s, smart working %2$s', 'dolly-employee-management' ), $t['office_start'] . '–' . $t['office_end'], $t['smart_start'] . '–' . $t['smart_end'] );
+			return sprintf( /* translators: %1$s: on-site time range, %2$s: smart-working time range (HH:MM–HH:MM). */ __( 'on site %1$s, remote %2$s', 'dolly-employee-management' ), $t['office_start'] . '–' . $t['office_end'], $t['smart_start'] . '–' . $t['smart_end'] );
 		}
-		return $t['start'] . '–' . $t['end'] . ( $t['lunch_start'] ? __( ' (pausa ', 'dolly-employee-management' ) . $t['lunch_start'] . '–' . $t['lunch_end'] . ')' : '' )
-			. ( 'smart' === $t['mode'] ? __( ' · smart working', 'dolly-employee-management' ) : '' );
+		return $t['start'] . '–' . $t['end'] . ( $t['lunch_start'] ? __( ' (break ', 'dolly-employee-management' ) . $t['lunch_start'] . '–' . $t['lunch_end'] . ')' : '' )
+			. ( 'smart' === $t['mode'] ? __( ' · remote work', 'dolly-employee-management' ) : '' );
 	}
 
 	/** One-line description: "Lun Mar Mer · 08:00–16:30 (pausa …)" or one entry per day. */
@@ -153,7 +153,7 @@ class Dolly_Schedules {
 			return '';
 		}
 		if ( self::is_on_call( $s ) ) {
-			return __( 'Contratto a chiamata (nessun orario fisso)', 'dolly-employee-management' );
+			return __( 'On-call contract (no fixed schedule)', 'dolly-employee-management' );
 		}
 		$days = self::weekdays( $s );
 		if ( ! $days ) {
@@ -213,13 +213,13 @@ class Dolly_Schedules {
 		$start  = (string) ( $d['start_time'] ?? '' );
 		$end    = (string) ( $d['end_time'] ?? '' );
 		if ( ! Dolly_Time::is_time( $start ) ) {
-			$errors[ $prefix . 'start_time' ] = __( 'Orario di inizio non valido.', 'dolly-employee-management' );
+			$errors[ $prefix . 'start_time' ] = __( 'Invalid start time.', 'dolly-employee-management' );
 		}
 		if ( ! Dolly_Time::is_time( $end ) ) {
-			$errors[ $prefix . 'end_time' ] = __( 'Orario di fine non valido.', 'dolly-employee-management' );
+			$errors[ $prefix . 'end_time' ] = __( 'Invalid end time.', 'dolly-employee-management' );
 		}
 		if ( count( $errors ) === $before && Dolly_Time::hm_to_min( $end ) <= Dolly_Time::hm_to_min( $start ) ) {
-			$errors[ $prefix . 'end_time' ] = __( 'La fine deve essere successiva all\'inizio (turni notturni non previsti).', 'dolly-employee-management' );
+			$errors[ $prefix . 'end_time' ] = __( 'The end must be after the start (night shifts are not supported).', 'dolly-employee-management' );
 		}
 		$ls = null;
 		$le = null;
@@ -227,10 +227,10 @@ class Dolly_Schedules {
 			$ls = (string) ( $d['lunch_start'] ?? '' );
 			$le = (string) ( $d['lunch_end'] ?? '' );
 			if ( ! Dolly_Time::is_time( $ls ) ) {
-				$errors[ $prefix . 'lunch_start' ] = __( 'Inizio pausa non valido.', 'dolly-employee-management' );
+				$errors[ $prefix . 'lunch_start' ] = __( 'Invalid break start.', 'dolly-employee-management' );
 			}
 			if ( ! Dolly_Time::is_time( $le ) ) {
-				$errors[ $prefix . 'lunch_end' ] = __( 'Fine pausa non valida.', 'dolly-employee-management' );
+				$errors[ $prefix . 'lunch_end' ] = __( 'Invalid break end.', 'dolly-employee-management' );
 			}
 			if ( count( $errors ) === $before ) {
 				$s = Dolly_Time::hm_to_min( $start );
@@ -238,9 +238,9 @@ class Dolly_Schedules {
 				$a = Dolly_Time::hm_to_min( $ls );
 				$b = Dolly_Time::hm_to_min( $le );
 				if ( $b <= $a ) {
-					$errors[ $prefix . 'lunch_end' ] = __( 'La fine pausa deve essere successiva all\'inizio pausa.', 'dolly-employee-management' );
+					$errors[ $prefix . 'lunch_end' ] = __( 'The break end must be after the break start.', 'dolly-employee-management' );
 				} elseif ( $a <= $s || $b >= $e ) {
-					$errors[ $prefix . 'lunch_start' ] = __( 'La pausa deve essere compresa nell\'orario di lavoro.', 'dolly-employee-management' );
+					$errors[ $prefix . 'lunch_start' ] = __( 'The break must fall within working hours.', 'dolly-employee-management' );
 				}
 			}
 		}
@@ -266,7 +266,7 @@ class Dolly_Schedules {
 		foreach ( array( 'office_start', 'office_end', 'smart_start', 'smart_end' ) as $k ) {
 			$v[ $k ] = (string) ( $d[ $k ] ?? '' );
 			if ( ! Dolly_Time::is_time( $v[ $k ] ) ) {
-				$errors[ $prefix . $k ] = __( 'Orario non valido.', 'dolly-employee-management' );
+				$errors[ $prefix . $k ] = __( 'Invalid time.', 'dolly-employee-management' );
 			}
 		}
 		if ( count( $errors ) !== $before ) {
@@ -277,13 +277,13 @@ class Dolly_Schedules {
 		$ss = Dolly_Time::hm_to_min( $v['smart_start'] );
 		$se = Dolly_Time::hm_to_min( $v['smart_end'] );
 		if ( $oe <= $os ) {
-			$errors[ $prefix . 'office_end' ] = __( 'La fine deve essere successiva all\'inizio.', 'dolly-employee-management' );
+			$errors[ $prefix . 'office_end' ] = __( 'The end must be after the start.', 'dolly-employee-management' );
 		}
 		if ( $se <= $ss ) {
-			$errors[ $prefix . 'smart_end' ] = __( 'La fine deve essere successiva all\'inizio.', 'dolly-employee-management' );
+			$errors[ $prefix . 'smart_end' ] = __( 'The end must be after the start.', 'dolly-employee-management' );
 		}
 		if ( count( $errors ) === $before && $os < $se && $ss < $oe ) {
-			$errors[ $prefix . 'smart_start' ] = __( 'Le ore in presenza e in smart working non devono sovrapporsi.', 'dolly-employee-management' );
+			$errors[ $prefix . 'smart_start' ] = __( 'On-site and remote hours must not overlap.', 'dolly-employee-management' );
 		}
 		if ( count( $errors ) !== $before ) {
 			return null;
@@ -316,7 +316,7 @@ class Dolly_Schedules {
 		$errors = array();
 		$type   = $data['employment_type'] ?? 'full_time';
 		if ( ! isset( self::TYPES[ $type ] ) ) {
-			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi dell\'orario.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'employment_type' => __( 'Tipo di contratto non valido.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Check the schedule fields.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'employment_type' => __( 'Invalid contract type.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( 'on_call' === $type ) {
 			return array(
@@ -347,10 +347,10 @@ class Dolly_Schedules {
 			}
 			ksort( $days );
 			if ( ! $days && ! $errors ) {
-				$errors['weekdays'] = __( 'Attiva almeno un giorno lavorativo.', 'dolly-employee-management' );
+				$errors['weekdays'] = __( 'Enable at least one working day.', 'dolly-employee-management' );
 			}
 			if ( $errors ) {
-				return new WP_Error( 'dolly_invalid', __( 'Controlla i campi dell\'orario.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
+				return new WP_Error( 'dolly_invalid', __( 'Check the schedule fields.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 			}
 			$first = reset( $days );
 			return array(
@@ -370,11 +370,11 @@ class Dolly_Schedules {
 		} ) ) );
 		sort( $weekdays );
 		if ( ! $weekdays ) {
-			$errors['weekdays'] = __( 'Seleziona almeno un giorno lavorativo.', 'dolly-employee-management' );
+			$errors['weekdays'] = __( 'Select at least one working day.', 'dolly-employee-management' );
 		}
 		$t = self::clean_times( $data, '', $errors );
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi dell\'orario.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Check the schedule fields.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		return array(
 			'weekdays'        => implode( ',', $weekdays ),

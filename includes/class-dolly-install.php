@@ -67,12 +67,12 @@ class Dolly_Install {
 
 	public static function create_roles() {
 		if ( ! get_role( self::ROLE_EMPLOYEE ) ) {
-			add_role( self::ROLE_EMPLOYEE, __( 'Dipendente', 'dolly-employee-management' ), array( 'read' => true ) );
+			add_role( self::ROLE_EMPLOYEE, __( 'Employee', 'dolly-employee-management' ), array( 'read' => true ) );
 		}
 		get_role( self::ROLE_EMPLOYEE )->add_cap( 'dolly_employee' );
 
 		if ( ! get_role( self::ROLE_WORKPLACE ) ) {
-			add_role( self::ROLE_WORKPLACE, __( 'Account sede', 'dolly-employee-management' ), array( 'read' => true ) );
+			add_role( self::ROLE_WORKPLACE, __( 'Workplace account', 'dolly-employee-management' ), array( 'read' => true ) );
 		}
 		get_role( self::ROLE_WORKPLACE )->add_cap( 'dolly_workplace' );
 

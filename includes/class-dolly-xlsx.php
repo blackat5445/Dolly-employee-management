@@ -64,7 +64,7 @@ class Dolly_Xlsx {
 	private function sheet_name( $name ) {
 		$name = trim( preg_replace( '/[\[\]\:\*\?\/\\\\]+/', ' ', (string) $name ) );
 		$name = trim( $name, "' " ); // A name cannot start or end with an apostrophe.
-		$name = '' === $name ? __( 'Foglio', 'dolly-employee-management' ) : $name;
+		$name = '' === $name ? __( 'Sheet', 'dolly-employee-management' ) : $name;
 		$base = function_exists( 'mb_substr' ) ? mb_substr( $name, 0, 31 ) : substr( $name, 0, 31 );
 		$used = array();
 		foreach ( $this->sheets as $s ) {
@@ -346,7 +346,7 @@ class Dolly_Xlsx {
 	 */
 	public function save() {
 		if ( ! $this->sheets ) {
-			return new WP_Error( 'dolly_xlsx', __( 'Nessun foglio da esportare.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_xlsx', __( 'No sheets to export.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		$parts = $this->parts();
@@ -354,14 +354,14 @@ class Dolly_Xlsx {
 		if ( class_exists( 'ZipArchive' ) ) {
 			$zip = new ZipArchive();
 			if ( true !== $zip->open( $tmp, ZipArchive::CREATE | ZipArchive::OVERWRITE ) ) {
-				return new WP_Error( 'dolly_xlsx', __( 'Impossibile creare il file Excel.', 'dolly-employee-management' ), array( 'status' => 500 ) );
+				return new WP_Error( 'dolly_xlsx', __( 'Unable to create the Excel file.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 			}
 			foreach ( $parts as $name => $content ) {
 				$zip->addFromString( $name, $content );
 			}
 			if ( ! $zip->close() ) {
 				@unlink( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- private files of the plugin.
-				return new WP_Error( 'dolly_xlsx', __( 'Impossibile creare il file Excel.', 'dolly-employee-management' ), array( 'status' => 500 ) );
+				return new WP_Error( 'dolly_xlsx', __( 'Unable to create the Excel file.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 			}
 			return $tmp;
 		}
@@ -385,7 +385,7 @@ class Dolly_Xlsx {
 			@rmdir( $dir . $sub ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- private files of the plugin.
 		}
 		if ( 0 === $ok ) {
-			return new WP_Error( 'dolly_xlsx', __( 'Impossibile creare il file Excel.', 'dolly-employee-management' ), array( 'status' => 500 ) );
+			return new WP_Error( 'dolly_xlsx', __( 'Unable to create the Excel file.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 		}
 		return $tmp;
 	}

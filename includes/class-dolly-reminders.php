@@ -131,16 +131,16 @@ class Dolly_Reminders {
 					if ( isset( $punches['entrata'] ) || self::leave_covers( $leaves, $shift[0], false ) ) {
 						continue;
 					}
-					$title = __( 'Promemoria: timbra l\'entrata', 'dolly-employee-management' );
+					$title = __( 'Reminder: clock in', 'dolly-employee-management' );
 					$body  = $now < $start_ts
-						? sprintf( /* translators: %s: shift start time (HH:MM). */ __( 'Il tuo turno inizia alle %s. Ricordati di timbrare l\'entrata.', 'dolly-employee-management' ), $shift[0] )
-						: sprintf( /* translators: %s: shift start time (HH:MM). */ __( 'Il tuo turno è iniziato alle %s. Ricordati di timbrare l\'entrata.', 'dolly-employee-management' ), $shift[0] );
+						? sprintf( /* translators: %s: shift start time (HH:MM). */ __( 'Your shift starts at %s. Remember to clock in.', 'dolly-employee-management' ), $shift[0] )
+						: sprintf( /* translators: %s: shift start time (HH:MM). */ __( 'Your shift started at %s. Remember to clock in.', 'dolly-employee-management' ), $shift[0] );
 				} else {
 					if ( ! isset( $punches['entrata'] ) || isset( $punches['uscita'] ) || self::leave_covers( $leaves, $shift[1], true ) ) {
 						continue;
 					}
-					$title = __( 'Promemoria: timbra l\'uscita', 'dolly-employee-management' );
-					$body  = sprintf( /* translators: %s: shift end time (HH:MM). */ __( 'Il tuo turno è terminato alle %s e non risulta ancora l\'uscita. Ricordati di timbrarla.', 'dolly-employee-management' ), $shift[1] );
+					$title = __( 'Reminder: clock out', 'dolly-employee-management' );
+					$body  = sprintf( /* translators: %s: shift end time (HH:MM). */ __( 'Your shift ended at %s and there is no clock-out yet. Remember to clock out.', 'dolly-employee-management' ), $shift[1] );
 				}
 				if ( ! self::claim( $uid, $today, $kind, $m ) ) {
 					continue;

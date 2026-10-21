@@ -23,22 +23,22 @@ class Dolly_Analytics {
 	/** Hours codes of the leaves taken by the hour. */
 	const LEAVE_CODES = array( 'P', 'ROL', 'EO', 'Pn', 'PL' );
 
-	/** Absence groups of the "Ripartizione delle assenze" chart: label => hours codes. */
+	/** Absence groups of the "Absences by reason" chart: label => hours codes. */
 	const ABSENCE_GROUPS = array(
-		'Ferie'                  => array( 'FE' ),
-		'Permessi'               => array( 'P', 'ROL', 'EO', 'Pn', 'PL' ),
-		'Malattia'               => array( 'M' ),
-		'Infortunio'             => array( 'I' ),
-		'Donazione sangue'       => array( 'Av' ),
-		'Assenze non giustificate' => array( 'A' ),
+		'Vacation'                  => array( 'FE' ),
+		'Leave'               => array( 'P', 'ROL', 'EO', 'Pn', 'PL' ),
+		'Sickness'               => array( 'M' ),
+		'Injury'             => array( 'I' ),
+		'Blood donation'       => array( 'Av' ),
+		'Unjustified absences' => array( 'A' ),
 	);
 
 	/** Day statuses that justify the whole day (the day does not count as an expected presence). */
 	const FULL_DAY_OFF = array( 'ferie', 'donazione', 'malattia', 'infortunio', 'festivo', 'chiusura', 'chiusura_festiva' );
 
-	const SHORT_MONTHS = array( 1 => 'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic' );
+	const SHORT_MONTHS = array( 1 => 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' );
 
-	const SHORT_WEEKDAYS = array( 1 => 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom' );
+	const SHORT_WEEKDAYS = array( 1 => 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' );
 
 	/* ---------- Cache ---------- */
 
@@ -120,7 +120,7 @@ class Dolly_Analytics {
 	/** Attendance row of every employee on a date (same columns as the monthly attendance). */
 	public static function day( $date, $workplace_id = 0 ) {
 		if ( ! Dolly_Time::is_date( $date ) || $date > Dolly_Time::today() ) {
-			return new WP_Error( 'dolly_invalid', __( 'Scegli una data fino a oggi.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Choose a date up to today.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 120 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
@@ -169,10 +169,10 @@ class Dolly_Analytics {
 				$label = Dolly_I18n::t( self::SHORT_WEEKDAYS[ Dolly_Time::weekday( $d ) ] ) . ' ' . substr( $d, 8, 2 ) . '/' . substr( $d, 5, 2 );
 			} elseif ( 'week' === $unit ) {
 				$key   = Dolly_Time::add_days( $d, 1 - Dolly_Time::weekday( $d ) );
-				$label = __( 'Sett. ', 'dolly-employee-management' ) . substr( $key, 8, 2 ) . '/' . substr( $key, 5, 2 );
+				$label = __( 'Wk ', 'dolly-employee-management' ) . substr( $key, 8, 2 ) . '/' . substr( $key, 5, 2 );
 			} else {
 				$key   = substr( $d, 0, 7 );
-				$label = Dolly_I18n::t( self::SHORT_MONTHS[ (int) substr( $d, 5, 2 ) ] ) . ' ' . substr( $d, 0, 4 );
+				$label = Dolly_I18n::t( self::SHORT_MONTHS[ (int) substr( $d, 5, 2 ) ], 'short month' ) . ' ' . substr( $d, 0, 4 );
 			}
 			$map[ $d ]      = $key;
 			$labels[ $key ] = $label;
@@ -200,17 +200,17 @@ class Dolly_Analytics {
 	public static function range( $from, $to, $workplace_id = 0, $user_id = 0, $fresh = false ) {
 		$today = Dolly_Time::today();
 		if ( ! Dolly_Time::is_date( $from ) || ! Dolly_Time::is_date( $to ) || $from > $to ) {
-			return new WP_Error( 'dolly_invalid', __( 'Periodo non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Invalid period.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( $to > $today ) {
-			return new WP_Error( 'dolly_invalid', __( 'La data finale non può essere successiva a oggi.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'The end date cannot be after today.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$days = (int) round( ( strtotime( $to . ' 12:00:00 UTC' ) - strtotime( $from . ' 12:00:00 UTC' ) ) / DAY_IN_SECONDS ) + 1;
 		if ( $days > self::MAX_DAYS ) {
-			return new WP_Error( 'dolly_invalid', __( 'Il periodo può durare al massimo ', 'dolly-employee-management' ) . self::MAX_DAYS . __( ' giorni.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'The period can last at most ', 'dolly-employee-management' ) . self::MAX_DAYS . __( ' days.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( $user_id && ! Dolly_Employees::is_employee( $user_id ) ) {
-			return new WP_Error( 'dolly_invalid', __( 'Dipendente non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Invalid employee.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 300 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
@@ -332,7 +332,7 @@ class Dolly_Analytics {
 
 		$absences = array();
 		foreach ( self::ABSENCE_GROUPS as $label => $codes ) {
-			$absences[] = array( 'label' => Dolly_I18n::t( $label ), 'codes' => implode( ', ', $codes ), 'min' => self::sum_codes( $codes_tot, $codes ) );
+			$absences[] = array( 'label' => Dolly_I18n::t( $label, 'absence chart' ), 'codes' => implode( ', ', $codes ), 'min' => self::sum_codes( $codes_tot, $codes ) );
 		}
 		$wd_rows = array();
 		foreach ( self::SHORT_WEEKDAYS as $n => $short ) {

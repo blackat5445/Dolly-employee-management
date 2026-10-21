@@ -12,23 +12,23 @@ class Dolly_Admin {
 
 	const PAGES = array(
 		'dolly-dashboard'    => array( 'Dashboard', 'dashboard' ),
-		'dolly-employees'    => array( 'Dipendenti', 'employees' ),
-		'dolly-employee-new' => array( 'Nuovo dipendente', 'employee-new' ),
-		'dolly-workplaces'   => array( 'Sedi', 'workplaces' ),
-		'dolly-requests'     => array( 'Richieste', 'requests' ),
-		'dolly-attendance'   => array( 'Presenze', 'attendance' ),
-		'dolly-documents'    => array( 'Documenti', 'documents' ),
+		'dolly-employees'    => array( 'Employees', 'employees' ),
+		'dolly-employee-new' => array( 'New employee', 'employee-new' ),
+		'dolly-workplaces'   => array( 'Workplaces', 'workplaces' ),
+		'dolly-requests'     => array( 'Requests', 'requests' ),
+		'dolly-attendance'   => array( 'Attendance', 'attendance' ),
+		'dolly-documents'    => array( 'Documents', 'documents' ),
 		'dolly-analytics'    => array( 'Analytics', 'analytics' ),
-		'dolly-anomalies'    => array( 'Anomalie', 'anomalies' ),
+		'dolly-anomalies'    => array( 'Anomalies', 'anomalies' ),
 		'dolly-broadcast'    => array( 'Broadcast', 'broadcast' ),
-		'dolly-exports'      => array( 'Esportazioni', 'exports' ),
-		'dolly-appearance'   => array( 'Aspetto', 'appearance' ),
-		'dolly-settings'     => array( 'Impostazioni', 'settings' ),
+		'dolly-exports'      => array( 'Exports', 'exports' ),
+		'dolly-appearance'   => array( 'Appearance', 'appearance' ),
+		'dolly-settings'     => array( 'Settings', 'settings' ),
 	);
 
 	/** Pages outside the menus: the guided setup is opened after activation and from Impostazioni. */
 	const HIDDEN = array(
-		'dolly-onboarding' => array( 'Configurazione guidata', 'onboarding' ),
+		'dolly-onboarding' => array( 'Guided setup', 'onboarding' ),
 	);
 
 	private static function page_info( $page ) {
@@ -151,18 +151,18 @@ class Dolly_Admin {
 	public static function render() {
 		$page = self::current_page();
 		if ( ! current_user_can( 'dolly_manage' ) || ! $page ) {
-			wp_die( esc_html__( 'Non autorizzato.', 'dolly-employee-management' ) );
+			wp_die( esc_html__( 'Not authorized.', 'dolly-employee-management' ) );
 		}
 		$title = Dolly_I18n::t( self::page_info( $page )[0] );
 		?>
 		<div class="wrap dolly-wrap">
 			<div class="dolly-app dolly-admin" id="dolly-admin-app" data-page="<?php echo esc_attr( self::page_info( $page )[1] ); ?>">
 				<header class="dolly-admin__header">
-					<button type="button" class="dolly-btn dolly-btn--ghost dolly-btn--icon dolly-admin__menu-toggle" id="dolly-menu-toggle" aria-controls="adminmenumain" aria-pressed="false" aria-label="<?php esc_attr_e( 'Nascondi il menu laterale', 'dolly-employee-management' ); ?>" title="<?php esc_attr_e( 'Nascondi il menu laterale', 'dolly-employee-management' ); ?>"><i data-lucide="panel-left-close" aria-hidden="true"></i></button>
+					<button type="button" class="dolly-btn dolly-btn--ghost dolly-btn--icon dolly-admin__menu-toggle" id="dolly-menu-toggle" aria-controls="adminmenumain" aria-pressed="false" aria-label="<?php esc_attr_e( 'Hide the sidebar', 'dolly-employee-management' ); ?>" title="<?php esc_attr_e( 'Hide the sidebar', 'dolly-employee-management' ); ?>"><i data-lucide="panel-left-close" aria-hidden="true"></i></button>
 					<div class="dolly-admin__brand"><?php Dolly_Frontend::brand( Dolly_Appearance::get( 'admin_title' ), true ); ?></div>
 					<h1 class="dolly-admin__title"><?php echo esc_html( $title ); ?></h1>
 				</header>
-				<nav class="dolly-admin__nav"<?php echo isset( self::HIDDEN[ $page ] ) ? ' hidden' : ''; ?> aria-label="<?php echo esc_attr( __( 'Sezioni ', 'dolly-employee-management' ) . Dolly_Appearance::get( 'admin_title' ) ); ?>">
+				<nav class="dolly-admin__nav"<?php echo isset( self::HIDDEN[ $page ] ) ? ' hidden' : ''; ?> aria-label="<?php echo esc_attr( __( 'Sections ', 'dolly-employee-management' ) . Dolly_Appearance::get( 'admin_title' ) ); ?>">
 					<?php
 					$icons = array(
 						'dolly-dashboard'    => 'layout-dashboard',
@@ -192,9 +192,9 @@ class Dolly_Admin {
 					?>
 				</nav>
 				<main class="dolly-admin__main" id="dolly-admin-main" tabindex="-1">
-					<div class="dolly-loading"><span class="dolly-spinner" aria-hidden="true"></span><span><?php esc_html_e( 'Caricamento…', 'dolly-employee-management' ); ?></span></div>
+					<div class="dolly-loading"><span class="dolly-spinner" aria-hidden="true"></span><span><?php esc_html_e( 'Loading…', 'dolly-employee-management' ); ?></span></div>
 				</main>
-				<noscript><div class="dolly-alert dolly-alert--error"><?php esc_html_e( 'Per usare il pannello è necessario JavaScript.', 'dolly-employee-management' ); ?></div></noscript>
+				<noscript><div class="dolly-alert dolly-alert--error"><?php esc_html_e( 'JavaScript is required to use the panel.', 'dolly-employee-management' ); ?></div></noscript>
 			</div>
 		</div>
 		<?php

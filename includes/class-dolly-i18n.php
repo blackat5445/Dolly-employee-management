@@ -1,7 +1,7 @@
 <?php
 /**
- * Languages: the plugin is written in Italian and translated with standard gettext files in /languages
- * (dolly-employee-management-<locale>.mo for PHP, .js for the browser).
+ * Languages: the plugin is written in English and translated with standard gettext files in /languages
+ * (dolly-employee-management-<locale>.mo for PHP, .js for the browser). Italian is included.
  *
  * Language of a request: the user's own choice (portal profile or admin settings), otherwise the
  * plugin default (Impostazioni › Lingua), which can follow the site language. Visitors of the login
@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 class Dolly_I18n {
 
 	const DOMAIN    = 'dolly-employee-management';
-	const SOURCE    = 'it_IT';
+	const SOURCE    = 'en_US';
 	const USER_META = 'dolly_locale';
 	const COOKIE    = 'dolly_lang';
 
@@ -41,7 +41,7 @@ class Dolly_I18n {
 		add_action( 'wp_login', array( __CLASS__, 'adopt_cookie' ), 10, 2 );
 	}
 
-	/** Available languages: Italian plus every translation shipped in /languages. */
+	/** Available languages: English plus every translation shipped in /languages. */
 	public static function available() {
 		$out = array( self::SOURCE => self::NAMES[ self::SOURCE ] );
 		foreach ( (array) glob( DOLLY_DIR . 'languages/' . self::DOMAIN . '-*.mo' ) as $file ) {
@@ -75,8 +75,8 @@ class Dolly_I18n {
 				return $loc;
 			}
 		}
-		// No translation for the site language: English is understood more widely than Italian.
-		return self::is_available( 'en_US' ) ? 'en_US' : self::SOURCE;
+		// No translation for the site language: English.
+		return self::SOURCE;
 	}
 
 	/** The user's own choice, or '' to follow the plugin default. */
@@ -139,7 +139,7 @@ class Dolly_I18n {
 		self::load( self::request_locale() );
 	}
 
-	/** Loads the translation of the given language (Italian needs none). */
+	/** Loads the translation of the given language (English needs none). */
 	public static function load( $locale ) {
 		if ( $locale === self::$locale ) {
 			return;
@@ -176,9 +176,16 @@ class Dolly_I18n {
 		}
 	}
 
-	/** Translates a label stored in a constant (constants cannot call __() themselves). */
-	public static function t( $text ) {
-		return is_string( $text ) && '' !== $text ? translate( $text, self::DOMAIN ) : $text; // phpcs:ignore WordPress.WP.I18n
+	/**
+	 * Translates a label stored in a constant (constants cannot call __() themselves), with an optional
+	 * gettext context (see CONST_CONTEXT in tools/i18n/i18n.py).
+	 */
+	public static function t( $text, $context = '' ) {
+		if ( ! is_string( $text ) || '' === $text ) {
+			return $text;
+		}
+		// phpcs:ignore WordPress.WP.I18n.LowLevelTranslationFunction, WordPress.WP.I18n.NonSingularStringLiteralText, WordPress.WP.I18n.NonSingularStringLiteralContext, WordPress.WP.I18n.NonSingularStringLiteralDomain -- Labels stored in constants.
+		return $context ? translate_with_gettext_context( $text, $context, self::DOMAIN ) : translate( $text, self::DOMAIN );
 	}
 
 	/** Translates every label of a [key => label] map. */
@@ -186,7 +193,7 @@ class Dolly_I18n {
 		return array_map( array( __CLASS__, 't' ), $map );
 	}
 
-	/** URL of the browser dictionary for the current language, or '' for Italian. */
+	/** URL of the browser dictionary for the current language, or '' for English. */
 	public static function js_url() {
 		$file = 'languages/' . self::DOMAIN . '-' . self::locale() . '.js';
 		return self::SOURCE !== self::locale() && is_readable( DOLLY_DIR . $file ) ? DOLLY_URL . $file : '';

@@ -17,16 +17,16 @@ class Dolly_Holidays {
 	const MAX_YEAR = 2100;
 
 	const FIXED = array(
-		'01-01' => 'Capodanno',
-		'01-06' => 'Epifania',
-		'04-25' => 'Festa della Liberazione',
-		'05-01' => 'Festa dei Lavoratori',
-		'06-02' => 'Festa della Repubblica',
-		'08-15' => 'Ferragosto',
-		'11-01' => 'Ognissanti',
-		'12-08' => 'Immacolata Concezione',
-		'12-25' => 'Natale',
-		'12-26' => 'Santo Stefano',
+		'01-01' => 'New Year\'s Day',
+		'01-06' => 'Epiphany',
+		'04-25' => 'Liberation Day',
+		'05-01' => 'Labor Day',
+		'06-02' => 'Republic Day',
+		'08-15' => 'Assumption Day (Ferragosto)',
+		'11-01' => 'All Saints\' Day',
+		'12-08' => 'Immaculate Conception',
+		'12-25' => 'Christmas',
+		'12-26' => 'St. Stephen\'s Day',
 	);
 
 	/** Easter Sunday (Gregorian calendar, anonymous algorithm) as Y-m-d. */
@@ -65,11 +65,11 @@ class Dolly_Holidays {
 		}
 		// San Francesco d'Assisi, national holiday again from 2026.
 		if ( $year >= 2026 ) {
-			$out[ $year . '-10-04' ] = __( 'San Francesco d\'Assisi', 'dolly-employee-management' );
+			$out[ $year . '-10-04' ] = __( 'St. Francis of Assisi', 'dolly-employee-management' );
 		}
 		$easter = self::easter( $year );
 		// Easter can coincide with a fixed holiday (e.g. 25/04/2038): both names are kept.
-		foreach ( array( $easter => __( 'Pasqua', 'dolly-employee-management' ), Dolly_Time::add_days( $easter, 1 ) => __( 'Lunedì dell\'Angelo', 'dolly-employee-management' ) ) as $d => $name ) {
+		foreach ( array( $easter => __( 'Easter', 'dolly-employee-management' ), Dolly_Time::add_days( $easter, 1 ) => __( 'Easter Monday', 'dolly-employee-management' ) ) as $d => $name ) {
 			$out[ $d ] = isset( $out[ $d ] ) ? $out[ $d ] . ' · ' . $name : $name;
 		}
 		ksort( $out );

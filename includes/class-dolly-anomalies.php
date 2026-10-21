@@ -17,22 +17,22 @@ defined( 'ABSPATH' ) || exit;
 class Dolly_Anomalies {
 
 	const TYPES = array(
-		'unjustified_absence' => 'Assente non giustificato',
-		'missing_exit'        => 'Uscita mancante',
-		'late_exit'           => 'Uscita oltre l\'orario autorizzato',
-		'missing_certificate' => 'Certificato mancante',
-		'sickness_conflict'   => 'Malattia/infortunio in conflitto',
+		'unjustified_absence' => 'Absent without justification',
+		'missing_exit'        => 'Missing clock-out',
+		'late_exit'           => 'Clock-out after authorized time',
+		'missing_certificate' => 'Missing certificate',
+		'sickness_conflict'   => 'Conflicting sickness/injury',
 	);
 
 	const RESOLUTIONS = array(
-		'approved_extra'        => 'Straordinario approvato',
-		'corrected'             => 'Orario corretto',
-		'entry_recorded'        => 'Entrata registrata',
-		'justified'             => 'Assenza giustificata',
-		'dismissed'             => 'Chiusa dall\'amministratore',
-		'certificate_uploaded'  => 'Certificato caricato',
-		'certificates_disabled' => 'Requisito disattivato',
-		'reviewed'              => 'Verificata',
+		'approved_extra'        => 'Overtime approved',
+		'corrected'             => 'Corrected time',
+		'entry_recorded'        => 'Clock-in recorded',
+		'justified'             => 'Justified absence',
+		'dismissed'             => 'Closed by the administrator',
+		'certificate_uploaded'  => 'Certificate uploaded',
+		'certificates_disabled' => 'Requirement disabled',
+		'reviewed'              => 'Verified',
 	);
 
 	public static function get( $id ) {
@@ -48,7 +48,7 @@ class Dolly_Anomalies {
 			'employee'         => Dolly_Employees::sort_name( (int) $a->user_id ),
 			'work_date'        => $a->work_date,
 			'type'             => $a->type,
-			'type_label'       => ( Dolly_I18n::t( self::TYPES[ $a->type ] ?? $a->type ) ) . ( $a->overdue ? __( ' (scaduto)', 'dolly-employee-management' ) : '' ),
+			'type_label'       => ( Dolly_I18n::t( self::TYPES[ $a->type ] ?? $a->type ) ) . ( $a->overdue ? __( ' (overdue)', 'dolly-employee-management' ) : '' ),
 			'status'           => $a->status,
 			'overdue'          => (bool) $a->overdue,
 			'related_type'     => $a->related_type,
@@ -91,7 +91,7 @@ class Dolly_Anomalies {
 		$id    = (int) $wpdb->insert_id;
 		// Built in each recipient's language.
 		$label = fn () => Dolly_I18n::t( self::TYPES[ $type ] );
-		$when  = fn () => $date ? __( ' del ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $date ) : '';
+		$when  = fn () => $date ? __( ' on ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $date ) : '';
 		if ( 'missing_certificate' !== $type ) { // Certificate notifications are sent by the dedicated events.
 			Dolly_Notifications::notify_user( $user_id, 'anomaly_created', fn () => array( $label() . $when(), $details ), null, 'dashboard', 'anom-' . $id );
 			Dolly_Notifications::notify_admins( 'anomaly_created', fn () => array( $label() . ': ' . Dolly_Employees::display_name( $user_id ) . $when(), $details ), null, 'dolly-anomalies', 'anom-' . $id );
@@ -116,7 +116,7 @@ class Dolly_Anomalies {
 		);
 		Dolly_Audit::log( 'anomaly_resolved', 'anomaly', (int) $a->id, (int) $a->user_id, $note, array( 'status' => 'open', 'type' => $a->type ), array( 'status' => 'resolved', 'resolution' => $resolution ) );
 		if ( in_array( $a->type, array( 'missing_exit', 'late_exit', 'sickness_conflict', 'unjustified_absence' ), true ) ) {
-			Dolly_Notifications::notify_user( (int) $a->user_id, 'anomaly_resolved', fn () => array( __( 'Anomalia risolta: ', 'dolly-employee-management' ) . ( Dolly_I18n::t( self::TYPES[ $a->type ] ?? '' ) ), ( Dolly_I18n::t( self::RESOLUTIONS[ $resolution ] ?? '' ) ) . ( $note ? ' — ' . $note : '' ) ), null, 'dashboard', 'anomres-' . $a->id );
+			Dolly_Notifications::notify_user( (int) $a->user_id, 'anomaly_resolved', fn () => array( __( 'Anomaly resolved: ', 'dolly-employee-management' ) . ( Dolly_I18n::t( self::TYPES[ $a->type ] ?? '' ) ), ( Dolly_I18n::t( self::RESOLUTIONS[ $resolution ] ?? '' ) ) . ( $note ? ' — ' . $note : '' ) ), null, 'dashboard', 'anomres-' . $a->id );
 		}
 	}
 
@@ -166,7 +166,7 @@ class Dolly_Anomalies {
 			if ( $after_extra_approval ) {
 				foreach ( self::open_exit_anomalies( $user_id, $date ) as $a ) {
 					if ( 'late_exit' === $a->type ) {
-						self::close( $a, 'approved_extra', __( 'Straordinario approvato.', 'dolly-employee-management' ) );
+						self::close( $a, 'approved_extra', __( 'Overtime approved.', 'dolly-employee-management' ) );
 					}
 				}
 			}
@@ -176,7 +176,7 @@ class Dolly_Anomalies {
 		if ( time() <= Dolly_Time::local_ts( $date, '23:59:59' ) ) {
 			return;
 		}
-		$details = sprintf( /* translators: %1$s: date, %2$s: clock-in time (HH:MM). */ __( 'Uscita non registrata entro le 23:59 del %1$s (entrata alle %2$s).', 'dolly-employee-management' ), Dolly_Time::fmt_date( $date ), Dolly_Time::utc_to_local( $punches['entrata']->punched_at, 'H:i' ) );
+		$details = sprintf( /* translators: %1$s: date, %2$s: clock-in time (HH:MM). */ __( 'Clock-out not recorded by 23:59 on %1$s (clock-in at %2$s).', 'dolly-employee-management' ), Dolly_Time::fmt_date( $date ), Dolly_Time::utc_to_local( $punches['entrata']->punched_at, 'H:i' ) );
 		self::open( $user_id, 'missing_exit', 'exit-' . $user_id . '-' . $date, $date, 'day', 0, $details );
 	}
 
@@ -229,10 +229,10 @@ class Dolly_Anomalies {
 					continue;
 				}
 				$details = sprintf(
-					/* translators: %1$s: time limit (HH:MM), %2$s: scheduled start (HH:MM), %3$s: optional workplace tolerance note. */ __( 'Nessuna entrata registrata entro le %1$s (inizio previsto %2$s%3$s). Se la presenza c\'è stata, invia una richiesta di correzione timbratura.', 'dolly-employee-management' ),
+					/* translators: %1$s: time limit (HH:MM), %2$s: scheduled start (HH:MM), %3$s: optional workplace tolerance note. */ __( 'No clock-in recorded by %1$s (scheduled start %2$s%3$s). If you were present, send a clock-in correction request.', 'dolly-employee-management' ),
 					Dolly_Time::ts_to_hm( $deadline ),
 					$expected,
-					$delay ? ' + ' . $delay . __( ' minuti', 'dolly-employee-management' ) : ''
+					$delay ? ' + ' . $delay . __( ' minutes', 'dolly-employee-management' ) : ''
 				);
 				self::open( $uid, 'unjustified_absence', 'abs-' . $uid . '-' . $date, $date, 'day', 0, $details );
 			}
@@ -281,7 +281,7 @@ class Dolly_Anomalies {
 		global $wpdb;
 		$a = self::get( $id );
 		if ( ! $a || (int) $a->user_id !== (int) $user_id ) {
-			return new WP_Error( 'dolly_not_found', __( 'Anomalia non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Anomaly not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$note = sanitize_textarea_field( $note );
 		$wpdb->update( Dolly_Install::t( 'anomalies' ), array( 'employee_note' => $note, 'employee_note_at' => Dolly_Time::now_utc(), 'updated_at' => Dolly_Time::now_utc() ), array( 'id' => $id ) );
@@ -296,10 +296,10 @@ class Dolly_Anomalies {
 	public static function admin_resolve( $id, $data ) {
 		$a = self::get( $id );
 		if ( ! $a ) {
-			return new WP_Error( 'dolly_not_found', __( 'Anomalia non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Anomaly not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( 'open' !== $a->status ) {
-			return new WP_Error( 'dolly_invalid_state', __( 'L\'anomalia è già risolta.', 'dolly-employee-management' ), array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'The anomaly is already resolved.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		$action = $data['action'] ?? '';
 		$note   = sanitize_textarea_field( $data['note'] ?? '' );
@@ -313,19 +313,19 @@ class Dolly_Anomalies {
 				}
 				$punches = Dolly_Attendance::punches_for( $uid, $a->work_date );
 				if ( ! isset( $punches['uscita'] ) ) {
-					return new WP_Error( 'dolly_invalid', __( 'Manca l\'uscita: inserisci prima l\'orario di uscita corretto (l\'approvazione non crea timbrature).', 'dolly-employee-management' ), array( 'status' => 400 ) );
+					return new WP_Error( 'dolly_invalid', __( 'Clock-out is missing: first enter the correct clock-out time (approval does not create clock-ins).', 'dolly-employee-management' ), array( 'status' => 400 ) );
 				}
 				$plan = Dolly_Schedules::day_plan( $uid, $a->work_date );
 				if ( ! $plan['scheduled'] ) {
-					return new WP_Error( 'dolly_invalid', __( 'Per i giorni di riposo modifica la richiesta di straordinario o correggi l\'uscita.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+					return new WP_Error( 'dolly_invalid', __( 'For days off, edit the overtime request or correct the clock-out.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 				}
 				$end = $data['end_time'] ?? Dolly_Time::utc_to_local( $punches['uscita']->punched_at, 'H:i' );
 				if ( ! Dolly_Time::is_time( $end ) ) {
-					return new WP_Error( 'dolly_invalid', __( 'Orario non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'end_time' => __( 'Orario non valido.', 'dolly-employee-management' ) ) ) );
+					return new WP_Error( 'dolly_invalid', __( 'Invalid time.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'end_time' => __( 'Invalid time.', 'dolly-employee-management' ) ) ) );
 				}
 				$existing = Dolly_Requests::approved_extra_for( $uid, $a->work_date );
 				if ( $existing ) {
-					return new WP_Error( 'dolly_conflict', __( 'Esiste già uno straordinario approvato per questa data: modificalo dalla sezione Richieste.', 'dolly-employee-management' ), array( 'status' => 409 ) );
+					return new WP_Error( 'dolly_conflict', __( 'Approved overtime already exists for this date: edit it from the Requests section.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 				}
 				$req = Dolly_Requests::create(
 					$uid,
@@ -334,7 +334,7 @@ class Dolly_Anomalies {
 						'extra_kind'    => 'working_day',
 						'start_date'    => $a->work_date,
 						'end_time'      => $end,
-						'notes'         => __( 'Approvato dalla gestione anomalie.', 'dolly-employee-management' ),
+						'notes'         => __( 'Approved from anomaly management.', 'dolly-employee-management' ),
 						'decision_note' => $note,
 					),
 					true
@@ -344,7 +344,7 @@ class Dolly_Anomalies {
 				}
 				$a = self::get( $id );
 				if ( 'open' === $a->status ) {
-					self::close( $a, 'approved_extra', $note ? $note : __( 'Straordinario approvato fino alle ', 'dolly-employee-management' ) . $end . '.' );
+					self::close( $a, 'approved_extra', $note ? $note : __( 'Overtime approved until ', 'dolly-employee-management' ) . $end . '.' );
 				}
 				return self::format( self::get( $id ) );
 
@@ -355,9 +355,9 @@ class Dolly_Anomalies {
 				$time = (string) ( $data['time'] ?? '' );
 				if ( ! Dolly_Time::is_time( $time ) ) {
 					// An empty time would void the exit punch instead of correcting it.
-					return new WP_Error( 'dolly_invalid', __( 'Orario non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'time' => __( 'Orario non valido.', 'dolly-employee-management' ) ) ) );
+					return new WP_Error( 'dolly_invalid', __( 'Invalid time.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'time' => __( 'Invalid time.', 'dolly-employee-management' ) ) ) );
 				}
-				$reason = $note ? $note : __( 'Correzione uscita da gestione anomalie.', 'dolly-employee-management' );
+				$reason = $note ? $note : __( 'Clock-out correction from anomaly management.', 'dolly-employee-management' );
 				$r      = Dolly_Attendance::correct( $uid, $a->work_date, 'uscita', $time, $reason );
 				if ( is_wp_error( $r ) ) {
 					return $r;
@@ -376,12 +376,12 @@ class Dolly_Anomalies {
 				$time = (string) ( $data['time'] ?? '' );
 				$out  = (string) ( $data['exit_time'] ?? '' );
 				if ( ! Dolly_Time::is_time( $time ) ) {
-					return new WP_Error( 'dolly_invalid', __( 'Orario di entrata non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'time' => __( 'Orario non valido.', 'dolly-employee-management' ) ) ) );
+					return new WP_Error( 'dolly_invalid', __( 'Invalid clock-in time.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'time' => __( 'Invalid time.', 'dolly-employee-management' ) ) ) );
 				}
 				if ( '' !== $out && ! Dolly_Time::is_time( $out ) ) {
-					return new WP_Error( 'dolly_invalid', __( 'Orario di uscita non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'exit_time' => __( 'Orario non valido.', 'dolly-employee-management' ) ) ) );
+					return new WP_Error( 'dolly_invalid', __( 'Invalid clock-out time.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'exit_time' => __( 'Invalid time.', 'dolly-employee-management' ) ) ) );
 				}
-				$reason = $note ? $note : __( 'Entrata inserita dalla gestione anomalie.', 'dolly-employee-management' );
+				$reason = $note ? $note : __( 'Clock-in entered from anomaly management.', 'dolly-employee-management' );
 				$r      = Dolly_Attendance::correct( $uid, $a->work_date, 'entrata', $time, $reason );
 				if ( is_wp_error( $r ) ) {
 					return $r;
@@ -410,15 +410,15 @@ class Dolly_Anomalies {
 
 			case 'dismiss':
 				if ( 'missing_certificate' === $a->type ) {
-					return new WP_Error( 'dolly_invalid', __( 'Il certificato mancante si risolve solo con il caricamento del certificato o disattivando il requisito nelle impostazioni.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+					return new WP_Error( 'dolly_invalid', __( 'A missing certificate is resolved only by uploading the certificate or by turning off the requirement in the settings.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 				}
 				if ( '' === $note ) {
-					return new WP_Error( 'dolly_invalid', __( 'Indica il motivo della chiusura.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'note' => __( 'Indica il motivo.', 'dolly-employee-management' ) ) ) );
+					return new WP_Error( 'dolly_invalid', __( 'Enter the reason for closing it.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'note' => __( 'Enter the reason.', 'dolly-employee-management' ) ) ) );
 				}
 				self::close( $a, 'dismissed', $note );
 				return self::format( self::get( $id ) );
 		}
-		return new WP_Error( 'dolly_invalid', __( 'Azione non valida per questo tipo di anomalia.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+		return new WP_Error( 'dolly_invalid', __( 'Invalid action for this type of anomaly.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 	}
 
 	public static function query( $args ) {
@@ -487,7 +487,7 @@ class Dolly_Anomalies {
 		$in   = implode( ',', array_map( 'intval', $user_ids ) );
 		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, work_date, type, overdue FROM $t WHERE status = 'open' AND user_id IN ($in) AND work_date BETWEEN %s AND %s", $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $r ) {
-			$out[ (int) $r->user_id ][ $r->work_date ][] = ( Dolly_I18n::t( self::TYPES[ $r->type ] ?? $r->type ) ) . ( $r->overdue ? __( ' (scaduto)', 'dolly-employee-management' ) : '' );
+			$out[ (int) $r->user_id ][ $r->work_date ][] = ( Dolly_I18n::t( self::TYPES[ $r->type ] ?? $r->type ) ) . ( $r->overdue ? __( ' (overdue)', 'dolly-employee-management' ) : '' );
 		}
 		return $out;
 	}

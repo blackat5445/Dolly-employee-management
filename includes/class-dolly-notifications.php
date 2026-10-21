@@ -105,7 +105,7 @@ class Dolly_Notifications {
 		global $wpdb;
 		$t = Dolly_Install::t( 'notifications' );
 		$r = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d AND user_id = %d", $id, $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
-		return $r ? self::format_row( $r ) : new WP_Error( 'dolly_not_found', __( 'Notifica non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+		return $r ? self::format_row( $r ) : new WP_Error( 'dolly_not_found', __( 'Notification not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 	}
 
 	/** Unread messages to show in a pop-up when the employee opens the portal (oldest first). */
@@ -119,18 +119,18 @@ class Dolly_Notifications {
 	public static function test_email( $user_id ) {
 		$u = get_userdata( $user_id );
 		if ( ! $u || ! is_email( $u->user_email ) ) {
-			return new WP_Error( 'dolly_invalid', __( 'Il tuo account non ha un indirizzo email valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Your account does not have a valid email address.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		self::$last_mail_error = '';
 		add_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
 		add_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
-		$ok = wp_mail( $u->user_email, Dolly_Appearance::email_subject( __( 'Email di prova', 'dolly-employee-management' ) ), __( "Se ricevi questo messaggio, l'invio delle email del portale funziona.\n\n", 'dolly-employee-management' ) . Dolly_Appearance::email_signature(), self::mail_headers() );
+		$ok = wp_mail( $u->user_email, Dolly_Appearance::email_subject( __( 'Test email', 'dolly-employee-management' ) ), __( "If you receive this message, portal email delivery is working.\n\n", 'dolly-employee-management' ) . Dolly_Appearance::email_signature(), self::mail_headers() );
 		remove_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
 		remove_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
 		return array(
 			'ok'      => (bool) $ok,
 			'to'      => $u->user_email,
-			'message' => $ok ? __( 'Email inviata a ', 'dolly-employee-management' ) . $u->user_email . __( '. Se non arriva, controlla lo spam e la configurazione SMTP.', 'dolly-employee-management' ) : __( 'Invio non riuscito: ', 'dolly-employee-management' ) . ( self::$last_mail_error ? self::$last_mail_error : __( 'wp_mail ha restituito false (server di posta non configurato?)', 'dolly-employee-management' ) ),
+			'message' => $ok ? __( 'Email sent to ', 'dolly-employee-management' ) . $u->user_email . __( '. If it doesn\'t arrive, check your spam folder and the SMTP configuration.', 'dolly-employee-management' ) : __( 'Sending failed: ', 'dolly-employee-management' ) . ( self::$last_mail_error ? self::$last_mail_error : __( 'wp_mail returned false (mail server not configured?)', 'dolly-employee-management' ) ),
 		);
 	}
 
@@ -158,7 +158,7 @@ class Dolly_Notifications {
 
 	private static function queue_email( $user_id, $event, $to, $title, $body, $link, $dedupe ) {
 		global $wpdb;
-		$text  = $body . "\n\n" . __( 'Apri: ', 'dolly-employee-management' ) . $link . "\n\n" . Dolly_Appearance::email_signature();
+		$text  = $body . "\n\n" . __( 'Open: ', 'dolly-employee-management' ) . $link . "\n\n" . Dolly_Appearance::email_signature();
 		$now   = Dolly_Time::now_utc();
 		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- The values are passed as one array.
 		$sql   = $wpdb->prepare(
@@ -204,7 +204,7 @@ class Dolly_Notifications {
 						'attempts'        => $attempts,
 						'next_attempt_at' => gmdate( 'Y-m-d H:i:s', time() + $wait * 60 ),
 						'locked_until'    => null,
-						'last_error'      => self::$last_mail_error ? self::$last_mail_error : 'wp_mail ha restituito false',
+						'last_error'      => self::$last_mail_error ? self::$last_mail_error : 'wp_mail returned false',
 					),
 					array( 'id' => $m->id )
 				);

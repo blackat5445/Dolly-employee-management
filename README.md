@@ -23,12 +23,12 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 - A full-screen page showing a QR code and a PIN that change every 15 seconds, with a countdown and the connection status.
 - It uses a dedicated workplace account that stays signed in for 30 days.
 
-### Administration (wp-admin › *Gestione Dipendenti*)
+### Administration (wp-admin › *Employee Management*)
 - **Dashboard:** today's attendance, latest requests, open anomalies, a calendar and an attendance chart.
 - **Employees:** create, edit and deactivate employees, reset passwords and set device limits.
 - **Schedules:** full-time, part-time and on-call contracts, with history. A schedule can be one fixed timetable (regular shifts) or different times for each weekday (different shifts).
-- **Smart working:** with regular shifts one switch puts the whole schedule in smart working; with different shifts each day is on site, smart working, or mixed (an on-site slot and a smart-working slot that must not overlap). Smart-working punches need no GPS, QR/PIN or Bluetooth; on mixed days the punches of the on-site slot are still verified. The smart-working hours of a day are approved automatically or by the administrator in *Richieste* (setting *Smart working*); until approved they are not counted.
-- **Documents:** send each employee documents by category (Contratto, CU, Busta paga, Altro, plus your own categories) with a title and an optional description. A list of employees with search and pagination, a modal to send a document and one to browse, open or delete the documents of an employee. The employee is notified (event *Nuovo documento*, in-app and/or email).
+- **Smart working:** with regular shifts one switch puts the whole schedule in smart working; with different shifts each day is on site, smart working, or mixed (an on-site slot and a smart-working slot that must not overlap). Smart-working punches need no GPS, QR/PIN or Bluetooth; on mixed days the punches of the on-site slot are still verified. The smart-working hours of a day are approved automatically or by the administrator in *Requests* (setting *Remote work*); until approved they are not counted.
+- **Documents:** send each employee documents by category (Contratto, CU, Busta paga, Altro, plus your own categories) with a title and an optional description. A list of employees with search and pagination, a modal to send a document and one to browse, open or delete the documents of an employee. The employee is notified (event *New document*, in-app and/or email).
 - **Workplaces:** address and an interactive map (OpenStreetMap) to place the workplace: it shows your current position, you tap the map, drag the pin or search for an address, and a circle shows the GPS radius. Plus a per-site late tolerance and employee assignments.
 - **Requests:** approve and revoke requests. On-call shifts can be approved automatically below a threshold; smart-working days automatically or one by one.
 - **Attendance:** daily and monthly views, with audited corrections.
@@ -39,8 +39,8 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 - **Exports:** a monthly Excel attendance sheet, an employees CSV, a monthly attendance ZIP and an hours summary CSV.
 - **Appearance (white label):** brand name, logos, app icon, colours, dark mode, fonts, shapes, login page, email sender and custom CSS, with a live preview.
 - **Settings:** clock-in rules, notifications, certificates, reminders, a system-status panel and an audit log.
-- **Guided setup:** opens right after activation. It walks through the settings category by category, explaining for each option what it is for and what happens when it is turned on, off or changed, then creates the first workplace and the first employee. Progress is saved, so it resumes where it stopped, and it can be restarted from *Impostazioni › Configurazione guidata*.
-- **Interactive tutorial:** a spotlight tour of every section of the panel (dashboard, workplaces, employees, requests, attendance, analytics, anomalies, broadcasts, exports, appearance and settings). It starts at the end of the guided setup. Administrators added later, once the setup is done, are only offered the tutorial. It can be watched again from *Impostazioni*.
+- **Guided setup:** opens right after activation. It walks through the settings category by category, explaining for each option what it is for and what happens when it is turned on, off or changed, then creates the first workplace and the first employee. Progress is saved, so it resumes where it stopped, and it can be restarted from *Settings › Guided setup*.
+- **Interactive tutorial:** a spotlight tour of every section of the panel (dashboard, workplaces, employees, requests, attendance, analytics, anomalies, broadcasts, exports, appearance and settings). It starts at the end of the guided setup. Administrators added later, once the setup is done, are only offered the tutorial. It can be watched again from *Settings*.
 
 ## Requirements
 
@@ -58,7 +58,7 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 1. Download or clone this repository into `wp-content/plugins/dolly-employee-management`.
 2. Activate **Dolly Employee Management** under *Plugins*.
 3. The guided setup opens: follow it to configure the settings, create the first workplace and the first employee, then take the tutorial.
-4. Go to *Gestione Dipendenti › Aspetto* to complete your brand (logo, icon, fonts).
+4. Go to *Employee Management › Appearance* to complete your brand (logo, icon, fonts).
 5. Set up the scheduler as described below.
 6. Optional: install the latest version of the companion theme **Dolly Portal** for a dedicated portal site. Until it is installed, the plugin shows a reminder in wp-admin (dismissible per administrator).
 
@@ -75,21 +75,21 @@ define( 'DISABLE_WP_CRON', true );
 # With WP-CLI
 * * * * * wp --path=/path/to/wordpress dolly tick
 
-# Or over HTTP. The key is shown in Impostazioni › Stato del sistema.
+# Or over HTTP. The key is shown in Settings › System status.
 * * * * * curl -s "https://example.com/wp-json/dolly/v1/cron?key=YOUR_KEY" >/dev/null
 ```
 
-*Impostazioni › Stato del sistema* shows the exact commands for your site and whether the scheduler is running.
+*Settings › System status* shows the exact commands for your site and whether the scheduler is running.
 
 ## Bluetooth clock-in
 
 Bluetooth is a third way to verify presence, next to GPS and QR/PIN. An ESP32 board near the entrance serves a 6-digit code that changes every 30 seconds (TOTP). The employee's phone reads it over Bluetooth from a few metres away.
 
-1. In *Sedi*, click **Bluetooth** on a workplace, activate it and download `config.h`.
+1. In *Workplaces*, click **Bluetooth** on a workplace, activate it and download `config.h`.
 2. Flash the firmware in [`firmware/dolly-ble-beacon`](firmware/dolly-ble-beacon) to the board.
-3. In *Impostazioni › Verifica timbrature*, enable **Bluetooth**.
+3. In *Settings › Clock-in verification*, enable **Bluetooth**.
 
-The board either gets the time over Wi-Fi and computes the code itself, or runs without Wi-Fi: the workplace display on an Android tablet relays the code to it over Bluetooth (**Collega il Bluetooth** button).
+The board either gets the time over Wi-Fi and computes the code itself, or runs without Wi-Fi: the workplace display on an Android tablet relays the code to it over Bluetooth (**Connect Bluetooth** button).
 
 Phones need Chrome, Edge or Samsung Internet on Android. Safari on iPhone does not support Web Bluetooth, so iPhone users need the Bluefy browser, or another method must stay enabled. The full guide, recommended boards and security notes are in [firmware/README.md](firmware/README.md).
 
@@ -104,7 +104,7 @@ define( 'DOLLY_PRIVATE_DIR', '/absolute/path/outside/webroot' );
 
 Employee documents are isolated per employee in `documents/u{ID}-{random token}`: the token is random and stored only in the employee's user meta, every folder has deny rules (`.htaccess`, `web.config`) and an empty index, and the files have random names. They are served only through the REST API, to the employee they belong to (while the account is active) and to administrators; administrator openings are written to the audit log.
 
-Medical certificates: in *Impostazioni › Malattia, infortunio e certificati* choose whether the file and/or the protocol number are required. With both off, either one is enough.
+Medical certificates: in *Settings › Sickness, injury and certificates* choose whether the file and/or the protocol number are required. With both off, either one is enough.
 
 ### Front-end URLs
 
@@ -127,7 +127,7 @@ Medical certificates: in *Impostazioni › Malattia, infortunio e certificati* c
 
 ## Appearance and white labelling
 
-*Gestione Dipendenti › Aspetto* rebrands the whole plugin without touching code. A live preview, in light and dark, shows changes before you save.
+*Employee Management › Appearance* rebrands the whole plugin without touching code. A live preview, in light and dark, shows changes before you save.
 
 | Section | Options |
 |---|---|
@@ -147,13 +147,13 @@ Every visual value is a CSS custom property (`--dolly-primary`, `--dolly-surface
 
 ## Languages
 
-The plugin ships in **Italian** (the source language) and **English**.
+The plugin is written in **English** (the source language) and ships with an **Italian** translation.
 
-- **Default language:** set in *Impostazioni › Lingua*. It applies to the portal, the login pages, emails and the admin screens. **Come il sito** follows the WordPress site language: Italian for Italian sites, English otherwise.
-- **Per user:** administrators pick their own language in the same card. Employees choose theirs in *Profilo › Lingua* in the portal. Visitors can switch language with the links under the login form, and the choice is kept when they sign in.
+- **Default language:** set in *Settings › Language*. It applies to the portal, the login pages, emails and the admin screens. **Same as the site** follows the WordPress site language: Italian for Italian sites, English otherwise.
+- **Per user:** administrators pick their own language in the same card. Employees choose theirs in *Profile › Language* in the portal. Visitors can switch language with the links under the login form, and the choice is kept when they sign in.
 - **Notifications and emails** are written in each recipient's language, including those sent by the scheduler.
 
-Translations are standard gettext files in [`languages/`](languages): a `.po` source for translators, a `.mo` for PHP and a `.js` dictionary for the browser screens. To add a language, copy `dolly-employee-management.pot` to `dolly-employee-management-<locale>.po`, translate it (for example with Poedit), then run:
+Translations are standard gettext files in [`languages/`](languages) (texts with a gettext context, such as gendered Italian forms, use `_x()` in PHP and `DOLLY._x()` in JavaScript): a `.po` source for translators, a `.mo` for PHP and a `.js` dictionary for the browser screens. To add a language, copy `dolly-employee-management.pot` to `dolly-employee-management-<locale>.po`, translate it (for example with Poedit), then run:
 
 ```bash
 python3 tools/i18n/i18n.py update    # after code changes: refresh the .pot and merge new strings into every .po
@@ -206,4 +206,4 @@ These are bundled in `assets/vendor/`, so nothing is loaded from a CDN at runtim
 
 ## License
 
-[MIT](LICENSE) © Kasra Falahati
+[GPL-2.0-or-later](LICENSE) © 2026 [Kasra Falahati](https://kasra.eu)

@@ -11,9 +11,9 @@ class Dolly_Time {
 
 	const TZ = 'Europe/Rome';
 
-	const MONTHS = array( 1 => 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre' );
+	const MONTHS = array( 1 => 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December' );
 
-	const WEEKDAYS = array( 1 => 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica' );
+	const WEEKDAYS = array( 1 => 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday' );
 
 	public static function tz() {
 		static $tz = null;

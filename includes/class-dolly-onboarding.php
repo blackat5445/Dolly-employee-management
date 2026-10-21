@@ -136,8 +136,8 @@ class Dolly_Onboarding {
 			return;
 		}
 		$text = 'outdated' === $status
-			? __( 'Il tema Dolly Portal è di una versione precedente: installa l\'ultima versione del tema Dolly Portal.', 'dolly-employee-management' )
-			: __( 'Per un sito dedicato al portale dipendenti installa l\'ultima versione del tema Dolly Portal. Il plugin funziona anche con altri temi.', 'dolly-employee-management' );
+			? __( 'The Dolly Portal theme is an older version: install the latest version of the Dolly Portal theme.', 'dolly-employee-management' )
+			: __( 'For a site dedicated to the employee portal, install the latest version of the Dolly Portal theme. The plugin also works with other themes.', 'dolly-employee-management' );
 		printf(
 			'<div class="notice notice-info is-dismissible" data-dolly-theme-notice="%1$s" data-nonce="%2$s"><p><strong>%3$s</strong> %4$s</p></div>',
 			esc_attr( $status ),

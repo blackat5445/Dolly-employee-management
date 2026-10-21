@@ -118,7 +118,7 @@ class Dolly_Push {
 		$host     = wp_parse_url( $endpoint, PHP_URL_HOST );
 		// Only the format is checked: a DNS lookup here fails on some hosts and rejected valid phones.
 		if ( 0 !== strpos( $endpoint, 'https://' ) || ! $host || strlen( $endpoint ) > 2000 ) {
-			return new WP_Error( 'dolly_invalid', __( 'Iscrizione alle notifiche non valida.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Invalid notification subscription.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$t    = Dolly_Install::t( 'push_subs' );
 		$hash = hash( 'sha256', $endpoint );
@@ -280,11 +280,11 @@ class Dolly_Push {
 		global $wpdb;
 		$p = wp_parse_url( $sub->endpoint );
 		if ( empty( $p['host'] ) ) {
-			return array( 'ok' => false, 'code' => 0, 'error' => __( 'Indirizzo del servizio push non valido.', 'dolly-employee-management' ) );
+			return array( 'ok' => false, 'code' => 0, 'error' => __( 'Invalid push service address.', 'dolly-employee-management' ) );
 		}
 		$jwt = self::jwt( $p['scheme'] . '://' . $p['host'] . ( isset( $p['port'] ) ? ':' . $p['port'] : '' ), $keys );
 		if ( '' === $jwt ) {
-			return self::fail( 0, __( 'Firma VAPID non riuscita (OpenSSL).', 'dolly-employee-management' ) );
+			return self::fail( 0, __( 'VAPID signing failed (OpenSSL).', 'dolly-employee-management' ) );
 		}
 		$headers = array(
 			'TTL'           => '86400',
@@ -305,14 +305,14 @@ class Dolly_Push {
 			)
 		);
 		if ( is_wp_error( $res ) ) {
-			return self::fail( 0, __( 'Connessione al servizio push non riuscita: ', 'dolly-employee-management' ) . $res->get_error_message() );
+			return self::fail( 0, __( 'Connection to the push service failed: ', 'dolly-employee-management' ) . $res->get_error_message() );
 		}
 		$code = (int) wp_remote_retrieve_response_code( $res );
 		$t    = Dolly_Install::t( 'push_subs' );
 		if ( 404 === $code || 410 === $code ) {
 			$wpdb->delete( $t, array( 'id' => (int) $sub->id ) );
 			unset( self::$has_sub[ (int) $sub->user_id ] );
-			return self::fail( $code, __( 'Iscrizione scaduta sul telefono: riattiva le notifiche dal Profilo.', 'dolly-employee-management' ) );
+			return self::fail( $code, __( 'Subscription expired on the phone: turn notifications back on from your Profile.', 'dolly-employee-management' ) );
 		}
 		if ( $code >= 200 && $code < 300 ) {
 			$wpdb->update( $t, array( 'last_success_at' => Dolly_Time::now_utc() ), array( 'id' => (int) $sub->id ) );
@@ -385,7 +385,7 @@ class Dolly_Push {
 				return $label;
 			}
 		}
-		return __( 'Dispositivo', 'dolly-employee-management' );
+		return __( 'Device', 'dolly-employee-management' );
 	}
 
 	/**
@@ -394,7 +394,7 @@ class Dolly_Push {
 	 */
 	public static function test( $user_id ) {
 		$devices = count( self::subscriptions( $user_id ) );
-		Dolly_Notifications::deliver( $user_id, 'test', __( 'Notifica di prova', 'dolly-employee-management' ), __( 'Se vedi questo messaggio sul telefono, le notifiche push funzionano.', 'dolly-employee-management' ), 'notifiche', true, false );
+		Dolly_Notifications::deliver( $user_id, 'test', __( 'Test notification', 'dolly-employee-management' ), __( 'If you see this message on your phone, push notifications are working.', 'dolly-employee-management' ), 'notifiche', true, false );
 		$results = self::process_queue( 5, $user_id );
 		return array(
 			'available' => (bool) self::keys(),
@@ -467,7 +467,7 @@ class Dolly_Push {
 			'portal' => Dolly_Frontend::url( 'portale' ),
 			'icon'   => self::icon_url( 192 ),
 			'brand'  => Dolly_Appearance::brand(),
-			'note'   => __( 'Hai una nuova notifica nel portale.', 'dolly-employee-management' ),
+			'note'   => __( 'You have a new notification in the portal.', 'dolly-employee-management' ),
 		);
 		// A JavaScript file: the settings are JSON (wp_json_encode escapes "<", ">" and "&" with JSON_HEX_*).
 		echo 'self.DOLLY_SW = ' . wp_json_encode( $config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) . ";\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
