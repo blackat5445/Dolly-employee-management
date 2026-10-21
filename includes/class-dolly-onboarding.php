@@ -8,6 +8,7 @@
  * - The tutorial is a guided tour of every section of the panel. It is per administrator: once the setup
  *   is done, other administrators only get the tutorial.
  * - Notices when the companion theme (Dolly Portal) is missing or outdated.
+ * - A feedback banner on the dashboard (GitHub, review on WordPress.org): dismissible, per administrator.
  *
  * @package DollyEM
  */
@@ -16,11 +17,16 @@ defined( 'ABSPATH' ) || exit;
 
 class Dolly_Onboarding {
 
-	const OPTION        = 'dolly_onboarding';
-	const REDIRECT      = 'dolly_onboarding_redirect';
-	const TOUR_META     = 'dolly_admin_tour';
-	const NOTICE_META   = 'dolly_theme_notice_dismissed';
-	const THEME_VERSION = '1.3.0';
+	const OPTION          = 'dolly_onboarding';
+	const REDIRECT        = 'dolly_onboarding_redirect';
+	const TOUR_META       = 'dolly_admin_tour';
+	const NOTICE_META     = 'dolly_theme_notice_dismissed';
+	const THEME_VERSION   = '1.3.0';
+	const FEEDBACK_META   = 'dolly_feedback_banner';
+	const FEEDBACK_SNOOZE = 30 * DAY_IN_SECONDS;
+	const GITHUB_URL      = 'https://github.com/blackat5445/Dolly-employee-management';
+	/** Review page in the WordPress.org directory: empty until the plugin is published there. */
+	const REVIEW_URL = '';
 
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ) );
@@ -88,11 +94,46 @@ class Dolly_Onboarding {
 	public static function client_config() {
 		$s = self::state();
 		return array(
-			'done' => (bool) $s['done'],
-			'step' => $s['step'],
-			'tour' => self::tour_state(),
-			'url'  => admin_url( 'admin.php?page=dolly-onboarding' ),
+			'done'     => (bool) $s['done'],
+			'step'     => $s['step'],
+			'tour'     => self::tour_state(),
+			'url'      => admin_url( 'admin.php?page=dolly-onboarding' ),
+			'feedback' => self::feedback_config(),
 		);
+	}
+
+	/* ---------- Feedback banner ---------- */
+
+	/**
+	 * Links of the feedback banner and whether to show it to the current administrator: after the guided setup
+	 * and the tutorial, until "Don't show again" (or for 30 days after "Later").
+	 */
+	public static function feedback_config() {
+		/**
+		 * Filters the links of the feedback banner.
+		 *
+		 * @param array $links { github: string, review: string } — an empty review link shows the button disabled.
+		 */
+		$links = (array) apply_filters(
+			'dolly_feedback_links',
+			array(
+				'github' => self::GITHUB_URL,
+				'review' => self::REVIEW_URL,
+			)
+		);
+		$s    = self::state();
+		$meta = (string) get_user_meta( get_current_user_id(), self::FEEDBACK_META, true );
+		$show = $s['done'] && '' !== self::tour_state() && 'dismissed' !== $meta && ( ! is_numeric( $meta ) || time() >= (int) $meta );
+		return array(
+			'show'   => $show,
+			'github' => esc_url_raw( (string) ( $links['github'] ?? '' ) ),
+			'review' => esc_url_raw( (string) ( $links['review'] ?? '' ) ),
+		);
+	}
+
+	/** "later" hides the banner for 30 days, anything else for good. */
+	public static function set_feedback( $action ) {
+		update_user_meta( get_current_user_id(), self::FEEDBACK_META, 'later' === $action ? (string) ( time() + self::FEEDBACK_SNOOZE ) : 'dismissed' );
 	}
 
 	/** First page load after activation: open the guided setup (not on bulk activation). */

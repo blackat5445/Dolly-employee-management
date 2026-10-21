@@ -3883,6 +3883,39 @@
 		});
 	}
 
+	/** Dashboard banner asking for a star on GitHub and a review on WordPress.org (no review link yet: disabled). */
+	function feedbackBanner(fb) {
+		var box;
+		function external(btn) { btn.target = '_blank'; btn.rel = 'noopener noreferrer'; return btn; }
+		function close(action, btn) {
+			DOLLY.busy(btn, DOLLY.api('admin/feedback', { method: 'POST', body: { action: action } })).then(function (c) {
+				CFG.onboarding = c;
+				box.remove();
+				if (action === 'later') { DOLLY.toast(__('We\'ll ask again in a month.'), 'info'); }
+			}, function (err) { DOLLY.toast(err.message, 'error'); });
+		}
+		var later = DOLLY.button(__('Later'), { size: 'sm', variant: 'ghost', onClick: function () { close('later', later); } });
+		var never = DOLLY.button(__('Don\'t show again'), { size: 'sm', variant: 'ghost', onClick: function () { close('dismiss', never); } });
+		var review = fb.review
+			? external(DOLLY.button(__('Review on WordPress.org'), { size: 'sm', icon: 'star', href: fb.review }))
+			: DOLLY.button(__('Review on WordPress.org'), { size: 'sm', icon: 'star', disabled: true, ariaLabel: __('Review on WordPress.org (available soon)') });
+		box = h('section', { class: 'dolly-feedback', 'aria-labelledby': 'dolly-feedback-title' }, [
+			h('div', { class: 'dolly-feedback__icon', 'aria-hidden': 'true' }, DOLLY.icon('heart')),
+			h('div', { class: 'dolly-feedback__body' }, [
+				h('h2', { id: 'dolly-feedback-title', class: 'dolly-feedback__title', text: __('Enjoying Dolly Employee Management?') }),
+				h('p', { class: 'dolly-feedback__text', text: __('It is free and open source. A star on GitHub or a review on WordPress.org helps other teams find it, and your ideas and bug reports shape the next versions.') }),
+				h('div', { class: 'dolly-btn-row' }, [
+					fb.github ? external(DOLLY.button(__('Star on GitHub'), { size: 'sm', variant: 'primary', icon: 'github', href: fb.github })) : null,
+					fb.github ? external(DOLLY.button(__('Send feedback'), { size: 'sm', icon: 'message-square-heart', href: fb.github + '/issues' })) : null,
+					review
+				]),
+				fb.review ? null : h('p', { class: 'dolly-small dolly-muted dolly-feedback__note', text: __('Reviews open once the plugin is published in the WordPress.org directory.') })
+			]),
+			h('div', { class: 'dolly-feedback__close' }, [later, never])
+		]);
+		return box;
+	}
+
 	/** On every admin screen: continue a running tour, invite to the tour or to finish the setup. */
 	function guide() {
 		var ob = CFG.onboarding;
@@ -3891,6 +3924,11 @@
 		if (!ob.done) {
 			app.insertBefore(h('div', { class: 'dolly-ob-banner' }, DOLLY.alert(__('The guided setup is not complete yet.'), 'warning',
 				h('div', { class: 'dolly-btn-row', style: 'margin-top:8px' }, DOLLY.button(__('Resume the setup'), { size: 'sm', variant: 'primary', icon: 'arrow-right', href: ob.url })))), main);
+			DOLLY.icons();
+			return;
+		}
+		if (ob.tour && ob.feedback && ob.feedback.show && CFG.page === 'dashboard') {
+			app.insertBefore(feedbackBanner(ob.feedback), main);
 			DOLLY.icons();
 			return;
 		}
