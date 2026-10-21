@@ -32,6 +32,8 @@ class Dolly_Frontend {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ) );
 		add_filter( 'document_title_parts', array( __CLASS__, 'title' ) );
 		add_filter( 'language_attributes', array( __CLASS__, 'language_attributes' ) );
+		add_filter( 'body_class', array( __CLASS__, 'body_class' ) );
+		add_filter( 'wp_robots', array( __CLASS__, 'robots' ) );
 		add_filter( 'script_loader_tag', array( __CLASS__, 'defer_vendor' ), 10, 2 );
 	}
 
@@ -53,6 +55,67 @@ class Dolly_Frontend {
 	public static function url( $view ) {
 		$slug = array_search( $view, self::VIEWS, true );
 		return home_url( '/' . $slug . '/' );
+	}
+
+	/** Classes of the plugin pages, with the plugin template or a theme template. */
+	public static function body_class( $classes ) {
+		$view = self::current_view();
+		if ( $view ) {
+			$classes[] = 'dolly-body';
+			$classes[] = 'dolly-view-' . sanitize_html_class( $view );
+		}
+		return $classes;
+	}
+
+	/** The portal pages are private: never indexed by search engines. */
+	public static function robots( $robots ) {
+		if ( self::current_view() ) {
+			$robots['noindex']  = true;
+			$robots['nofollow'] = true;
+		}
+		return $robots;
+	}
+
+	/* ---------- Helpers for themes (templates in dolly/{view}.php) ---------- */
+
+	/** Color of the browser bar on phones (<meta name="theme-color">). */
+	public static function theme_color() {
+		return Dolly_Appearance::get( 'header_bg' );
+	}
+
+	/** "Skip to content" link: to the portal content, or to the page wrapper (#dolly-content). */
+	public static function skip_link() {
+		$target = 'portale' === self::current_view() ? '#dolly-main' : '#dolly-content';
+		echo '<a class="dolly-skip-link" href="' . esc_attr( $target ) . '">' . esc_html__( 'Vai al contenuto', 'dolly-employee-management' ) . '</a>';
+	}
+
+	/**
+	 * Stylesheet and Appearance settings of the plugin, for theme pages that are not plugin views
+	 * (e.g. the theme's front page). Plugin views load them by themselves.
+	 */
+	public static function enqueue_styles() {
+		self::register_shared_assets();
+		wp_enqueue_style( 'dolly-ui' );
+		wp_add_inline_style( 'dolly-ui', Dolly_Appearance::css( null, 'front' ) . Dolly_Appearance::custom_css() );
+		self::enqueue_font();
+	}
+
+	/** Card with links to both sign-in pages, for a theme front page (no public content on a portal site). */
+	public static function render_welcome() {
+		?>
+		<div class="dolly-app dolly-auth">
+			<div class="dolly-card dolly-auth__card">
+				<?php self::brand( Dolly_Appearance::get( 'portal_subtitle' ) ); ?>
+				<h1 class="dolly-auth__title"><?php esc_html_e( 'Benvenuto', 'dolly-employee-management' ); ?></h1>
+				<p class="dolly-muted"><?php esc_html_e( 'Accedi per timbrare, consultare le presenze e inviare richieste.', 'dolly-employee-management' ); ?></p>
+				<a class="dolly-btn dolly-btn--primary dolly-btn--block" href="<?php echo esc_url( self::url( 'login' ) ); ?>"><?php esc_html_e( 'Accesso dipendenti', 'dolly-employee-management' ); ?></a>
+				<div class="dolly-auth__links">
+					<a href="<?php echo esc_url( self::url( 'login-sede' ) ); ?>"><?php esc_html_e( 'Accesso sede', 'dolly-employee-management' ); ?></a>
+				</div>
+				<?php self::language_links(); ?>
+			</div>
+		</div>
+		<?php
 	}
 
 	/** <html lang> of the plugin pages follows the language of the user, not of the site. */
@@ -447,7 +510,7 @@ class Dolly_Frontend {
 	}
 
 	/** Links to switch language before signing in (stored in a cookie). */
-	private static function language_links() {
+	public static function language_links() {
 		$langs = Dolly_I18n::available();
 		if ( count( $langs ) < 2 ) {
 			return;

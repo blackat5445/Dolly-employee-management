@@ -856,7 +856,7 @@ msgstr ""
 msgid "Requisiti certificato di donazione annullati"
 msgstr ""
 
-#: includes/class-dolly-auth.php:29 includes/class-dolly-frontend.php:179
+#: includes/class-dolly-auth.php:29 includes/class-dolly-frontend.php:242
 msgid "Account disattivato. Contatta l'amministratore."
 msgstr ""
 
@@ -1215,131 +1215,143 @@ msgstr ""
 msgid "La nuova password deve avere almeno 8 caratteri."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:68 includes/class-dolly-frontend.php:440
+#: includes/class-dolly-frontend.php:89
+msgid "Vai al contenuto"
+msgstr ""
+
+#: includes/class-dolly-frontend.php:109
+msgid "Benvenuto"
+msgstr ""
+
+#: includes/class-dolly-frontend.php:110
+msgid "Accedi per timbrare, consultare le presenze e inviare richieste."
+msgstr ""
+
+#: includes/class-dolly-frontend.php:111 includes/class-dolly-frontend.php:131 includes/class-dolly-frontend.php:503
 msgid "Accesso dipendenti"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:69 includes/class-dolly-frontend.php:407 includes/class-dolly-frontend.php:438
+#: includes/class-dolly-frontend.php:113 includes/class-dolly-frontend.php:132 includes/class-dolly-frontend.php:470 includes/class-dolly-frontend.php:501
 msgid "Accesso sede"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:70 includes/class-dolly-frontend.php:471
+#: includes/class-dolly-frontend.php:133 includes/class-dolly-frontend.php:534
 msgid "Recupero password"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:71 includes/class-dolly-appearance.php:defaults assets/js/dolly-admin.js:2053
+#: includes/class-dolly-frontend.php:134 includes/class-dolly-appearance.php:defaults assets/js/dolly-admin.js:2053
 msgid "Portale dipendenti"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:72
+#: includes/class-dolly-frontend.php:135
 msgid "Codice presenze sede"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:164 includes/class-dolly-frontend.php:207
+#: includes/class-dolly-frontend.php:227 includes/class-dolly-frontend.php:270
 msgid "Sessione del modulo scaduta. Riprova."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:171
+#: includes/class-dolly-frontend.php:234
 msgid "Inserisci nome utente e password."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:184
+#: includes/class-dolly-frontend.php:247
 msgid "Nome utente o password non corretti."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:190
+#: includes/class-dolly-frontend.php:253
 msgid "Questa pagina è riservata agli account sede. I dipendenti accedono dalla pagina Accesso dipendenti."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:194
+#: includes/class-dolly-frontend.php:257
 msgid "Gli account sede accedono dalla pagina Accesso sede."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:212
+#: includes/class-dolly-frontend.php:275
 msgid "Inserisci il nome utente o l'email."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:220
+#: includes/class-dolly-frontend.php:283
 msgid "Troppe richieste. Riprova tra 15 minuti."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:229
+#: includes/class-dolly-frontend.php:292
 msgid "Se i dati corrispondono a un account attivo, riceverai un'email con il link per impostare una nuova password."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:235
+#: includes/class-dolly-frontend.php:298
 msgid "Sei uscito dal portale."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:238
+#: includes/class-dolly-frontend.php:301
 msgid "Connessione non sicura: il portale richiede HTTPS per la posizione e la fotocamera."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:389
+#: includes/class-dolly-frontend.php:452
 msgid "Caricamento del portale…"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:390
+#: includes/class-dolly-frontend.php:453
 msgid "Per usare il portale è necessario JavaScript."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:393
+#: includes/class-dolly-frontend.php:456
 msgid "Caricamento del codice…"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:394
+#: includes/class-dolly-frontend.php:457
 msgid "Per mostrare il codice è necessario JavaScript."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:406
+#: includes/class-dolly-frontend.php:469
 msgid "Schermo sede"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:408
+#: includes/class-dolly-frontend.php:471
 msgid "Accedi con l'account dedicato della sede per mostrare QR e PIN."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:417 includes/class-dolly-reports.php:611 assets/js/dolly-admin.js:671
+#: includes/class-dolly-frontend.php:480 includes/class-dolly-reports.php:611 assets/js/dolly-admin.js:671
 msgid "Nome utente"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:421 assets/js/dolly-admin.js:913 assets/js/dolly-employee.js:1070
+#: includes/class-dolly-frontend.php:484 assets/js/dolly-admin.js:913 assets/js/dolly-employee.js:1070
 msgid "Password"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:424 assets/js/dolly-core.js:429 assets/js/dolly-core.js:1358
+#: includes/class-dolly-frontend.php:487 assets/js/dolly-core.js:429 assets/js/dolly-core.js:1358
 msgid "Mostra password"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:430
+#: includes/class-dolly-frontend.php:493
 msgid "Resta connesso su questo dispositivo"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:433 includes/class-dolly-appearance.php:defaults
+#: includes/class-dolly-frontend.php:496 includes/class-dolly-appearance.php:defaults
 msgid "Accedi"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:437
+#: includes/class-dolly-frontend.php:500
 msgid "Password dimenticata?"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:455 assets/js/dolly-admin.js:2050 assets/js/dolly-employee.js:1068
+#: includes/class-dolly-frontend.php:518 assets/js/dolly-admin.js:2050 assets/js/dolly-employee.js:1068
 msgid "Lingua"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:472
+#: includes/class-dolly-frontend.php:535
 msgid "Inserisci il tuo nome utente o l'email: riceverai un link per impostare una nuova password."
 msgstr ""
 
-#: includes/class-dolly-frontend.php:477
+#: includes/class-dolly-frontend.php:540
 msgid "Nome utente o email"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:480
+#: includes/class-dolly-frontend.php:543
 msgid "Invia link"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:483
+#: includes/class-dolly-frontend.php:546
 msgid "Torna all'accesso"
 msgstr ""
 

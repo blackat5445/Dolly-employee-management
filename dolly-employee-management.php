@@ -3,7 +3,7 @@
  * Plugin Name:       Dolly Employee Management
  * Plugin URI:        https://github.com/blackat5445/Dolly-employee-management
  * Description:       Gestione dipendenti: account, permessi, presenze, richieste, certificati, notifiche, amministrazione ed esportazioni.
- * Version:           1.10.0
+ * Version:           1.11.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Kasra Falahati
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'DOLLY_VERSION', '1.10.0' );
+define( 'DOLLY_VERSION', '1.11.0' );
 define( 'DOLLY_DB_VERSION', '6' );
 define( 'DOLLY_FILE', __FILE__ );
 define( 'DOLLY_DIR', plugin_dir_path( __FILE__ ) );
@@ -57,6 +57,7 @@ require_once DOLLY_DIR . 'includes/class-dolly-cron.php';
 require_once DOLLY_DIR . 'includes/class-dolly-rest.php';
 require_once DOLLY_DIR . 'includes/class-dolly-auth.php';
 require_once DOLLY_DIR . 'includes/class-dolly-frontend.php';
+require_once DOLLY_DIR . 'includes/class-dolly-login-screen.php';
 require_once DOLLY_DIR . 'includes/class-dolly-admin.php';
 
 register_activation_hook( __FILE__, array( 'Dolly_Install', 'activate' ) );
@@ -68,6 +69,7 @@ add_action( 'plugins_loaded', array( 'Dolly_Cron', 'init' ) );
 add_action( 'plugins_loaded', array( 'Dolly_Auth', 'init' ) );
 add_action( 'plugins_loaded', array( 'Dolly_Devices', 'init' ) );
 add_action( 'plugins_loaded', array( 'Dolly_Frontend', 'init' ) );
+add_action( 'plugins_loaded', array( 'Dolly_Login_Screen', 'init' ) );
 add_action( 'plugins_loaded', array( 'Dolly_Push', 'init' ) );
 add_action( 'plugins_loaded', array( 'Dolly_Admin', 'init' ) );
 add_action( 'rest_api_init', array( 'Dolly_REST', 'register_routes' ) );

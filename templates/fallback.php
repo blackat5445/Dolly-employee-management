@@ -1,6 +1,7 @@
 <?php
 /**
  * Minimal layout used when the active theme does not provide dolly/{view}.php templates.
+ * Themes can copy it: everything else (content, styles, classes, robots) comes from the plugin.
  *
  * @package DollyEM
  */
@@ -11,13 +12,13 @@ defined( 'ABSPATH' ) || exit;
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-	<meta name="robots" content="noindex, nofollow">
-	<meta name="theme-color" content="<?php echo esc_attr( Dolly_Appearance::get( 'header_bg' ) ); ?>">
+	<meta name="theme-color" content="<?php echo esc_attr( Dolly_Frontend::theme_color() ); ?>">
 	<?php wp_head(); ?>
 </head>
-<body <?php body_class( 'dolly-body dolly-view-' . sanitize_html_class( Dolly_Frontend::current_view() ) ); ?>>
+<body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
-<?php Dolly_Frontend::render_view(); ?>
+<?php Dolly_Frontend::skip_link(); ?>
+<div id="dolly-content"><?php Dolly_Frontend::render_view(); ?></div>
 <?php wp_footer(); ?>
 </body>
 </html>

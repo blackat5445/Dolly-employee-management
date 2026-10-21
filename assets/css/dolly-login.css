@@ -1,0 +1,69 @@
+/*
+ * WordPress sign-in screens (wp-login.php): password reset from the recovery email and the administrators' sign-in.
+ * Colors are the --dolly-* tokens of the Appearance settings, printed inline by Dolly_Login_Screen.
+ */
+
+body.login {
+	background: var(--dolly-bg);
+	color: var(--dolly-text);
+	font-family: var(--dolly-font);
+}
+body.login h1 a {
+	background-image: none;
+	width: auto;
+	height: auto;
+	text-indent: 0;
+	font-size: 28px;
+	font-weight: 800;
+	letter-spacing: .02em;
+	color: var(--dolly-primary);
+	line-height: 1.2;
+	text-decoration: none;
+}
+body.login h1 a::after {
+	content: "";
+	display: var(--dolly-wordmark-mark);
+	width: 8px;
+	height: 8px;
+	margin-left: 4px;
+	background: var(--dolly-accent);
+	border-radius: 2px;
+}
+body.login form {
+	background: var(--dolly-surface);
+	border: 1px solid var(--dolly-border);
+	border-radius: var(--dolly-radius);
+	box-shadow: var(--dolly-shadow);
+}
+body.login label { color: var(--dolly-text); }
+body.login .button-primary {
+	background: var(--dolly-primary);
+	border-color: var(--dolly-primary);
+	color: var(--dolly-on-primary);
+	min-height: 44px;
+	padding: 0 16px;
+	border-radius: var(--dolly-btn-radius);
+	font-weight: 600;
+}
+body.login .button-primary:hover,
+body.login .button-primary:focus { background: var(--dolly-primary-hover); border-color: var(--dolly-primary-hover); color: var(--dolly-on-primary); }
+body.login input[type="text"],
+body.login input[type="password"],
+body.login input[type="email"] { min-height: 44px; border-radius: var(--dolly-radius-sm); }
+body.login input:focus { border-color: var(--dolly-primary); box-shadow: 0 0 0 3px var(--dolly-focus-ring); }
+body.login #nav a, body.login #backtoblog a, body.login .privacy-policy-page-link a { color: var(--dolly-primary); font-weight: 600; }
+/* Messages: tinted box with a full border, no colored bar on the left. */
+body.login .message, body.login .notice, body.login .success {
+	border: 1px solid var(--dolly-blue-border);
+	border-left-width: 1px;
+	background: var(--dolly-blue-bg);
+	border-radius: var(--dolly-radius-sm);
+	box-shadow: none;
+}
+body.login #login_error, body.login .notice-error {
+	border: 1px solid var(--dolly-red-border);
+	border-left-width: 1px;
+	background: var(--dolly-red-bg);
+	border-radius: var(--dolly-radius-sm);
+	box-shadow: none;
+}

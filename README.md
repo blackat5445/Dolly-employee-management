@@ -156,10 +156,14 @@ A translation placed in `wp-content/languages/plugins/` takes priority over the 
 
 ## Theme integration
 
-The plugin works with any theme through its built-in fallback layout. To use your theme's own layout for the portal pages, add a template named `dolly/{view}.php` to the theme, where `{view}` is one of `login`, `login-sede`, `recupero-password`, `portale` or `sede`. Use `templates/fallback.php` as the starting point. A template must:
+The plugin works with any theme through its built-in fallback layout. The companion theme [Dolly Portal](https://github.com/blackat5445/Dolly-employee-management-portal) is a ready-made base for a dedicated portal site: it only adds the page layout, and everything else stays in the plugin.
+
+Whatever the theme, the plugin also brands the WordPress sign-in and password-reset screens (`wp-login.php`) with the Appearance settings, and sends employees back to the portal sign-in after resetting their password. To use your theme's own layout for the portal pages, add a template named `dolly/{view}.php` to the theme, where `{view}` is one of `login`, `login-sede`, `recupero-password`, `portale` or `sede`. Use `templates/fallback.php` as the starting point. A template must:
 
 - call `wp_head()` and `wp_footer()`;
 - call `Dolly_Frontend::render_view()`.
+
+Helpers for theme templates: `Dolly_Frontend::skip_link()`, `Dolly_Frontend::theme_color()` (for `<meta name="theme-color">`), `Dolly_Frontend::brand()`, and, for theme pages that are not plugin views, `Dolly_Frontend::enqueue_styles()` and `Dolly_Frontend::render_welcome()`. The plugin adds the `dolly-body dolly-view-{view}` body classes and `noindex` to its views by itself.
 
 Other filters you can use:
 

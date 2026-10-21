@@ -807,3 +807,11 @@ html:has(.dolly-app.dolly-portal), body:has(.dolly-app.dolly-portal) { overflow-
 .dolly-app .dolly-auth__langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin-top: var(--dolly-s2); padding-top: var(--dolly-s2); border-top: 1px solid var(--dolly-border); font-size: .875rem; }
 .dolly-app .dolly-auth__langs a, .dolly-app .dolly-auth__langs span { display: inline-flex; align-items: center; min-height: 32px; }
 .dolly-app .dolly-auth__langs span { font-weight: 700; color: var(--dolly-text); }
+
+/* Skip link (plugin template and themes): hidden until focused with the keyboard. */
+.dolly-skip-link {
+	position: absolute; left: 8px; top: -60px; z-index: 100002; padding: 12px 16px;
+	background: var(--dolly-primary); color: var(--dolly-on-primary); font: 700 1rem/1.2 var(--dolly-font);
+	border-radius: var(--dolly-btn-radius); text-decoration: none;
+}
+.dolly-skip-link:focus { top: 8px; outline: 3px solid var(--dolly-focus-ring); outline-offset: 2px; }
