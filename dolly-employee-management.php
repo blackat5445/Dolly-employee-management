@@ -3,7 +3,7 @@
  * Plugin Name:       Dolly Employee Management
  * Plugin URI:        https://github.com/blackat5445/Dolly-employee-management
  * Description:       Employee portal with verified clock-in (GPS, QR/PIN, Bluetooth, smart working), requests, sickness certificates, documents, administration and payroll exports.
- * Version:           1.14.0
+ * Version:           1.14.1
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Kasra Falahati
@@ -28,7 +28,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'DOLLY_VERSION', '1.14.0' );
+define( 'DOLLY_VERSION', '1.14.1' );
 define( 'DOLLY_DB_VERSION', '7' );
 define( 'DOLLY_FILE', __FILE__ );
 define( 'DOLLY_DIR', plugin_dir_path( __FILE__ ) );

@@ -4,7 +4,7 @@ Tags: employee, attendance, time tracking, timesheet, hr
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.14.0
+Stable tag: 1.14.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -121,6 +121,9 @@ Distributed under the terms of the GNU General Public License, version 2 or (at 
 
 == Changelog ==
 
+= 1.14.1 =
+* Feedback banner on the dashboard: star the project on GitHub, send feedback or review the plugin on WordPress.org. Shown after the guided setup and the tutorial; "Later" hides it for 30 days, "Don't show again" for good.
+
 = 1.14.0 =
 * Source language is now English, with the Italian translation included; gendered Italian forms use translation contexts.
 * License changed to GPLv2 or later.
@@ -144,6 +147,9 @@ Distributed under the terms of the GNU General Public License, version 2 or (at 
 * Theme integration, English translation, Bluetooth clock-in.
 
 == Upgrade Notice ==
+
+= 1.14.1 =
+Adds a dismissible feedback banner on the dashboard.
 
 = 1.14.0 =
 English is now the source language (Italian included). No changes to your data.

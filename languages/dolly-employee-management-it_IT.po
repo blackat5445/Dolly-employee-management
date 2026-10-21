@@ -620,7 +620,7 @@ msgid "QR or PIN"
 msgstr "QR o PIN"
 
 #: includes/class-dolly-attendance.php:408 includes/class-dolly-devices.php:323 includes/class-dolly-documents.php:333 includes/class-dolly-employees.php:336
-#: includes/class-dolly-employees.php:393 includes/class-dolly-employees.php:414 includes/class-dolly-rest.php:488 includes/class-dolly-rest.php:858
+#: includes/class-dolly-employees.php:393 includes/class-dolly-employees.php:414 includes/class-dolly-rest.php:489 includes/class-dolly-rest.php:859
 #: includes/class-dolly-verification.php:252
 msgid "Employee not found."
 msgstr "Dipendente non trovato."
@@ -630,7 +630,7 @@ msgid "Invalid date (future dates are not allowed)."
 msgstr "Data non valida (non sono ammesse date future)."
 
 #: includes/class-dolly-attendance.php:411 includes/class-dolly-closures.php:144 includes/class-dolly-closures.php:147 includes/class-dolly-requests.php:205
-#: includes/class-dolly-requests.php:210 includes/class-dolly-rest.php:694
+#: includes/class-dolly-requests.php:210 includes/class-dolly-rest.php:695
 msgid "Invalid date."
 msgstr "Data non valida."
 
@@ -1679,11 +1679,11 @@ msgstr "wp_mail ha restituito false (server di posta non configurato?)"
 msgid "Open: "
 msgstr "Apri: "
 
-#: includes/class-dolly-onboarding.php:139
+#: includes/class-dolly-onboarding.php:180
 msgid "The Dolly Portal theme is an older version: install the latest version of the Dolly Portal theme."
 msgstr "Il tema Dolly Portal è di una versione precedente: installa l'ultima versione del tema Dolly Portal."
 
-#: includes/class-dolly-onboarding.php:140
+#: includes/class-dolly-onboarding.php:181
 msgid "For a site dedicated to the employee portal, install the latest version of the Dolly Portal theme. The plugin also works with other themes."
 msgstr "Per un sito dedicato al portale dipendenti installa l'ultima versione del tema Dolly Portal. Il plugin funziona anche con altri temi."
 
@@ -2052,7 +2052,7 @@ msgstr "Modifica: "
 msgid "Invalid request type."
 msgstr "Tipo di richiesta non valido."
 
-#: includes/class-dolly-requests.php:188 includes/class-dolly-rest.php:602
+#: includes/class-dolly-requests.php:188 includes/class-dolly-rest.php:603
 msgid "Select the type."
 msgstr "Seleziona il tipo."
 
@@ -2381,63 +2381,63 @@ msgstr "Accesso riservato agli account sede."
 msgid "Access restricted to administrators."
 msgstr "Accesso riservato agli amministratori."
 
-#: includes/class-dolly-rest.php:229
+#: includes/class-dolly-rest.php:230
 msgid "Language not available."
 msgstr "Lingua non disponibile."
 
-#: includes/class-dolly-rest.php:237
+#: includes/class-dolly-rest.php:238
 msgid "Password updated."
 msgstr "Password aggiornata."
 
-#: includes/class-dolly-rest.php:303
+#: includes/class-dolly-rest.php:304
 msgid "Invalid month or year."
 msgstr "Mese o anno non valido."
 
-#: includes/class-dolly-rest.php:320
+#: includes/class-dolly-rest.php:321
 msgid "Invalid range."
 msgstr "Intervallo non valido."
 
-#: includes/class-dolly-rest.php:351
+#: includes/class-dolly-rest.php:352
 msgid "Overtime is not requested: it is calculated automatically from clock-ins and, beyond the limit or on days off, authorized by the administrator."
 msgstr "Gli straordinari non si richiedono: vengono calcolati automaticamente dalle timbrature e, oltre il limite o nei giorni di riposo, autorizzati dall'amministratore."
 
-#: includes/class-dolly-rest.php:422
+#: includes/class-dolly-rest.php:423
 msgid "This account is not linked to an active workplace."
 msgstr "Questo account non è collegato a una sede attiva."
 
-#: includes/class-dolly-rest.php:508
+#: includes/class-dolly-rest.php:509
 msgid "Password updated. The employee's active sessions have been closed."
 msgstr "Password aggiornata. Le sessioni attive del dipendente sono state chiuse."
 
-#: includes/class-dolly-rest.php:580 includes/class-dolly-rest.php:594 includes/class-dolly-rest.php:634 assets/js/dolly-admin.js:1447
+#: includes/class-dolly-rest.php:581 includes/class-dolly-rest.php:595 includes/class-dolly-rest.php:635 assets/js/dolly-admin.js:1447
 msgid "Select an employee."
 msgstr "Seleziona un dipendente."
 
-#: includes/class-dolly-rest.php:602
+#: includes/class-dolly-rest.php:603
 msgid "Invalid authorization type."
 msgstr "Tipo di autorizzazione non valido."
 
-#: includes/class-dolly-rest.php:650
+#: includes/class-dolly-rest.php:651
 msgid "Invalid parameters."
 msgstr "Parametri non validi."
 
-#: includes/class-dolly-rest.php:724
+#: includes/class-dolly-rest.php:725
 msgid "Employees_"
 msgstr "Dipendenti_"
 
-#: includes/class-dolly-rest.php:738 assets/js/dolly-admin.js:1813
+#: includes/class-dolly-rest.php:739 assets/js/dolly-admin.js:1813
 msgid "Attendance_"
 msgstr "Presenze_"
 
-#: includes/class-dolly-rest.php:765
+#: includes/class-dolly-rest.php:766
 msgid "Hours_summary_"
 msgstr "Riepilogo_ore_"
 
-#: includes/class-dolly-rest.php:806 includes/class-dolly-rest.php:814 includes/class-dolly-workplaces.php:138
+#: includes/class-dolly-rest.php:807 includes/class-dolly-rest.php:815 includes/class-dolly-workplaces.php:138
 msgid "Workplace not found."
 msgstr "Sede non trovata."
 
-#: includes/class-dolly-rest.php:946
+#: includes/class-dolly-rest.php:953
 msgid "Invalid key."
 msgstr "Chiave non valida."
 
@@ -5697,7 +5697,7 @@ msgstr "La configurazione guidata non è ancora completa: riprendila dal punto i
 msgid "Restart the guided setup"
 msgstr "Ricomincia la configurazione guidata"
 
-#: assets/js/dolly-admin.js:2327 assets/js/dolly-admin.js:3893
+#: assets/js/dolly-admin.js:2327 assets/js/dolly-admin.js:3926
 msgid "Resume the setup"
 msgstr "Riprendi la configurazione"
 
@@ -7379,7 +7379,7 @@ msgstr "Potrai crearli in seguito da Nuovo dipendente."
 msgid "All set"
 msgstr "Tutto pronto"
 
-#: assets/js/dolly-admin.js:3643 assets/js/dolly-admin.js:3904
+#: assets/js/dolly-admin.js:3643 assets/js/dolly-admin.js:3942
 msgid "Start the tutorial"
 msgstr "Avvia il tutorial"
 
@@ -7727,19 +7727,59 @@ msgstr "Tutorial completato."
 msgid "You can watch the tutorial again from Settings › Guided setup."
 msgstr "Puoi rivedere il tutorial da Impostazioni › Configurazione guidata."
 
-#: assets/js/dolly-admin.js:3892
+#: assets/js/dolly-admin.js:3894
+msgid "We'll ask again in a month."
+msgstr "Te lo chiederemo di nuovo tra un mese."
+
+#: assets/js/dolly-admin.js:3897
+msgid "Later"
+msgstr "Più tardi"
+
+#: assets/js/dolly-admin.js:3898
+msgid "Don't show again"
+msgstr "Non mostrare più"
+
+#: assets/js/dolly-admin.js:3900 assets/js/dolly-admin.js:3901
+msgid "Review on WordPress.org"
+msgstr "Recensisci su WordPress.org"
+
+#: assets/js/dolly-admin.js:3901
+msgid "Review on WordPress.org (available soon)"
+msgstr "Recensisci su WordPress.org (disponibile a breve)"
+
+#: assets/js/dolly-admin.js:3905
+msgid "Enjoying Dolly Employee Management?"
+msgstr "Ti piace Dolly Employee Management?"
+
+#: assets/js/dolly-admin.js:3906
+msgid "It is free and open source. A star on GitHub or a review on WordPress.org helps other teams find it, and your ideas and bug reports shape the next versions."
+msgstr "È gratuito e open source. Una stella su GitHub o una recensione su WordPress.org aiuta altri team a trovarlo, e le tue idee e segnalazioni di errori guidano le prossime versioni."
+
+#: assets/js/dolly-admin.js:3908
+msgid "Star on GitHub"
+msgstr "Metti una stella su GitHub"
+
+#: assets/js/dolly-admin.js:3909
+msgid "Send feedback"
+msgstr "Invia un feedback"
+
+#: assets/js/dolly-admin.js:3912
+msgid "Reviews open once the plugin is published in the WordPress.org directory."
+msgstr "Le recensioni saranno disponibili quando il plugin sarà pubblicato nella directory di WordPress.org."
+
+#: assets/js/dolly-admin.js:3925
 msgid "The guided setup is not complete yet."
 msgstr "La configurazione guidata non è ancora completa."
 
-#: assets/js/dolly-admin.js:3901
+#: assets/js/dolly-admin.js:3939
 msgid "Hi %s!"
 msgstr "Ciao %s!"
 
-#: assets/js/dolly-admin.js:3902
+#: assets/js/dolly-admin.js:3940
 msgid "A short interactive tutorial shows you how the dashboard, workplaces, employees, requests and the other sections of the panel work."
 msgstr "Ti mostriamo in un breve tutorial interattivo come funzionano dashboard, sedi, dipendenti, richieste e le altre sezioni del pannello."
 
-#: assets/js/dolly-admin.js:3904 assets/js/dolly-employee.js:1452
+#: assets/js/dolly-admin.js:3942 assets/js/dolly-employee.js:1452
 msgid "Not now"
 msgstr "Non ora"
 

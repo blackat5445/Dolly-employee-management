@@ -151,6 +151,7 @@ class Dolly_REST {
 			array( '/admin/documents', 'POST', 'admin_document_send', $adm ),
 			array( '/admin/documents/(?P<id>\d+)', 'DELETE', 'admin_document_delete', $adm ),
 			array( '/admin/tour', 'POST', 'admin_tour', $adm ),
+			array( '/admin/feedback', 'POST', 'admin_feedback', $adm ),
 			array( '/admin/appearance', 'GET', 'admin_appearance_get', $adm ),
 			array( '/admin/appearance', 'POST', 'admin_appearance_update', $adm ),
 			array( '/admin/appearance/preview', 'POST', 'admin_appearance_preview', $adm ),
@@ -892,6 +893,12 @@ class Dolly_REST {
 	/** Tutorial of the current administrator: { state: done | skipped | '' (restart) }. */
 	public static function admin_tour( WP_REST_Request $req ) {
 		Dolly_Onboarding::set_tour_state( (string) ( self::body( $req )['state'] ?? 'done' ) );
+		return Dolly_Onboarding::client_config();
+	}
+
+	/** Feedback banner of the current administrator: { action: later | dismiss }. */
+	public static function admin_feedback( WP_REST_Request $req ) {
+		Dolly_Onboarding::set_feedback( (string) ( self::body( $req )['action'] ?? 'dismiss' ) );
 		return Dolly_Onboarding::client_config();
 	}
 
