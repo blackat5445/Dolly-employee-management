@@ -24,7 +24,11 @@ class Dolly_Admin {
 		'dolly-exports'      => array( 'Exports', 'exports' ),
 		'dolly-appearance'   => array( 'Appearance', 'appearance' ),
 		'dolly-settings'     => array( 'Settings', 'settings' ),
+		'dolly-about'        => array( 'About', 'about' ),
 	);
+
+	/** Website of the plugin: empty until it is published (the About page then shows the link disabled). */
+	const WEBSITE_URL = '';
 
 	/** Pages outside the menus: the guided setup is opened after activation and from Impostazioni. */
 	const HIDDEN = array(
@@ -129,8 +133,27 @@ class Dolly_Admin {
 					'firmwareUrl'     => 'https://github.com/blackat5445/Dolly-employee-management/tree/main/firmware',
 					'map'             => self::map_config(),
 					'dollyIcon'       => DOLLY_URL . 'assets/img/dolly-logo.svg',
+					'about'           => self::about_config(),
 				)
 			)
+		);
+	}
+
+	/** Version and links of the About page. Filter dolly_about_links: { github, website }. */
+	private static function about_config() {
+		$links = (array) apply_filters(
+			'dolly_about_links',
+			array(
+				'github'  => Dolly_Onboarding::GITHUB_URL,
+				'website' => self::WEBSITE_URL,
+			)
+		);
+		return array(
+			'version'   => DOLLY_VERSION,
+			'github'    => esc_url_raw( (string) ( $links['github'] ?? '' ) ),
+			'website'   => esc_url_raw( (string) ( $links['website'] ?? '' ) ),
+			'author'    => 'Kasra Falahati',
+			'authorUrl' => 'https://kasra.eu',
 		);
 	}
 
@@ -185,6 +208,7 @@ class Dolly_Admin {
 						'dolly-exports'      => 'download',
 						'dolly-appearance'   => 'palette',
 						'dolly-settings'     => 'settings',
+						'dolly-about'        => 'info',
 					);
 					foreach ( self::PAGES as $slug => $p ) {
 						printf(
