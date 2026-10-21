@@ -19,10 +19,10 @@ class Dolly_Documents {
 
 	/** Default categories: always present, they cannot be removed. */
 	const CATEGORIES = array(
-		'contratto'  => 'Contratto',
-		'cu'         => 'CU',
-		'busta_paga' => 'Busta paga',
-		'altro'      => 'Altro',
+		'contratto'  => 'Contract',
+		'cu'         => 'Tax certificate (CU)',
+		'busta_paga' => 'Payslip',
+		'altro'      => 'Other',
 	);
 
 	/** Categories added by the administrators: [key => label]. */
@@ -118,7 +118,7 @@ class Dolly_Documents {
 			}
 			$label = mb_substr( $label, 0, 40 );
 			if ( in_array( mb_strtolower( $label ), $taken, true ) ) {
-				$errors[ 'category_' . $i ] = __( 'Esiste già una categoria con questo nome.', 'dolly-employee-management' );
+				$errors[ 'category_' . $i ] = __( 'A category with this name already exists.', 'dolly-employee-management' );
 				continue;
 			}
 			$taken[] = mb_strtolower( $label );
@@ -133,7 +133,7 @@ class Dolly_Documents {
 			$new[ $key ] = $label;
 		}
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', __( 'Controlla i nomi delle categorie.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Check the category names.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		$t = Dolly_Install::t( 'documents' );
 		foreach ( array_diff_key( $old, $new ) as $key => $label ) {
@@ -179,16 +179,16 @@ class Dolly_Documents {
 	private static function store( $user_id, $file ) {
 		if ( empty( $file ) || ! isset( $file['tmp_name'] ) || UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
 			$code = (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE );
-			$msg  = in_array( $code, array( UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ), true ) ? __( 'Il file supera la dimensione massima consentita dal server.', 'dolly-employee-management' ) : __( 'Scegli il file da inviare.', 'dolly-employee-management' );
+			$msg  = in_array( $code, array( UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ), true ) ? __( 'The file exceeds the maximum size allowed by the server.', 'dolly-employee-management' ) : __( 'Choose the file to send.', 'dolly-employee-management' );
 			return new WP_Error( 'dolly_upload', $msg, array( 'status' => 400, 'fields' => array( 'file' => $msg ) ) );
 		}
 		if ( (int) $file['size'] > self::MAX_BYTES ) {
-			return new WP_Error( 'dolly_upload', __( 'Il file supera i 20 MB.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'file' => __( 'Il file supera i 20 MB.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_upload', __( 'The file is larger than 20 MB.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'file' => __( 'The file is larger than 20 MB.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( ! is_uploaded_file( $file['tmp_name'] ) ) {
-			return new WP_Error( 'dolly_upload', __( 'Caricamento non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_upload', __( 'Invalid upload.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
-		$bad   = __( 'Formato non consentito. Carica un file PDF, immagine (JPG, PNG), Word, Excel o OpenDocument.', 'dolly-employee-management' );
+		$bad   = __( 'File type not allowed. Upload a PDF, an image (JPG, PNG), a Word, Excel or OpenDocument file.', 'dolly-employee-management' );
 		$check = wp_check_filetype( $file['name'], self::ALLOWED );
 		$ext   = $check['ext'] ? strtolower( $check['ext'] ) : '';
 		if ( ! $ext || ! isset( self::ALLOWED[ $ext ] ) ) {
@@ -199,14 +199,14 @@ class Dolly_Documents {
 			$real = finfo_file( $fi, $file['tmp_name'] );
 			finfo_close( $fi );
 			if ( ! in_array( $real, self::REAL_TYPES[ $ext ], true ) ) {
-				$msg = __( 'Il contenuto del file non corrisponde alla sua estensione.', 'dolly-employee-management' );
+				$msg = __( 'The content of the file does not match its extension.', 'dolly-employee-management' );
 				return new WP_Error( 'dolly_upload', $msg, array( 'status' => 400, 'fields' => array( 'file' => $msg ) ) );
 			}
 		}
 		$dir  = self::user_dir( $user_id, true );
 		$name = bin2hex( random_bytes( 20 ) );
 		if ( ! $dir || ! @move_uploaded_file( $file['tmp_name'], $dir . '/' . $name ) ) {
-			return new WP_Error( 'dolly_upload', __( 'Impossibile salvare il file. Controlla i permessi della cartella privata.', 'dolly-employee-management' ), array( 'status' => 500 ) );
+			return new WP_Error( 'dolly_upload', __( 'Unable to save the file. Check the permissions of the private folder.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 		}
 		@chmod( $dir . '/' . $name, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- failure handled by the caller; private files of the plugin.
 		return array(
@@ -330,16 +330,16 @@ class Dolly_Documents {
 		$desc   = trim( sanitize_textarea_field( (string) ( $data['description'] ?? '' ) ) );
 		$errors = array();
 		if ( ! $uid || ! Dolly_Employees::is_employee( $uid ) ) {
-			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Employee not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( ! isset( self::categories()[ $cat ] ) ) {
-			$errors['category'] = __( 'Scegli una categoria.', 'dolly-employee-management' );
+			$errors['category'] = __( 'Choose a category.', 'dolly-employee-management' );
 		}
 		if ( '' === $title ) {
-			$errors['title'] = __( 'Campo obbligatorio.', 'dolly-employee-management' );
+			$errors['title'] = __( 'Required field.', 'dolly-employee-management' );
 		}
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Check the highlighted fields.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		$stored = self::store( $uid, $file );
 		if ( is_wp_error( $stored ) ) {
@@ -366,8 +366,8 @@ class Dolly_Documents {
 			$uid,
 			'document_received',
 			fn () => array(
-				sprintf( /* translators: %s: document title. */ __( 'Nuovo documento: %s', 'dolly-employee-management' ), $doc->title ),
-				sprintf( /* translators: %s: document category. */ __( 'Categoria: %s. Lo trovi nella sezione Documenti del portale.', 'dolly-employee-management' ), self::categories()[ $doc->category ] ?? $doc->category ) . ( $doc->description ? "\n" . $doc->description : '' ),
+				sprintf( /* translators: %s: document title. */ __( 'New document: %s', 'dolly-employee-management' ), $doc->title ),
+				sprintf( /* translators: %s: document category. */ __( 'Category: %s. You find it in the Documents section of the portal.', 'dolly-employee-management' ), self::categories()[ $doc->category ] ?? $doc->category ) . ( $doc->description ? "\n" . $doc->description : '' ),
 			),
 			null,
 			'documenti'
@@ -380,7 +380,7 @@ class Dolly_Documents {
 		global $wpdb;
 		$d = self::get( $id );
 		if ( ! $d ) {
-			return new WP_Error( 'dolly_not_found', __( 'Documento non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Document not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$path = self::path( $d );
 		if ( $path && file_exists( $path ) ) {
@@ -399,17 +399,17 @@ class Dolly_Documents {
 		global $wpdb;
 		$d = self::get( $id );
 		if ( ! $d ) {
-			return new WP_Error( 'dolly_not_found', __( 'Documento non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Document not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$uid      = get_current_user_id();
 		$is_admin = current_user_can( 'dolly_manage' );
 		$is_owner = (int) $d->user_id === $uid && Dolly_Employees::is_active( $uid );
 		if ( ! $is_admin && ! $is_owner ) {
-			return new WP_Error( 'dolly_forbidden', __( 'Non sei autorizzato ad aprire questo documento.', 'dolly-employee-management' ), array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_forbidden', __( 'You are not allowed to open this document.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		$path = self::path( $d );
 		if ( ! $path || ! is_readable( $path ) ) {
-			return new WP_Error( 'dolly_not_found', __( 'File non disponibile.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'File not available.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( $is_owner && ! $d->viewed_at ) {
 			$wpdb->update( Dolly_Install::t( 'documents' ), array( 'viewed_at' => Dolly_Time::now_utc() ), array( 'id' => (int) $d->id ) );

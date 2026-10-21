@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Translation tools for Dolly Employee Management (Python 3, no dependencies).
 
-The plugin is written in Italian. Translations live in languages/dolly-employee-management-<locale>.po.
+The plugin is written in English. Translations live in languages/dolly-employee-management-<locale>.po.
 
     python3 tools/i18n/i18n.py update     # rescan the code: refresh the .pot and add new strings to every .po
     python3 tools/i18n/i18n.py compile    # .po -> .mo (PHP) and .js (browser dictionary, window.DOLLY_I18N)
     python3 tools/i18n/i18n.py check      # report untranslated strings and placeholder mistakes
 
-Translatable strings: __( / esc_html__( / esc_attr__( / esc_html_e( / esc_attr_e( with the plugin text domain in PHP,
-__('...') in JS, and the label constants listed in LABEL_CONSTS (translated at runtime with Dolly_I18n::t()).
+Translatable strings: __( / esc_html__( / esc_attr__( / esc_html_e( / esc_attr_e( and, with a context, _x( / esc_html_x( /
+esc_attr_x( / _ex( with the plugin text domain in PHP; __('...') and _x('...', 'context') in JS; and the label constants
+listed in LABEL_CONSTS (translated at runtime with Dolly_I18n::t(), with the context of CONST_CONTEXT if any).
+Entries with a context are keyed "context\x04text" (gettext format) in the .mo and .js files.
 """
 import json
 import re
@@ -20,14 +22,24 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 DOMAIN = 'dolly-employee-management'
 LANG_DIR = ROOT / 'languages'
 
-LABEL_CONSTS = {'PAGES', 'ABSENCE_GROUPS', 'SHORT_MONTHS', 'SHORT_WEEKDAYS', 'TYPES', 'RESOLUTIONS', 'SCHEMES', 'FONTS', 'TEXT_SIZES',
+LABEL_CONSTS = {'PAGES', 'HIDDEN', 'ABSENCE_GROUPS', 'SHORT_MONTHS', 'SHORT_WEEKDAYS', 'TYPES', 'RESOLUTIONS', 'SCHEMES', 'FONTS', 'TEXT_SIZES',
                 'BUTTON_SHAPES', 'SHADOWS', 'DENSITIES', 'ACTIONS', 'METHODS', 'LABELS', 'STATUSES', 'CERT_STATUSES', 'FIXED', 'CODES',
                 'LEAVE_KINDS', 'SHORT_DAYS', 'VERIFICATION_METHODS', 'CERTIFICATE_MODES', 'EVENTS', 'EMPLOYEE_EVENTS', 'ADMIN_EVENTS',
                 'KINDS', 'MONTHS', 'WEEKDAYS', 'CATEGORIES', 'MODES'}
 KEY_IS_LABEL = {'ABSENCE_GROUPS'}
 CODES = {'', 'A', 'Av', 'O', 'FER', 'S', 'FS', 'FE', 'P', 'ROL', 'EO', 'Pn', 'PL', 'M', 'I'}
 # Default texts of Dolly_Appearance::defaults(), translated while unchanged (Dolly_Appearance::DEFAULT_TEXTS).
-APPEARANCE_TEXTS = ['Gestione Dipendenti', 'Portale dipendenti', 'Codice presenze', 'Accedi', "Accedi con le credenziali fornite dall'amministratore."]
+APPEARANCE_TEXTS = ['Employee Management', 'Employee portal', 'Attendance code', 'Sign in', 'Sign in with the credentials provided by your administrator.']
+# Constants translated with a context at their call sites: name or "file:name" -> context.
+CONST_CONTEXT = {'SHORT_MONTHS': 'short month', 'ABSENCE_GROUPS': 'absence chart', 'class-dolly-broadcasts.php:STATUSES': 'broadcast status'}
+
+
+def key(text, ctx=''):
+    return ctx + '\x04' + text if ctx else text
+
+
+def split_key(k):
+    return k.split('\x04', 1) if '\x04' in k else ['', k]
 
 
 # ---------------------------------------------------------------- source scanning
@@ -110,21 +122,48 @@ def js_strings(src):
         i += 1
 
 
-def php_strings(src):
-    for m in re.finditer(r'\b(__|esc_html__|esc_attr__|esc_html_e|esc_attr_e)\(\s*', src):
+def js_context_strings(src):
+    """_x('text', 'context') calls: (line, context, text)."""
+    for m in re.finditer(r'\b_x\(\s*', src):
         i = m.end()
         if src[i] not in '\'"':
             continue
         j = _skip_string(src, i)
-        if re.match(r"\s*,\s*'" + DOMAIN + "'", src[j + 1:j + 60]):
-            yield src.count('\n', 0, i) + 1, unescape_php(src[i + 1:j], src[i])
+        c = re.match(r'\s*,\s*', src[j + 1:])
+        k = j + 1 + c.end() if c else -1
+        if k < 0 or src[k] not in '\'"':
+            continue
+        e = _skip_string(src, k)
+        yield src.count('\n', 0, i) + 1, unescape_js(src[k + 1:e]), unescape_js(src[i + 1:j])
 
 
-def const_strings(src):
+def php_strings(src):
+    """(line, context, text) of the gettext calls with the plugin text domain."""
+    for m in re.finditer(r'\b(__|esc_html__|esc_attr__|esc_html_e|esc_attr_e|_x|esc_html_x|esc_attr_x|_ex)\(\s*', src):
+        i = m.end()
+        if src[i] not in '\'"':
+            continue
+        j = _skip_string(src, i)
+        ctx = ''
+        rest = j + 1
+        if m.group(1).endswith('x'):
+            c = re.match(r'\s*,\s*', src[rest:])
+            k = rest + c.end()
+            if src[k] not in '\'"':
+                continue
+            e = _skip_string(src, k)
+            ctx = unescape_php(src[k + 1:e], src[k])
+            rest = e + 1
+        if re.match(r"\s*,\s*'" + DOMAIN + "'", src[rest:rest + 60]):
+            yield src.count('\n', 0, i) + 1, ctx, unescape_php(src[i + 1:j], src[i])
+
+
+def const_strings(src, fname=''):
     for m in re.finditer(r'const\s+(\w+)\s*=\s*array\(', src):
         name = m.group(1)
         if name not in LABEL_CONSTS:
             continue
+        ctx = CONST_CONTEXT.get(name) or CONST_CONTEXT.get(fname + ':' + name, '')
         depth, j = 1, m.end()
         while depth:
             if src[j] in '\'"':
@@ -140,7 +179,7 @@ def const_strings(src):
                 continue
             if value in CODES or re.fullmatch(r'[a-z0-9_\-]+', value) or (name == 'FONTS' and ',' in value):
                 continue
-            yield name, value
+            yield name, ctx, value
 
 
 def extract():
@@ -156,16 +195,19 @@ def extract():
     for p in sorted((ROOT / 'includes').glob('*.php')) + [ROOT / 'dolly-employee-management.php', ROOT / 'templates' / 'fallback.php']:
         src = p.read_text(encoding='utf-8')
         rel = p.relative_to(ROOT).as_posix()
-        for line, s in php_strings(src):
-            add(s, f'{rel}:{line}')
-        for const, s in const_strings(src):
-            add(s, f'{rel}:{const}')
+        for line, ctx, s in php_strings(src):
+            add(key(s, ctx), f'{rel}:{line}')
+        for const, ctx, s in const_strings(src, p.name):
+            add(key(s, ctx), f'{rel}:{const}')
     for s in APPEARANCE_TEXTS:
         add(s, 'includes/class-dolly-appearance.php:defaults')
     for p in sorted((ROOT / 'assets' / 'js').glob('dolly-*.js')):
         rel = p.relative_to(ROOT).as_posix()
-        for line, s in js_strings(p.read_text(encoding='utf-8')):
+        src = p.read_text(encoding='utf-8')
+        for line, s in js_strings(src):
             add(s, f'{rel}:{line}')
+        for line, ctx, s in js_context_strings(src):
+            add(key(s, ctx), f'{rel}:{line}')
     return cat
 
 
@@ -186,9 +228,9 @@ def _po_line(x):
 
 
 def read_po(path):
-    """{msgid: (msgstr, [refs])} and the header."""
+    """{msgid: (msgstr, [refs])} and the header. Entries with a context are keyed "context\\x04msgid"."""
     entries, header = {}, ''
-    cur = {'refs': [], 'id': None, 'str': None, 'field': None}
+    cur = {'refs': [], 'id': None, 'str': None, 'field': None, 'ctx': ''}
 
     def flush():
         if cur['id'] is not None:
@@ -196,14 +238,18 @@ def read_po(path):
                 nonlocal header
                 header = cur['str'] or ''
             else:
-                entries[cur['id']] = (cur['str'] or '', cur['refs'])
-        cur.update({'refs': [], 'id': None, 'str': None, 'field': None})
+                entries[key(cur['id'], cur['ctx'])] = (cur['str'] or '', cur['refs'])
+        cur.update({'refs': [], 'id': None, 'str': None, 'field': None, 'ctx': ''})
 
     for line in path.read_text(encoding='utf-8').splitlines() + ['']:
         if line.startswith('#:'):
             if cur['id'] is not None:
                 flush()
             cur['refs'] += line[2:].split()
+        elif line.startswith('msgctxt '):
+            if cur['id'] is not None:
+                flush()
+            cur['ctx'], cur['field'] = _po_line(line[8:]), 'ctx'
         elif line.startswith('msgid '):
             if cur['id'] is not None:
                 flush()
@@ -226,15 +272,18 @@ def header_for(locale):
             + (f'Language: {locale}\n' if locale else '')
             + 'Plural-Forms: nplurals=2; plural=(n != 1);\n'
             'X-Domain: dolly-employee-management\n'
-            'X-Source-Language: it_IT\n')
+            'X-Source-Language: en_US\n')
 
 
 def write_po(path, catalog, translations, locale):
-    out = ['# Dolly Employee Management. Source language: Italian.', 'msgid ""', 'msgstr ' + po_quote(header_for(locale)), '']
+    out = ['# Dolly Employee Management. Source language: English.', 'msgid ""', 'msgstr ' + po_quote(header_for(locale)), '']
     for msgid, refs in catalog.items():
         for i in range(0, len(refs), 4):
             out.append('#: ' + ' '.join(refs[i:i + 4]))
-        out.append('msgid ' + po_quote(msgid))
+        ctx, text = split_key(msgid)
+        if ctx:
+            out.append('msgctxt ' + po_quote(ctx))
+        out.append('msgid ' + po_quote(text))
         out.append('msgstr ' + po_quote(translations.get(msgid, '')))
         out.append('')
     path.write_text('\n'.join(out), encoding='utf-8')
@@ -274,6 +323,7 @@ PLACEHOLDER = re.compile(r'%(?:\d+\$)?[sdf%]')
 
 
 def problems(msgid, msgstr):
+    msgid = split_key(msgid)[1]
     if not msgstr:
         return 'untranslated'
     if sorted(PLACEHOLDER.findall(msgid)) != sorted(PLACEHOLDER.findall(msgstr)):

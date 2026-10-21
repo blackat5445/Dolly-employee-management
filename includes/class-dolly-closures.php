@@ -15,8 +15,8 @@ defined( 'ABSPATH' ) || exit;
 class Dolly_Closures {
 
 	const TYPES = array(
-		'collective' => 'Chiusura collettiva',
-		'holiday'    => 'Chiusura per festività',
+		'collective' => 'Collective closure',
+		'holiday'    => 'Holiday closure',
 	);
 
 	/** Longest range created at once. */
@@ -141,16 +141,16 @@ class Dolly_Closures {
 		$from = (string) ( $data['from'] ?? ( $data['date'] ?? '' ) );
 		$to   = (string) ( $data['to'] ?? $from );
 		if ( ! Dolly_Time::is_date( $from ) || ! Dolly_Time::is_date( $to ) ) {
-			return new WP_Error( 'dolly_invalid', __( 'Date non valide.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'from' => __( 'Data non valida.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Invalid dates.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'from' => __( 'Invalid date.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( $to < $from ) {
-			return new WP_Error( 'dolly_invalid', __( 'La data di fine deve essere uguale o successiva all\'inizio.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'to' => __( 'Data non valida.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'The end date must be the same as or after the start.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'to' => __( 'Invalid date.', 'dolly-employee-management' ) ) ) );
 		}
 		$dates = array();
 		for ( $d = $from; $d <= $to; $d = Dolly_Time::add_days( $d, 1 ) ) {
 			$dates[] = $d;
 			if ( count( $dates ) > self::MAX_DAYS ) {
-				return new WP_Error( 'dolly_invalid', __( 'Il periodo può durare al massimo ', 'dolly-employee-management' ) . self::MAX_DAYS . __( ' giorni.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'to' => __( 'Periodo troppo lungo.', 'dolly-employee-management' ) ) ) );
+				return new WP_Error( 'dolly_invalid', __( 'The period can last at most ', 'dolly-employee-management' ) . self::MAX_DAYS . __( ' days.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'to' => __( 'Period too long.', 'dolly-employee-management' ) ) ) );
 			}
 		}
 		$type = isset( self::TYPES[ $data['type'] ?? '' ] ) ? $data['type'] : 'collective';
@@ -168,13 +168,13 @@ class Dolly_Closures {
 		$bc = (array) ( $data['broadcast'] ?? array() );
 		if ( ! empty( $bc['enabled'] ) ) {
 			if ( ! $wids ) {
-				return new WP_Error( 'dolly_invalid', __( 'Seleziona almeno una sede chiusa per inviare il messaggio.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+				return new WP_Error( 'dolly_invalid', __( 'Select at least one closed workplace to send the message.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 			}
 			if ( '' === trim( (string) ( $bc['message'] ?? '' ) ) ) {
-				return new WP_Error( 'dolly_invalid', __( 'Scrivi il messaggio da inviare.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'message' => __( 'Scrivi il messaggio.', 'dolly-employee-management' ) ) ) );
+				return new WP_Error( 'dolly_invalid', __( 'Write the message to send.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'message' => __( 'Write the message.', 'dolly-employee-management' ) ) ) );
 			}
 			if ( empty( $bc['email'] ) && empty( $bc['portal'] ) && empty( $bc['popup'] ) ) {
-				return new WP_Error( 'dolly_invalid', __( 'Scegli almeno un canale di invio.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'channels' => __( 'Scegli email e/o notifica nell\'app.', 'dolly-employee-management' ) ) ) );
+				return new WP_Error( 'dolly_invalid', __( 'Choose at least one delivery channel.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'channels' => __( 'Choose email and/or in-app notification.', 'dolly-employee-management' ) ) ) );
 			}
 		}
 
@@ -213,7 +213,7 @@ class Dolly_Closures {
 				if ( self::covers( $ids, $wids ) ) {
 					$affected[ $uid ] = true;
 					if ( isset( $absences[ $uid . '|' . $date ] ) ) {
-						Dolly_Anomalies::resolve_absence( $uid, $date, $date, 'justified', __( 'Giustificata: ', 'dolly-employee-management' ) . $name . '.' );
+						Dolly_Anomalies::resolve_absence( $uid, $date, $date, 'justified', __( 'Justified: ', 'dolly-employee-management' ) . $name . '.' );
 					}
 				}
 				// Everyone assigned to at least one closed workplace is informed.

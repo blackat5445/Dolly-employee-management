@@ -20,20 +20,20 @@ defined( 'ABSPATH' ) || exit;
 class Dolly_Hours {
 
 	const CODES = array(
-		'O'   => 'Ordinario',
-		'FER' => 'Sabato',
-		'S'   => 'Straordinario',
-		'FS'  => 'Festivo',
-		'FE'  => 'Ferie',
-		'P'   => 'Permesso',
-		'ROL' => 'Permesso retribuito per riduzione dell\'orario di lavoro',
-		'EO'  => 'Ex festività',
-		'Pn'  => 'Permesso non retribuito',
-		'PL'  => 'Permesso Legge 104',
-		'M'   => 'Malattia',
-		'I'   => 'Infortunio',
-		'Av'  => 'Donazione sangue',
-		'A'   => 'Assenza non retribuita',
+		'O'   => 'Regular',
+		'FER' => 'Saturday',
+		'S'   => 'Overtime',
+		'FS'  => 'Holiday',
+		'FE'  => 'Vacation',
+		'P'   => 'Leave',
+		'ROL' => 'Paid leave for reduced working hours',
+		'EO'  => 'Former public holidays',
+		'Pn'  => 'Unpaid leave',
+		'PL'  => 'Law 104 leave',
+		'M'   => 'Sickness',
+		'I'   => 'Injury',
+		'Av'  => 'Blood donation',
+		'A'   => 'Unpaid absence',
 	);
 
 	/** Codes used until version 1.6 and their current names (stored rows are renamed on upgrade). */
@@ -338,7 +338,7 @@ class Dolly_Hours {
 			$names[ $uid ] = Dolly_Employees::sort_name( $uid );
 		}
 		asort( $names, SORT_FLAG_CASE | SORT_STRING );
-		$head = array( __( 'Dipendente', 'dolly-employee-management' ), __( 'Mese', 'dolly-employee-management' ), __( 'Ore previste', 'dolly-employee-management' ) );
+		$head = array( __( 'Employee', 'dolly-employee-management' ), __( 'Month', 'dolly-employee-management' ), __( 'Planned hours', 'dolly-employee-management' ) );
 		foreach ( self::CODES as $code => $label ) {
 			$head[] = $code . ' - ' . Dolly_I18n::t( $label );
 		}

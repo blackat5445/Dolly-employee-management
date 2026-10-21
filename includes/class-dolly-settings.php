@@ -13,60 +13,60 @@ class Dolly_Settings {
 
 	/** Ways an employee can prove presence at the workplace; several can be allowed at once. */
 	const VERIFICATION_METHODS = array(
-		'gps'   => 'Posizione GPS',
-		'qrpin' => 'QR o PIN dello schermo della sede',
-		'ble'   => 'Bluetooth (dispositivo in sede)',
+		'gps'   => 'GPS location',
+		'qrpin' => 'QR or PIN on the workplace display',
+		'ble'   => 'Bluetooth (device at the workplace)',
 	);
 
 	/** Methods that prove presence with a code from the workplace (screen or Bluetooth device). */
 	const CODE_METHODS = array( 'qrpin', 'ble' );
 
 	const CERTIFICATE_MODES = array(
-		'required' => 'Obbligatorio senza scadenza',
-		'deadline' => 'Obbligatorio entro X giorni di calendario dalla segnalazione',
-		'disabled' => 'Disattivato',
+		'required' => 'Required, no deadline',
+		'deadline' => 'Required within X calendar days of the report',
+		'disabled' => 'Disabled',
 	);
 
 	const EVENTS = array(
-		'request_submitted'    => 'Nuova richiesta inviata',
-		'request_decided'      => 'Decisione su una richiesta',
-		'overtime_pending'     => 'Straordinario oltre il limite da approvare',
-		'oncall_pending'       => 'Turno a chiamata da approvare',
-		'smart_pending'        => 'Smart working da approvare',
-		'document_received'    => 'Nuovo documento',
-		'sickness_reported'    => 'Malattia o infortunio segnalato',
-		'certificate_required' => 'Certificato richiesto',
-		'certificate_overdue'  => 'Certificato scaduto',
-		'certificate_uploaded' => 'Certificato caricato',
-		'anomaly_created'      => 'Nuova anomalia',
-		'anomaly_resolved'     => 'Anomalia risolta',
-		'iban_changed'         => 'IBAN modificato dal dipendente',
+		'request_submitted'    => 'New request sent',
+		'request_decided'      => 'Decision on a request',
+		'overtime_pending'     => 'Overtime over the limit to approve',
+		'oncall_pending'       => 'On-call shift to approve',
+		'smart_pending'        => 'Remote work to approve',
+		'document_received'    => 'New document',
+		'sickness_reported'    => 'Sickness or injury reported',
+		'certificate_required' => 'Certificate required',
+		'certificate_overdue'  => 'Certificate overdue',
+		'certificate_uploaded' => 'Certificate uploaded',
+		'anomaly_created'      => 'New anomaly',
+		'anomaly_resolved'     => 'Anomaly resolved',
+		'iban_changed'         => 'IBAN changed by the employee',
 	);
 
 	/** Events an employee can receive (label as seen from the employee's side). */
 	const EMPLOYEE_EVENTS = array(
-		'request_decided'      => 'Esito delle richieste',
-		'overtime_pending'     => 'Straordinario oltre il limite in attesa di approvazione',
-		'sickness_reported'    => 'Malattia o infortunio registrato dall\'amministratore',
-		'certificate_required' => 'Certificato da caricare (medico o di donazione)',
-		'certificate_overdue'  => 'Certificato scaduto (medico o di donazione)',
-		'anomaly_created'      => 'Nuova anomalia (assenza, uscita mancante…)',
-		'anomaly_resolved'     => 'Anomalia risolta',
-		'document_received'    => 'Nuovo documento (contratto, CU, busta paga…)',
+		'request_decided'      => 'Request outcomes',
+		'overtime_pending'     => 'Overtime over the limit pending approval',
+		'sickness_reported'    => 'Sickness or injury recorded by the administrator',
+		'certificate_required' => 'Certificate to upload (medical or donation)',
+		'certificate_overdue'  => 'Certificate overdue (medical or donation)',
+		'anomaly_created'      => 'New anomaly (absence, missing clock-out…)',
+		'anomaly_resolved'     => 'Anomaly resolved',
+		'document_received'    => 'New document (contract, tax certificate, payslip…)',
 	);
 
 	/** Events the administrators can receive. */
 	const ADMIN_EVENTS = array(
-		'request_submitted'    => 'Nuova richiesta di un dipendente',
-		'overtime_pending'     => 'Straordinario oltre il limite da approvare',
-		'oncall_pending'       => 'Turno a chiamata da approvare',
-		'smart_pending'        => 'Smart working da approvare',
-		'sickness_reported'    => 'Malattia o infortunio segnalato da un dipendente',
-		'certificate_required' => 'Certificato richiesto',
-		'certificate_overdue'  => 'Certificato scaduto',
-		'certificate_uploaded' => 'Certificato caricato',
-		'anomaly_created'      => 'Nuova anomalia',
-		'iban_changed'         => 'IBAN modificato da un dipendente',
+		'request_submitted'    => 'New request from an employee',
+		'overtime_pending'     => 'Overtime over the limit to approve',
+		'oncall_pending'       => 'On-call shift to approve',
+		'smart_pending'        => 'Remote work to approve',
+		'sickness_reported'    => 'Sickness or injury reported by an employee',
+		'certificate_required' => 'Certificate required',
+		'certificate_overdue'  => 'Certificate overdue',
+		'certificate_uploaded' => 'Certificate uploaded',
+		'anomaly_created'      => 'New anomaly',
+		'iban_changed'         => 'IBAN changed by an employee',
 	);
 
 	private static function all_on( $events ) {
@@ -179,7 +179,7 @@ class Dolly_Settings {
 		if ( isset( $input['verification_methods'] ) && is_array( $input['verification_methods'] ) ) {
 			$methods = array_values( array_intersect( array_keys( self::VERIFICATION_METHODS ), $input['verification_methods'] ) );
 			if ( ! $methods ) {
-				return new WP_Error( 'dolly_invalid', __( 'Scegli almeno un metodo di verifica.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'verification_methods' => __( 'Scegli almeno un metodo di verifica.', 'dolly-employee-management' ) ) ) );
+				return new WP_Error( 'dolly_invalid', __( 'Choose at least one verification method.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'verification_methods' => __( 'Choose at least one verification method.', 'dolly-employee-management' ) ) ) );
 			}
 			$new['verification_methods'] = $methods;
 		}
@@ -190,7 +190,7 @@ class Dolly_Settings {
 			$new['verification_require_gps'] = (bool) $input['verification_require_gps'];
 		}
 		if ( $new['verification_require_gps'] && ! array_intersect( self::CODE_METHODS, $new['verification_methods'] ) ) {
-			return new WP_Error( 'dolly_invalid', __( 'Con il GPS sempre richiesto serve anche QR/PIN o Bluetooth.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'verification_require_gps' => __( 'Attiva anche QR/PIN o Bluetooth, oppure disattiva questa opzione.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'With GPS always required, QR/PIN or Bluetooth is also needed.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'verification_require_gps' => __( 'Also enable QR/PIN or Bluetooth, or turn off this option.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( isset( $input['default_radius'] ) ) {
 			$new['default_radius'] = max( 10, min( 5000, (int) $input['default_radius'] ) );

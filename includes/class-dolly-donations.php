@@ -18,12 +18,12 @@ class Dolly_Donations {
 	const TYPE = 'donazione';
 
 	const CERT_STATUSES = array(
-		'waiting'      => 'Certificato da caricare dopo la donazione',
-		'not_required' => 'Non richiesto',
-		'missing'      => 'Certificato mancante',
-		'overdue'      => 'Certificato scaduto',
-		'uploaded'     => 'Certificato caricato',
-		'cleared'      => 'Requisito annullato',
+		'waiting'      => 'Certificate to upload after the donation',
+		'not_required' => 'Not required',
+		'missing'      => 'Missing certificate',
+		'overdue'      => 'Certificate overdue',
+		'uploaded'     => 'Certificate uploaded',
+		'cleared'      => 'Requirement canceled',
 	);
 
 	private static function table() {
@@ -69,14 +69,14 @@ class Dolly_Donations {
 		$wpdb->update( self::table(), array( 'certificate_status' => 'disabled' === $mode ? 'not_required' : 'waiting', 'certificate_due' => null ), array( 'id' => (int) $r->id ) );
 		if ( $r->parent_id ) {
 			// A modification replaces the original request: its requirement is closed.
-			self::close_requirement( (int) $r->parent_id, __( 'Richiesta di donazione sostituita da una modifica.', 'dolly-employee-management' ) );
+			self::close_requirement( (int) $r->parent_id, __( 'Donation request replaced by a change.', 'dolly-employee-management' ) );
 		}
 		self::request_certificates();
 	}
 
 	/** The donation was cancelled: nothing to upload anymore. */
 	public static function on_cancelled( $request_id ) {
-		self::close_requirement( (int) $request_id, __( 'Donazione annullata.', 'dolly-employee-management' ) );
+		self::close_requirement( (int) $request_id, __( 'Donation canceled.', 'dolly-employee-management' ) );
 	}
 
 	private static function close_requirement( $request_id, $note ) {
@@ -107,10 +107,10 @@ class Dolly_Donations {
 			}
 			$uid  = (int) $r->user_id;
 			$day  = Dolly_Time::fmt_date( $r->start_date );
-			$body = __( 'Carica il certificato della donazione di sangue del ', 'dolly-employee-management' ) . $day . ( $due ? __( ' entro il ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $due ) : '' ) . __( ': Richieste › Donazione sangue › Carica certificato.', 'dolly-employee-management' );
-			Dolly_Anomalies::open( $uid, 'missing_certificate', 'doncert-' . (int) $r->id, $r->start_date, 'request', (int) $r->id, __( 'Certificato di donazione sangue mancante per il ', 'dolly-employee-management' ) . $day . ( $due ? __( ' (scadenza ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $due ) . ')' : '' ) );
-			Dolly_Notifications::notify_user( $uid, 'certificate_required', fn () => array( __( 'Certificato di donazione richiesto', 'dolly-employee-management' ), $body ), null, 'richieste', 'doncertreq-' . (int) $r->id );
-			Dolly_Notifications::notify_admins( 'certificate_required', fn () => array( __( 'Certificato di donazione richiesto: ', 'dolly-employee-management' ) . Dolly_Employees::display_name( $uid ), __( 'Donazione sangue del ', 'dolly-employee-management' ) . $day . '.' ), null, 'dolly-requests', 'doncertreq-' . (int) $r->id );
+			$body = __( 'Upload the certificate for your blood donation on ', 'dolly-employee-management' ) . $day . ( $due ? __( ' by ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $due ) : '' ) . __( ': Requests › Blood donation › Upload certificate.', 'dolly-employee-management' );
+			Dolly_Anomalies::open( $uid, 'missing_certificate', 'doncert-' . (int) $r->id, $r->start_date, 'request', (int) $r->id, __( 'Blood donation certificate missing for ', 'dolly-employee-management' ) . $day . ( $due ? __( ' (due ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $due ) . ')' : '' ) );
+			Dolly_Notifications::notify_user( $uid, 'certificate_required', fn () => array( __( 'Donation certificate required', 'dolly-employee-management' ), $body ), null, 'richieste', 'doncertreq-' . (int) $r->id );
+			Dolly_Notifications::notify_admins( 'certificate_required', fn () => array( __( 'Donation certificate required: ', 'dolly-employee-management' ) . Dolly_Employees::display_name( $uid ), __( 'Blood donation on ', 'dolly-employee-management' ) . $day . '.' ), null, 'dolly-requests', 'doncertreq-' . (int) $r->id );
 		}
 	}
 
@@ -128,8 +128,8 @@ class Dolly_Donations {
 			}
 			Dolly_Anomalies::mark_overdue( 'doncert-' . (int) $r->id );
 			$day = Dolly_Time::fmt_date( $r->start_date );
-			Dolly_Notifications::notify_user( (int) $r->user_id, 'certificate_overdue', fn () => array( __( 'Certificato di donazione scaduto', 'dolly-employee-management' ), __( 'Il termine per il certificato della donazione di sangue del ', 'dolly-employee-management' ) . $day . __( ' è scaduto. Caricalo appena possibile.', 'dolly-employee-management' ) ), null, 'richieste', 'doncertover-' . (int) $r->id );
-			Dolly_Notifications::notify_admins( 'certificate_overdue', fn () => array( __( 'Certificato di donazione scaduto: ', 'dolly-employee-management' ) . Dolly_Employees::display_name( (int) $r->user_id ), __( 'Donazione sangue del ', 'dolly-employee-management' ) . $day . '.' ), null, 'dolly-anomalies', 'doncertover-' . (int) $r->id );
+			Dolly_Notifications::notify_user( (int) $r->user_id, 'certificate_overdue', fn () => array( __( 'Donation certificate overdue', 'dolly-employee-management' ), __( 'The deadline for the blood donation certificate of ', 'dolly-employee-management' ) . $day . __( ' has passed. Upload it as soon as possible.', 'dolly-employee-management' ) ), null, 'richieste', 'doncertover-' . (int) $r->id );
+			Dolly_Notifications::notify_admins( 'certificate_overdue', fn () => array( __( 'Donation certificate overdue: ', 'dolly-employee-management' ) . Dolly_Employees::display_name( (int) $r->user_id ), __( 'Blood donation on ', 'dolly-employee-management' ) . $day . '.' ), null, 'dolly-anomalies', 'doncertover-' . (int) $r->id );
 		}
 	}
 
@@ -143,16 +143,16 @@ class Dolly_Donations {
 		$r = Dolly_Requests::get( $request_id );
 		// A row that replaced the original after an approved modification is the effective donation: only cancellations are excluded.
 		if ( ! $r || self::TYPE !== $r->type || 'cancel' === $r->amend_action ) {
-			return new WP_Error( 'dolly_not_found', __( 'Richiesta di donazione non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Donation request not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( ! $as_admin && (int) $r->user_id !== get_current_user_id() ) {
-			return new WP_Error( 'dolly_forbidden', __( 'Non autorizzato.', 'dolly-employee-management' ), array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_forbidden', __( 'Not authorized.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		if ( 'approved' !== $r->status ) {
-			return new WP_Error( 'dolly_invalid_state', __( 'Il certificato si carica dopo l\'approvazione della richiesta.', 'dolly-employee-management' ), array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'The certificate is uploaded after the request is approved.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		if ( ! $as_admin && 'waiting' === $r->certificate_status ) {
-			return new WP_Error( 'dolly_invalid_state', __( 'Potrai caricare il certificato dal giorno successivo alla donazione.', 'dolly-employee-management' ), array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'You can upload the certificate from the day after the donation.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		$stored = Dolly_Sickness::store_upload( $file );
 		if ( is_wp_error( $stored ) ) {
@@ -174,8 +174,8 @@ class Dolly_Donations {
 		);
 		$cert_id = (int) $wpdb->insert_id;
 		$wpdb->update( self::table(), array( 'certificate_status' => 'uploaded' ), array( 'id' => (int) $r->id ) );
-		Dolly_Anomalies::resolve_by_key( 'doncert-' . (int) $r->id, 'certificate_uploaded', __( 'Certificato di donazione caricato.', 'dolly-employee-management' ) );
-		Dolly_Notifications::notify_admins( 'certificate_uploaded', fn () => array( __( 'Certificato di donazione caricato da ', 'dolly-employee-management' ) . Dolly_Employees::display_name( (int) $r->user_id ), __( 'Donazione sangue del ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $r->start_date ) ), null, 'dolly-requests', 'doncertup-' . $cert_id );
+		Dolly_Anomalies::resolve_by_key( 'doncert-' . (int) $r->id, 'certificate_uploaded', __( 'Donation certificate uploaded.', 'dolly-employee-management' ) );
+		Dolly_Notifications::notify_admins( 'certificate_uploaded', fn () => array( __( 'Donation certificate uploaded by ', 'dolly-employee-management' ) . Dolly_Employees::display_name( (int) $r->user_id ), __( 'Blood donation on ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $r->start_date ) ), null, 'dolly-requests', 'doncertup-' . $cert_id );
 		return Dolly_Requests::format( Dolly_Requests::get( (int) $r->id ) );
 	}
 
@@ -189,9 +189,9 @@ class Dolly_Donations {
 		}
 		$wpdb->query( "UPDATE $t SET certificate_status = 'cleared' WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $ids as $id ) {
-			Dolly_Anomalies::resolve_by_key( 'doncert-' . $id, 'certificates_disabled', __( 'Requisito certificato di donazione disattivato dalle impostazioni.', 'dolly-employee-management' ) );
+			Dolly_Anomalies::resolve_by_key( 'doncert-' . $id, 'certificates_disabled', __( 'Donation certificate requirement disabled in the settings.', 'dolly-employee-management' ) );
 		}
-		Dolly_Audit::log( 'donation_certificates_disabled', 'settings', 0, 0, __( 'Certificati di donazione disattivati: requisiti in sospeso annullati.', 'dolly-employee-management' ), array( 'request_ids' => $ids ), array( 'certificate_status' => 'cleared' ) );
+		Dolly_Audit::log( 'donation_certificates_disabled', 'settings', 0, 0, __( 'Donation certificates turned off: pending requirements canceled.', 'dolly-employee-management' ), array( 'request_ids' => $ids ), array( 'certificate_status' => 'cleared' ) );
 		return count( $ids );
 	}
 

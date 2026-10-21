@@ -56,14 +56,14 @@ class Dolly_Employees {
 		if ( isset( $data['iban'] ) ) {
 			$iban = strtoupper( preg_replace( '/[\s-]+/', '', (string) $data['iban'] ) );
 			if ( '' !== $iban && ! self::is_valid_iban( $iban ) ) {
-				$errors['iban'] = __( 'IBAN non valido: controlla lettere e cifre.', 'dolly-employee-management' );
+				$errors['iban'] = __( 'Invalid IBAN: check the letters and digits.', 'dolly-employee-management' );
 			}
 			$out['iban'] = $iban;
 		}
 		if ( isset( $data['bic'] ) ) {
 			$bic = strtoupper( preg_replace( '/\s+/', '', (string) $data['bic'] ) );
 			if ( '' !== $bic && ! preg_match( '/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/', $bic ) ) {
-				$errors['bic'] = __( 'BIC/SWIFT non valido (8 o 11 caratteri).', 'dolly-employee-management' );
+				$errors['bic'] = __( 'Invalid BIC/SWIFT (8 or 11 characters).', 'dolly-employee-management' );
 			}
 			$out['bic'] = $bic;
 		}
@@ -117,11 +117,11 @@ class Dolly_Employees {
 
 	public static function display_name( $user_id ) {
 		if ( ! $user_id ) {
-			return __( 'Sistema', 'dolly-employee-management' );
+			return __( 'System', 'dolly-employee-management' );
 		}
 		$u = get_userdata( $user_id );
 		if ( ! $u ) {
-			return __( 'Utente #', 'dolly-employee-management' ) . (int) $user_id;
+			return __( 'User #', 'dolly-employee-management' ) . (int) $user_id;
 		}
 		$name = trim( $u->first_name . ' ' . $u->last_name );
 		return '' !== $name ? $name : $u->display_name;
@@ -241,7 +241,7 @@ class Dolly_Employees {
 	private static function validate_identity( $data, $user_id = 0 ) {
 		$errors = array();
 		$out    = array();
-		foreach ( array( 'first_name' => __( 'Inserisci il nome.', 'dolly-employee-management' ), 'last_name' => __( 'Inserisci il cognome.', 'dolly-employee-management' ) ) as $k => $msg ) {
+		foreach ( array( 'first_name' => __( 'Enter the first name.', 'dolly-employee-management' ), 'last_name' => __( 'Enter the last name.', 'dolly-employee-management' ) ) as $k => $msg ) {
 			if ( isset( $data[ $k ] ) || ! $user_id ) {
 				$out[ $k ] = sanitize_text_field( $data[ $k ] ?? '' );
 				if ( '' === $out[ $k ] ) {
@@ -252,11 +252,11 @@ class Dolly_Employees {
 		if ( isset( $data['email'] ) || ! $user_id ) {
 			$email = sanitize_email( $data['email'] ?? '' );
 			if ( ! is_email( $email ) ) {
-				$errors['email'] = __( 'Indirizzo email non valido.', 'dolly-employee-management' );
+				$errors['email'] = __( 'Invalid email address.', 'dolly-employee-management' );
 			} else {
 				$owner = email_exists( $email );
 				if ( $owner && (int) $owner !== (int) $user_id ) {
-					$errors['email'] = __( 'Email già associata a un altro account.', 'dolly-employee-management' );
+					$errors['email'] = __( 'Email already associated with another account.', 'dolly-employee-management' );
 				}
 			}
 			$out['email'] = $email;
@@ -264,7 +264,7 @@ class Dolly_Employees {
 		if ( isset( $data['phone'] ) ) {
 			$phone = preg_replace( '/[^0-9+ ]/', '', (string) $data['phone'] );
 			if ( '' !== $phone && strlen( preg_replace( '/\D/', '', $phone ) ) < 6 ) {
-				$errors['phone'] = __( 'Numero di telefono non valido.', 'dolly-employee-management' );
+				$errors['phone'] = __( 'Invalid phone number.', 'dolly-employee-management' );
 			}
 			$out['phone'] = trim( $phone );
 		}
@@ -277,13 +277,13 @@ class Dolly_Employees {
 		$errors                     = array_merge( $errors, $bank_errors );
 		$username = sanitize_user( $data['username'] ?? '', true );
 		if ( '' === $username ) {
-			$errors['username'] = __( 'Inserisci il nome utente.', 'dolly-employee-management' );
+			$errors['username'] = __( 'Enter the username.', 'dolly-employee-management' );
 		} elseif ( username_exists( $username ) ) {
-			$errors['username'] = __( 'Nome utente già in uso.', 'dolly-employee-management' );
+			$errors['username'] = __( 'Username already in use.', 'dolly-employee-management' );
 		}
 		$password = (string) ( $data['password'] ?? '' );
 		if ( strlen( $password ) < 8 ) {
-			$errors['password'] = __( 'La password deve avere almeno 8 caratteri.', 'dolly-employee-management' );
+			$errors['password'] = __( 'The password must be at least 8 characters.', 'dolly-employee-management' );
 		}
 		$sched = Dolly_Schedules::clean( $data['schedule'] ?? array() );
 		if ( is_wp_error( $sched ) ) {
@@ -294,11 +294,11 @@ class Dolly_Employees {
 			return (bool) Dolly_Workplaces::get( $id );
 		} ) );
 		if ( ! $wids ) {
-			$errors['workplaces'] = __( 'Assegna almeno una sede.', 'dolly-employee-management' );
+			$errors['workplaces'] = __( 'Assign at least one workplace.', 'dolly-employee-management' );
 		}
 		$from = ( ! empty( $data['valid_from'] ) && Dolly_Time::is_date( $data['valid_from'] ) ) ? $data['valid_from'] : Dolly_Time::today();
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Check the highlighted fields.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 
 		$user_id = wp_insert_user(
@@ -333,7 +333,7 @@ class Dolly_Employees {
 	 */
 	public static function update( $user_id, $data ) {
 		if ( ! self::is_employee( $user_id ) ) {
-			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Employee not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$before                     = self::format( $user_id );
 		list( $id_data, $errors )   = self::validate_identity( $data, $user_id );
@@ -347,10 +347,10 @@ class Dolly_Employees {
 			}
 		}
 		if ( isset( $data['workplaces'] ) && ! array_filter( array_map( 'intval', (array) $data['workplaces'] ) ) ) {
-			$errors['workplaces'] = __( 'Assegna almeno una sede.', 'dolly-employee-management' );
+			$errors['workplaces'] = __( 'Assign at least one workplace.', 'dolly-employee-management' );
 		}
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Check the highlighted fields.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		$update = array( 'ID' => $user_id );
 		foreach ( array( 'first_name', 'last_name', 'email' ) as $k ) {
@@ -390,11 +390,11 @@ class Dolly_Employees {
 	 */
 	public static function set_active( $user_id, $active, $reason ) {
 		if ( ! self::is_employee( $user_id ) ) {
-			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Employee not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$reason = sanitize_textarea_field( $reason );
 		if ( '' === $reason ) {
-			return new WP_Error( 'dolly_invalid', __( 'Indica il motivo.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'reason' => __( 'Indica il motivo.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Enter the reason.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'reason' => __( 'Enter the reason.', 'dolly-employee-management' ) ) ) );
 		}
 		$was = self::is_active( $user_id );
 		if ( $was === (bool) $active ) {
@@ -411,10 +411,10 @@ class Dolly_Employees {
 
 	public static function admin_set_password( $user_id, $password ) {
 		if ( ! self::is_employee( $user_id ) ) {
-			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Employee not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( strlen( (string) $password ) < 8 ) {
-			return new WP_Error( 'dolly_invalid', __( 'La password deve avere almeno 8 caratteri.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'password' => __( 'Minimo 8 caratteri.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'The password must be at least 8 characters.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'password' => __( 'At least 8 characters.', 'dolly-employee-management' ) ) ) );
 		}
 		wp_set_password( $password, $user_id ); // Also destroys existing sessions.
 		Dolly_Audit::log( 'password_reset', 'user', $user_id, $user_id );
@@ -479,7 +479,7 @@ class Dolly_Employees {
 		list( $bank, $bank_errors ) = self::validate_bank( array_intersect_key( $data, self::BANK_FIELDS ) );
 		$errors                     = array_merge( $errors, $bank_errors );
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Check the highlighted fields.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		$before = self::format( $user_id );
 		if ( $id_data ) {
@@ -508,20 +508,20 @@ class Dolly_Employees {
 			Dolly_Audit::log( 'profile_updated', 'user', $user_id, $user_id, '', array_intersect_key( $before, $keys ), array_intersect_key( $after, $keys ) );
 		}
 
-		$old_bank = self::save_bank( $user_id, $bank, __( 'Modifica dal profilo del dipendente', 'dolly-employee-management' ) );
+		$old_bank = self::save_bank( $user_id, $bank, __( 'Edit from the employee profile', 'dolly-employee-management' ) );
 		if ( null !== $old_bank && isset( $bank['iban'] ) && $old_bank['iban'] !== $bank['iban'] ) {
 			$new_bank = self::bank( $user_id );
 			$name     = self::display_name( $user_id );
 			$body     = sprintf(
-				__( "%1\$s ha modificato l'IBAN dal proprio profilo.\nPrecedente: %2\$s\nNuovo: %3\$s\nBeneficiario: %4\$s\nBanca: %5\$s\nBIC: %6\$s\nVerifica i dati completi in Gestione Dipendenti › Dipendenti.", 'dolly-employee-management' ),
+				__( "%1\$s changed their IBAN from their profile.\nPrevious: %2\$s\nNew: %3\$s\nAccount holder: %4\$s\nBank: %5\$s\nBIC: %6\$s\nCheck the full details in Employee Management › Employees.", 'dolly-employee-management' ),
 				$name,
-				'' !== $old_bank['iban'] ? self::mask_iban( $old_bank['iban'] ) : __( 'non indicato', 'dolly-employee-management' ),
+				'' !== $old_bank['iban'] ? self::mask_iban( $old_bank['iban'] ) : __( 'not specified', 'dolly-employee-management' ),
 				'' !== $new_bank['iban'] ? self::mask_iban( $new_bank['iban'] ) : 'rimosso',
 				'' !== $new_bank['bank_beneficiary'] ? $new_bank['bank_beneficiary'] : '—',
 				'' !== $new_bank['bank_name'] ? $new_bank['bank_name'] : '—',
 				'' !== $new_bank['bic'] ? $new_bank['bic'] : '—'
 			);
-			Dolly_Notifications::notify_admins( 'iban_changed', fn () => array( __( 'IBAN modificato: ', 'dolly-employee-management' ) . $name, $body ), null, 'dolly-employees', 'iban-' . $user_id . '-' . md5( $new_bank['iban'] . '|' . time() ) );
+			Dolly_Notifications::notify_admins( 'iban_changed', fn () => array( __( 'IBAN changed: ', 'dolly-employee-management' ) . $name, $body ), null, 'dolly-employees', 'iban-' . $user_id . '-' . md5( $new_bank['iban'] . '|' . time() ) );
 		}
 		return self::format( $user_id );
 	}
@@ -529,10 +529,10 @@ class Dolly_Employees {
 	public static function change_password( $user_id, $current, $new ) {
 		$u = get_userdata( $user_id );
 		if ( ! $u || ! wp_check_password( (string) $current, $u->user_pass, $user_id ) ) {
-			return new WP_Error( 'dolly_invalid', __( 'La password attuale non è corretta.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'current_password' => __( 'Password attuale non corretta.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'The current password is incorrect.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'current_password' => __( 'Current password is incorrect.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( strlen( (string) $new ) < 8 ) {
-			return new WP_Error( 'dolly_invalid', __( 'La nuova password deve avere almeno 8 caratteri.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'new_password' => __( 'Minimo 8 caratteri.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'The new password must be at least 8 characters.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'new_password' => __( 'At least 8 characters.', 'dolly-employee-management' ) ) ) );
 		}
 		wp_set_password( $new, $user_id );
 		// Keep the current browser signed in after the password change.

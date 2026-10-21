@@ -28,7 +28,7 @@ class Dolly_Cron {
 	public static function schedules( $s ) {
 		$s['dolly_every_minute'] = array(
 			'interval' => 60,
-			'display'  => __( 'Ogni minuto (Dolly)', 'dolly-employee-management' ),
+			'display'  => __( 'Every minute (Dolly)', 'dolly-employee-management' ),
 		);
 		return $s;
 	}
@@ -81,7 +81,7 @@ class Dolly_Cron {
 	public static function cli_tick() {
 		$r = self::tick( 'wp-cli' );
 		if ( class_exists( 'WP_CLI' ) ) {
-			WP_CLI::success( ! empty( $r['skipped'] ) ? __( 'Esecuzione già in corso: saltata.', 'dolly-employee-management' ) : __( 'Controlli completati. Email inviate: ', 'dolly-employee-management' ) . (int) ( $r['emails_sent'] ?? 0 ) );
+			WP_CLI::success( ! empty( $r['skipped'] ) ? __( 'Run already in progress: skipped.', 'dolly-employee-management' ) : __( 'Checks completed. Emails sent: ', 'dolly-employee-management' ) . (int) ( $r['emails_sent'] ?? 0 ) );
 		}
 	}
 

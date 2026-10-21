@@ -2,23 +2,33 @@
 /**
  * Plugin Name:       Dolly Employee Management
  * Plugin URI:        https://github.com/blackat5445/Dolly-employee-management
- * Description:       Gestione dipendenti: account, permessi, presenze, richieste, certificati, notifiche, amministrazione ed esportazioni.
- * Version:           1.13.1
+ * Description:       Employee portal with verified clock-in (GPS, QR/PIN, Bluetooth, smart working), requests, sickness certificates, documents, administration and payroll exports.
+ * Version:           1.14.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Kasra Falahati
- * Author URI:        https://github.com/blackat5445
+ * Author URI:        https://kasra.eu
  * Text Domain:       dolly-employee-management
  * Domain Path:       /languages
- * License:           MIT
- * License URI:       https://opensource.org/licenses/MIT
+ * License:           GPL-2.0-or-later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * Copyright (C) 2026 Kasra Falahati
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU
+ * General Public License as published by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+ * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ * License for more details.
  *
  * @package DollyEM
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'DOLLY_VERSION', '1.13.1' );
+define( 'DOLLY_VERSION', '1.14.0' );
 define( 'DOLLY_DB_VERSION', '7' );
 define( 'DOLLY_FILE', __FILE__ );
 define( 'DOLLY_DIR', plugin_dir_path( __FILE__ ) );

@@ -16,43 +16,43 @@ class Dolly_Appearance {
 	const OPTION = 'dolly_appearance';
 
 	const SCHEMES = array(
-		'light' => 'Chiaro',
-		'dark'  => 'Scuro',
-		'auto'  => 'Automatico (come il dispositivo)',
+		'light' => 'Light',
+		'dark'  => 'Dark',
+		'auto'  => 'Automatic (same as device)',
 	);
 
 	const FONTS = array(
-		'system'  => array( 'Sistema (predefinito)', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif' ),
-		'sans'    => array( 'Sans-serif classico', '"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif' ),
-		'rounded' => array( 'Arrotondato', 'ui-rounded, "SF Pro Rounded", "Nunito", "Varela Round", -apple-system, "Segoe UI", sans-serif' ),
+		'system'  => array( 'System (default)', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif' ),
+		'sans'    => array( 'Classic sans-serif', '"Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif' ),
+		'rounded' => array( 'Rounded', 'ui-rounded, "SF Pro Rounded", "Nunito", "Varela Round", -apple-system, "Segoe UI", sans-serif' ),
 		'serif'   => array( 'Serif', 'Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif' ),
-		'custom'  => array( 'Personalizzato', '' ),
+		'custom'  => array( 'Custom', '' ),
 	);
 
 	const TEXT_SIZES = array(
-		'small'  => array( 'Piccolo', 93.75 ),
-		'normal' => array( 'Normale (predefinito)', 100 ),
-		'large'  => array( 'Grande', 106.25 ),
-		'xlarge' => array( 'Molto grande', 112.5 ),
+		'small'  => array( 'Small', 93.75 ),
+		'normal' => array( 'Normal (default)', 100 ),
+		'large'  => array( 'Large', 106.25 ),
+		'xlarge' => array( 'Very large', 112.5 ),
 	);
 
 	const HEADING_WEIGHTS = array( 600, 700, 800 );
 
 	const BUTTON_SHAPES = array(
-		'rounded' => 'Arrotondati (predefinito)',
-		'pill'    => 'A pillola',
-		'square'  => 'Squadrati',
+		'rounded' => 'Rounded (default)',
+		'pill'    => 'Pill',
+		'square'  => 'Square',
 	);
 
 	const SHADOWS = array(
-		'none'   => 'Nessuna',
-		'subtle' => 'Leggera (predefinita)',
-		'medium' => 'Marcata',
+		'none'   => 'None',
+		'subtle' => 'Light (default)',
+		'medium' => 'Strong',
 	);
 
 	const DENSITIES = array(
-		'comfortable' => 'Comoda (predefinita)',
-		'compact'     => 'Compatta',
+		'comfortable' => 'Comfortable (default)',
+		'compact'     => 'Compact',
 	);
 
 	/** Color keys, in the order shown in the settings screen. */
@@ -72,9 +72,9 @@ class Dolly_Appearance {
 			// Brand.
 			'brand_name'          => 'Dolly',
 			'app_name'            => '',
-			'admin_title'         => 'Gestione Dipendenti',
-			'portal_subtitle'     => 'Portale dipendenti',
-			'display_subtitle'    => 'Codice presenze',
+			'admin_title'         => 'Employee Management',
+			'portal_subtitle'     => 'Employee portal',
+			'display_subtitle'    => 'Attendance code',
 			'wordmark_mark'       => false,
 			// Logos and icons.
 			'logo_id'             => 0,
@@ -113,8 +113,8 @@ class Dolly_Appearance {
 			'shadow'              => 'subtle',
 			'density'             => 'comfortable',
 			// Login page.
-			'login_title'         => 'Accedi',
-			'login_text'          => 'Accedi con le credenziali fornite dall\'amministratore.',
+			'login_title'         => 'Sign in',
+			'login_text'          => 'Sign in with the credentials provided by your administrator.',
 			'login_bg_id'         => 0,
 			// Emails.
 			'email_subject_prefix' => '',
@@ -135,14 +135,23 @@ class Dolly_Appearance {
 	/** Texts that are translated while they still have their default (Italian) value. */
 	const DEFAULT_TEXTS = array( 'admin_title', 'portal_subtitle', 'display_subtitle', 'login_title', 'login_text' );
 
+	/** Default texts of the versions written in Italian (before 1.14): still treated as defaults. */
+	const LEGACY_DEFAULTS = array(
+		'admin_title'      => 'Gestione Dipendenti',
+		'portal_subtitle'  => 'Portale dipendenti',
+		'display_subtitle' => 'Codice presenze',
+		'login_title'      => 'Accedi',
+		'login_text'       => 'Accedi con le credenziali fornite dall\'amministratore.',
+	);
+
 	/** Value for display: default texts are shown in the user's language. */
 	public static function get( $key ) {
 		$all = self::all();
 		if ( ! isset( $all[ $key ] ) ) {
 			return null;
 		}
-		if ( in_array( $key, self::DEFAULT_TEXTS, true ) && self::defaults()[ $key ] === $all[ $key ] ) {
-			return Dolly_I18n::t( $all[ $key ] );
+		if ( in_array( $key, self::DEFAULT_TEXTS, true ) && ( self::defaults()[ $key ] === $all[ $key ] || ( self::LEGACY_DEFAULTS[ $key ] ?? null ) === $all[ $key ] ) ) {
+			return Dolly_I18n::t( self::defaults()[ $key ] );
 		}
 		return $all[ $key ];
 	}
@@ -171,7 +180,7 @@ class Dolly_Appearance {
 			}
 			$v = trim( sanitize_text_field( (string) $input[ $k ] ) );
 			if ( $rule[1] && '' === $v ) {
-				$errors[ $k ] = __( 'Campo obbligatorio.', 'dolly-employee-management' );
+				$errors[ $k ] = __( 'Required field.', 'dolly-employee-management' );
 				continue;
 			}
 			$new[ $k ] = mb_substr( $v, 0, $rule[0] );
@@ -184,7 +193,7 @@ class Dolly_Appearance {
 		if ( isset( $input['email_from_email'] ) ) {
 			$v = trim( (string) $input['email_from_email'] );
 			if ( '' !== $v && ! is_email( $v ) ) {
-				$errors['email_from_email'] = __( 'Indirizzo email non valido.', 'dolly-employee-management' );
+				$errors['email_from_email'] = __( 'Invalid email address.', 'dolly-employee-management' );
 			} else {
 				$new['email_from_email'] = '' === $v ? '' : sanitize_email( $v );
 			}
@@ -196,7 +205,7 @@ class Dolly_Appearance {
 			}
 			$hex = self::hex( $input[ $k ] );
 			if ( ! $hex ) {
-				$errors[ $k ] = __( 'Colore non valido: usa il formato #RRGGBB.', 'dolly-employee-management' );
+				$errors[ $k ] = __( 'Invalid color: use the #RRGGBB format.', 'dolly-employee-management' );
 				continue;
 			}
 			$new[ $k ] = $hex;
@@ -233,7 +242,7 @@ class Dolly_Appearance {
 			}
 			$id = absint( $input[ $k ] );
 			if ( $id && ! wp_attachment_is_image( $id ) ) {
-				$errors[ $k ] = __( 'Scegli un\'immagine dalla libreria media.', 'dolly-employee-management' );
+				$errors[ $k ] = __( 'Choose an image from the media library.', 'dolly-employee-management' );
 				continue;
 			}
 			$new[ $k ] = $id;
@@ -246,13 +255,13 @@ class Dolly_Appearance {
 		if ( isset( $input['font_url'] ) ) {
 			$v = trim( (string) $input['font_url'] );
 			if ( '' !== $v && ( 0 !== strpos( $v, 'https://' ) || ! wp_http_validate_url( $v ) ) ) {
-				$errors['font_url'] = __( 'Indirizzo non valido: deve iniziare con https://.', 'dolly-employee-management' );
+				$errors['font_url'] = __( 'Invalid address: it must start with https://.', 'dolly-employee-management' );
 			} else {
 				$new['font_url'] = esc_url_raw( $v );
 			}
 		}
 		if ( 'custom' === $new['font_family'] && '' === $new['font_custom'] && ! isset( $errors['font_custom'] ) && isset( $input['font_family'] ) ) {
-			$errors['font_custom'] = __( 'Indica il nome del carattere (es. "Inter", sans-serif).', 'dolly-employee-management' );
+			$errors['font_custom'] = __( 'Enter the font name (e.g. "Inter", sans-serif).', 'dolly-employee-management' );
 		}
 		if ( isset( $input['custom_css'] ) ) {
 			$new['custom_css'] = self::clean_css( (string) $input['custom_css'] );
@@ -265,7 +274,7 @@ class Dolly_Appearance {
 		$current          = self::all();
 		list( $new, $err ) = self::sanitize( $input, $current );
 		if ( $err ) {
-			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $err ) );
+			return new WP_Error( 'dolly_invalid', __( 'Check the highlighted fields.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $err ) );
 		}
 		update_option( self::OPTION, $new, false );
 		self::audit( $current, $new );

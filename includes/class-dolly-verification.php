@@ -63,20 +63,20 @@ class Dolly_Verification {
 			$raw = $q['mc'] ?? '';
 		}
 		if ( ! preg_match( '/^(\d+)\.(\d+)\.([a-f0-9]{24})$/', $raw, $m ) ) {
-			return new WP_Error( 'dolly_qr_invalid', sprintf( /* translators: %s: brand name. */ __( 'Il codice QR non è un codice presenze %s valido.', 'dolly-employee-management' ), Dolly_Appearance::brand() ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_qr_invalid', sprintf( /* translators: %s: brand name. */ __( 'The QR code is not a valid %s attendance code.', 'dolly-employee-management' ), Dolly_Appearance::brand() ), array( 'status' => 400 ) );
 		}
 		$wid    = (int) $m[1];
 		$window = (int) $m[2];
 		$token  = $m[3];
 		$expect = self::challenge( $wid, $window );
 		if ( ! hash_equals( substr( $expect['code'], -24 ), $token ) ) {
-			return new WP_Error( 'dolly_qr_invalid', __( 'Il codice QR non è valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_qr_invalid', __( 'The QR code is not valid.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( ! in_array( $wid, Dolly_Workplaces::ids_for_user( $user_id ), true ) ) {
-			return new WP_Error( 'dolly_wrong_workplace', __( 'Questo codice appartiene a una sede che non ti è assegnata.', 'dolly-employee-management' ), array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_wrong_workplace', __( 'This code belongs to a workplace you are not assigned to.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		if ( ! in_array( $window, self::acceptable_windows(), true ) ) {
-			return new WP_Error( 'dolly_challenge_expired', __( 'Il codice QR è scaduto. Inquadra il codice aggiornato sullo schermo della sede.', 'dolly-employee-management' ), array( 'status' => 410 ) );
+			return new WP_Error( 'dolly_challenge_expired', __( 'The QR code has expired. Scan the updated code on the workplace display.', 'dolly-employee-management' ), array( 'status' => 410 ) );
 		}
 		return array(
 			'workplace_id' => $wid,
@@ -94,11 +94,11 @@ class Dolly_Verification {
 		$locked   = get_transient( $lock_key );
 		if ( $locked ) {
 			$mins = max( 1, (int) ceil( ( (int) $locked - time() ) / 60 ) );
-			return new WP_Error( 'dolly_pin_locked', sprintf( /* translators: %d: minutes before a new attempt. */ __( 'Troppi PIN errati. Riprova tra %d minuti oppure usa il QR.', 'dolly-employee-management' ), $mins ), array( 'status' => 429 ) );
+			return new WP_Error( 'dolly_pin_locked', sprintf( /* translators: %d: minutes before a new attempt. */ __( 'Too many wrong PINs. Try again in %d minutes or use the QR.', 'dolly-employee-management' ), $mins ), array( 'status' => 429 ) );
 		}
 		$pin = preg_replace( '/\D/', '', (string) $pin );
 		if ( 6 !== strlen( $pin ) ) {
-			return new WP_Error( 'dolly_pin_invalid', __( 'Il PIN deve essere di 6 cifre.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_pin_invalid', __( 'The PIN must be 6 digits.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		foreach ( Dolly_Workplaces::ids_for_user( $user_id ) as $wid ) {
 			foreach ( self::acceptable_windows() as $window ) {
@@ -120,9 +120,9 @@ class Dolly_Verification {
 		if ( $fails >= $max ) {
 			set_transient( $lock_key, time() + $mins * MINUTE_IN_SECONDS, $mins * MINUTE_IN_SECONDS );
 			delete_transient( $fail_key );
-			return new WP_Error( 'dolly_pin_locked', sprintf( /* translators: %d: minutes before a new attempt. */ __( 'Troppi PIN errati. Riprova tra %d minuti oppure usa il QR.', 'dolly-employee-management' ), $mins ), array( 'status' => 429 ) );
+			return new WP_Error( 'dolly_pin_locked', sprintf( /* translators: %d: minutes before a new attempt. */ __( 'Too many wrong PINs. Try again in %d minutes or use the QR.', 'dolly-employee-management' ), $mins ), array( 'status' => 429 ) );
 		}
-		return new WP_Error( 'dolly_pin_invalid', sprintf( /* translators: %d: attempts left. */ __( 'PIN errato o scaduto. Tentativi rimasti: %d.', 'dolly-employee-management' ), $max - $fails ), array( 'status' => 400 ) );
+		return new WP_Error( 'dolly_pin_invalid', sprintf( /* translators: %d: attempts left. */ __( 'Wrong or expired PIN. Attempts left: %d.', 'dolly-employee-management' ), $max - $fails ), array( 'status' => 400 ) );
 	}
 
 	/**
@@ -130,7 +130,7 @@ class Dolly_Verification {
 	 */
 	public static function verify_gps( $user_id, $gps ) {
 		if ( ! is_array( $gps ) || ! isset( $gps['lat'], $gps['lng'] ) || ! is_numeric( $gps['lat'] ) || ! is_numeric( $gps['lng'] ) ) {
-			return new WP_Error( 'dolly_gps_missing', __( 'Posizione non disponibile. Consenti l\'accesso alla posizione e riprova.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_gps_missing', __( 'Location not available. Allow access to your location and try again.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$lat      = (float) $gps['lat'];
 		$lng      = (float) $gps['lng'];
@@ -151,11 +151,11 @@ class Dolly_Verification {
 		}
 		if ( ! $best ) {
 			if ( ! $nearest ) {
-				return new WP_Error( 'dolly_gps_no_workplace', __( 'Nessuna sede assegnata ha coordinate configurate. Usa il QR/PIN o contatta l\'amministratore.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+				return new WP_Error( 'dolly_gps_no_workplace', __( 'None of your assigned workplaces has coordinates configured. Use the QR/PIN or contact the administrator.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 			}
-			$msg = sprintf( /* translators: %1$d: distance in meters, %2$s: workplace name, %3$d: allowed radius in meters. */ __( 'Sei a circa %1$d m da %2$s (raggio consentito %3$d m).', 'dolly-employee-management' ), (int) round( $nearest['distance'] ), $nearest['w']->name, (int) $nearest['w']->radius_m );
+			$msg = sprintf( /* translators: %1$d: distance in meters, %2$s: workplace name, %3$d: allowed radius in meters. */ __( 'You are about %1$d m from %2$s (allowed radius %3$d m).', 'dolly-employee-management' ), (int) round( $nearest['distance'] ), $nearest['w']->name, (int) $nearest['w']->radius_m );
 			if ( $accuracy && $accuracy > (int) $nearest['w']->radius_m ) {
-				$msg .= sprintf( /* translators: %d: GPS accuracy in meters. */ __( ' La precisione del GPS è bassa (±%d m): riprova all\'aperto o usa il QR/PIN.', 'dolly-employee-management' ), $accuracy );
+				$msg .= sprintf( /* translators: %d: GPS accuracy in meters. */ __( ' GPS accuracy is low (±%d m): try again outdoors or use the QR/PIN.', 'dolly-employee-management' ), $accuracy );
 			}
 			return new WP_Error( 'dolly_gps_out_of_range', $msg, array( 'status' => 403 ) );
 		}
@@ -188,21 +188,21 @@ class Dolly_Verification {
 	public static function read_ticket( $user_id, $ticket ) {
 		$parts = explode( '.', (string) $ticket );
 		if ( 2 !== count( $parts ) ) {
-			return new WP_Error( 'dolly_ticket_invalid', __( 'Verifica QR/PIN non valida. Ripeti la verifica.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_ticket_invalid', __( 'Invalid QR/PIN verification. Verify again.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$json = base64_decode( strtr( $parts[0], '-_', '+/' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- binary encoding, not code.
 		if ( ! $json || ! hash_equals( hash_hmac( 'sha256', $json, self::secret() . '|ticket' ), $parts[1] ) ) {
-			return new WP_Error( 'dolly_ticket_invalid', __( 'Verifica QR/PIN non valida. Ripeti la verifica.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_ticket_invalid', __( 'Invalid QR/PIN verification. Verify again.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$p = json_decode( $json, true );
 		if ( (int) $p['u'] !== (int) $user_id ) {
-			return new WP_Error( 'dolly_ticket_invalid', __( 'Verifica QR/PIN non valida.', 'dolly-employee-management' ), array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_ticket_invalid', __( 'Invalid QR/PIN verification.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		if ( (int) $p['e'] < time() ) {
-			return new WP_Error( 'dolly_challenge_expired', __( 'La verifica QR/PIN è scaduta. Ripeti la scansione o inserisci il nuovo PIN.', 'dolly-employee-management' ), array( 'status' => 410 ) );
+			return new WP_Error( 'dolly_challenge_expired', __( 'The QR/PIN check has expired. Scan again or enter the new PIN.', 'dolly-employee-management' ), array( 'status' => 410 ) );
 		}
 		if ( ! in_array( (int) $p['w'], Dolly_Workplaces::ids_for_user( $user_id ), true ) ) {
-			return new WP_Error( 'dolly_wrong_workplace', __( 'La sede verificata non ti è assegnata.', 'dolly-employee-management' ), array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_wrong_workplace', __( 'The verified workplace is not assigned to you.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		return array(
 			'workplace_id' => (int) $p['w'],
@@ -249,19 +249,19 @@ class Dolly_Verification {
 	public static function create_exception( $user_id, $reason, $expires_local = null ) {
 		global $wpdb;
 		if ( ! Dolly_Employees::is_employee( $user_id ) ) {
-			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Employee not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$reason = sanitize_textarea_field( $reason );
 		if ( '' === $reason ) {
-			return new WP_Error( 'dolly_invalid', __( 'Indica il motivo dell\'eccezione.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'reason' => __( 'Indica il motivo.', 'dolly-employee-management' ) ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Enter the reason for the exception.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'reason' => __( 'Enter the reason.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( $expires_local ) {
 			if ( ! preg_match( '/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})$/', $expires_local, $m ) || ! Dolly_Time::is_date( $m[1] ) || ! Dolly_Time::is_time( $m[2] ) ) {
-				return new WP_Error( 'dolly_invalid', __( 'Scadenza non valida.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'expires_at' => __( 'Scadenza non valida.', 'dolly-employee-management' ) ) ) );
+				return new WP_Error( 'dolly_invalid', __( 'Invalid expiry.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'expires_at' => __( 'Invalid expiry.', 'dolly-employee-management' ) ) ) );
 			}
 			$expires = Dolly_Time::local_to_utc( $m[1], $m[2] . ':59' );
 			if ( $expires <= Dolly_Time::now_utc() ) {
-				return new WP_Error( 'dolly_invalid', __( 'La scadenza deve essere futura.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'expires_at' => __( 'La scadenza deve essere futura.', 'dolly-employee-management' ) ) ) );
+				return new WP_Error( 'dolly_invalid', __( 'The expiry must be in the future.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'expires_at' => __( 'The expiry must be in the future.', 'dolly-employee-management' ) ) ) );
 			}
 		} else {
 			$expires = Dolly_Time::end_of_today_utc();
@@ -286,7 +286,7 @@ class Dolly_Verification {
 		$t = Dolly_Install::t( 'exceptions' );
 		$e = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( ! $e ) {
-			return new WP_Error( 'dolly_not_found', __( 'Eccezione non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Exception not found.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( ! $e->revoked_at ) {
 			$wpdb->update( $t, array( 'revoked_at' => Dolly_Time::now_utc(), 'revoked_by' => get_current_user_id() ), array( 'id' => $id ) );
