@@ -128,7 +128,8 @@ class Dolly_Install {
 		return $dir;
 	}
 
-	private static function protect_dir( $dir ) {
+	/** Adds the deny rules (.htaccess, web.config) and an empty index to a private directory. */
+	public static function protect_dir( $dir ) {
 		$files = array(
 			'.htaccess'  => "Require all denied\nDeny from all\n",
 			'index.php'  => "<?php\n// Silence is golden.\n",
@@ -193,6 +194,7 @@ lunch_start time NULL,
 lunch_end time NULL,
 day_times longtext NULL,
 employment_type varchar(20) NOT NULL DEFAULT 'full_time',
+work_mode varchar(10) NOT NULL DEFAULT 'office',
 created_by bigint(20) unsigned NOT NULL DEFAULT 0,
 created_at datetime NOT NULL,
 PRIMARY KEY  (id),
@@ -271,6 +273,7 @@ notes text NULL,
 status varchar(20) NOT NULL DEFAULT 'active',
 certificate_status varchar(20) NOT NULL DEFAULT 'missing',
 certificate_due date NULL,
+protocol varchar(40) NULL,
 conflict tinyint(1) NOT NULL DEFAULT 0,
 conflict_details text NULL,
 reviewed_by bigint(20) unsigned NULL,
@@ -298,6 +301,24 @@ PRIMARY KEY  (id),
 KEY sickness_id (sickness_id),
 KEY request_id (request_id),
 KEY user_id (user_id)
+) $c;";
+
+		$sql[] = 'CREATE TABLE ' . self::t( 'documents' ) . " (
+id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+user_id bigint(20) unsigned NOT NULL,
+category varchar(40) NOT NULL,
+title varchar(190) NOT NULL,
+description text NULL,
+file_name varchar(120) NOT NULL,
+original_name varchar(255) NOT NULL,
+mime varchar(100) NOT NULL,
+size_bytes int(10) unsigned NOT NULL DEFAULT 0,
+uploaded_by bigint(20) unsigned NOT NULL DEFAULT 0,
+uploaded_at datetime NOT NULL,
+viewed_at datetime NULL,
+PRIMARY KEY  (id),
+KEY user_category (user_id,category),
+KEY uploaded_at (uploaded_at)
 ) $c;";
 
 		$sql[] = 'CREATE TABLE ' . self::t( 'anomalies' ) . " (

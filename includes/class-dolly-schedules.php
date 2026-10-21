@@ -6,6 +6,12 @@
  * each weekday ("day_times", JSON keyed by ISO weekday). On-call contracts ("on_call") have no
  * working days or hours: the employee clocks whenever called and the hours are approved afterwards.
  *
+ * Smart working: with one fixed timetable the whole schedule can be smart working (column "work_mode").
+ * With a timetable per day each day is in presence, smart working, or mixed: one block in presence and
+ * one in smart working that do not overlap (the gap between them, if any, is the break). Punches in
+ * smart working need no presence verification (GPS, QR/PIN, Bluetooth) and the smart-working hours
+ * are approved (automatically or by the administrator, setting "smart_auto").
+ *
  * @package DollyEM
  */
 
@@ -20,6 +26,13 @@ class Dolly_Schedules {
 	);
 
 	const SHORT_DAYS = array( 1 => 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom' );
+
+	/** How a working day is worked. */
+	const MODES = array(
+		'office' => 'In presenza',
+		'smart'  => 'Smart working',
+		'mixed'  => 'Misto (presenza e smart working)',
+	);
 
 	public static function for_date( $user_id, $date ) {
 		global $wpdb;
@@ -75,29 +88,63 @@ class Dolly_Schedules {
 	}
 
 	/**
-	 * Hours of one weekday: array( start, end, lunch_start, lunch_end ) as HH:MM (lunch null when none).
+	 * Hours of one weekday: start, end, lunch_start, lunch_end as HH:MM (lunch null when none), mode
+	 * (office | smart | mixed) and, for mixed days, office_start/office_end and smart_start/smart_end.
 	 */
 	public static function times_for( $s, $weekday ) {
 		$map = self::day_map( $s );
 		if ( $map && isset( $map[ $weekday ] ) ) {
-			$d = $map[ $weekday ];
+			$d    = $map[ $weekday ];
+			$mode = isset( $d['mode'] ) && isset( self::MODES[ $d['mode'] ] ) ? $d['mode'] : 'office';
 			return array(
-				'start'       => $d['start'],
-				'end'         => $d['end'],
-				'lunch_start' => $d['lunch_start'] ?? null,
-				'lunch_end'   => $d['lunch_end'] ?? null,
+				'start'        => $d['start'],
+				'end'          => $d['end'],
+				'lunch_start'  => $d['lunch_start'] ?? null,
+				'lunch_end'    => $d['lunch_end'] ?? null,
+				'mode'         => $mode,
+				'office_start' => 'mixed' === $mode ? $d['office_start'] : null,
+				'office_end'   => 'mixed' === $mode ? $d['office_end'] : null,
+				'smart_start'  => 'mixed' === $mode ? $d['smart_start'] : null,
+				'smart_end'    => 'mixed' === $mode ? $d['smart_end'] : null,
 			);
 		}
 		return array(
-			'start'       => Dolly_Time::hm( $s->start_time ),
-			'end'         => Dolly_Time::hm( $s->end_time ),
-			'lunch_start' => Dolly_Time::hm( $s->lunch_start ),
-			'lunch_end'   => Dolly_Time::hm( $s->lunch_end ),
+			'start'        => Dolly_Time::hm( $s->start_time ),
+			'end'          => Dolly_Time::hm( $s->end_time ),
+			'lunch_start'  => Dolly_Time::hm( $s->lunch_start ),
+			'lunch_end'    => Dolly_Time::hm( $s->lunch_end ),
+			'mode'         => self::uniform_mode( $s ),
+			'office_start' => null,
+			'office_end'   => null,
+			'smart_start'  => null,
+			'smart_end'    => null,
 		);
 	}
 
+	/** Mode of a schedule with one fixed timetable: "office" or "smart". */
+	private static function uniform_mode( $s ) {
+		return isset( $s->work_mode ) && 'smart' === $s->work_mode ? 'smart' : 'office';
+	}
+
+	/** True when the schedule has at least one day (partly) in smart working. */
+	public static function has_smart( $s ) {
+		if ( ! $s || self::is_on_call( $s ) ) {
+			return false;
+		}
+		foreach ( self::weekdays( $s ) as $d ) {
+			if ( 'office' !== self::times_for( $s, $d )['mode'] ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static function times_label( $t ) {
-		return $t['start'] . '–' . $t['end'] . ( $t['lunch_start'] ? __( ' (pausa ', 'dolly-employee-management' ) . $t['lunch_start'] . '–' . $t['lunch_end'] . ')' : '' );
+		if ( 'mixed' === $t['mode'] ) {
+			return sprintf( __( 'presenza %1$s, smart working %2$s', 'dolly-employee-management' ), $t['office_start'] . '–' . $t['office_end'], $t['smart_start'] . '–' . $t['smart_end'] );
+		}
+		return $t['start'] . '–' . $t['end'] . ( $t['lunch_start'] ? __( ' (pausa ', 'dolly-employee-management' ) . $t['lunch_start'] . '–' . $t['lunch_end'] . ')' : '' )
+			. ( 'smart' === $t['mode'] ? __( ' · smart working', 'dolly-employee-management' ) : '' );
 	}
 
 	/** One-line description: "Lun Mar Mer · 08:00–16:30 (pausa …)" or one entry per day. */
@@ -147,6 +194,8 @@ class Dolly_Schedules {
 			'lunch_start'      => $first['lunch_start'],
 			'lunch_end'        => $first['lunch_end'],
 			'per_day'          => self::is_per_day( $s ),
+			'work_mode'        => self::uniform_mode( $s ),
+			'has_smart'        => self::has_smart( $s ),
 			'days'             => (object) $times,
 			'on_call'          => self::is_on_call( $s ),
 			'employment_type'  => $s->employment_type,
@@ -207,10 +256,60 @@ class Dolly_Schedules {
 	}
 
 	/**
+	 * Validates a mixed day: one block in presence (office_start–office_end) and one in smart working
+	 * (smart_start–smart_end) that must not overlap. The day runs from the first start to the last end;
+	 * the gap between the blocks, if any, is the break.
+	 */
+	private static function clean_mixed( $d, $prefix, &$errors ) {
+		$before = count( $errors );
+		$v      = array();
+		foreach ( array( 'office_start', 'office_end', 'smart_start', 'smart_end' ) as $k ) {
+			$v[ $k ] = (string) ( $d[ $k ] ?? '' );
+			if ( ! Dolly_Time::is_time( $v[ $k ] ) ) {
+				$errors[ $prefix . $k ] = __( 'Orario non valido.', 'dolly-employee-management' );
+			}
+		}
+		if ( count( $errors ) !== $before ) {
+			return null;
+		}
+		$os = Dolly_Time::hm_to_min( $v['office_start'] );
+		$oe = Dolly_Time::hm_to_min( $v['office_end'] );
+		$ss = Dolly_Time::hm_to_min( $v['smart_start'] );
+		$se = Dolly_Time::hm_to_min( $v['smart_end'] );
+		if ( $oe <= $os ) {
+			$errors[ $prefix . 'office_end' ] = __( 'La fine deve essere successiva all\'inizio.', 'dolly-employee-management' );
+		}
+		if ( $se <= $ss ) {
+			$errors[ $prefix . 'smart_end' ] = __( 'La fine deve essere successiva all\'inizio.', 'dolly-employee-management' );
+		}
+		if ( count( $errors ) === $before && $os < $se && $ss < $oe ) {
+			$errors[ $prefix . 'smart_start' ] = __( 'Le ore in presenza e in smart working non devono sovrapporsi.', 'dolly-employee-management' );
+		}
+		if ( count( $errors ) !== $before ) {
+			return null;
+		}
+		$office_first = $oe <= $ss;
+		$gap_from     = $office_first ? $v['office_end'] : $v['smart_end'];
+		$gap_to       = $office_first ? $v['smart_start'] : $v['office_start'];
+		$has_gap      = $gap_from !== $gap_to;
+		return array(
+			'start'        => $office_first ? $v['office_start'] : $v['smart_start'],
+			'end'          => $office_first ? $v['smart_end'] : $v['office_end'],
+			'lunch_start'  => $has_gap ? $gap_from : null,
+			'lunch_end'    => $has_gap ? $gap_to : null,
+			'office_start' => $v['office_start'],
+			'office_end'   => $v['office_end'],
+			'smart_start'  => $v['smart_start'],
+			'smart_end'    => $v['smart_end'],
+		);
+	}
+
+	/**
 	 * Validates schedule input. Returns clean array or WP_Error.
 	 *
-	 * Input: employment_type; on-call → nothing else. Otherwise either per_day + days[weekday] = {start_time,
-	 * end_time, has_lunch, lunch_start, lunch_end} for the working days only, or weekdays[] + one timetable.
+	 * Input: employment_type; on-call → nothing else. Otherwise either per_day + days[weekday] = {mode,
+	 * start_time, end_time, has_lunch, lunch_start, lunch_end} (mixed days: office_start, office_end,
+	 * smart_start, smart_end) for the working days only, or weekdays[] + one timetable + smart.
 	 */
 	public static function clean( $data ) {
 		$data   = (array) $data;
@@ -228,6 +327,7 @@ class Dolly_Schedules {
 				'lunch_end'       => null,
 				'day_times'       => null,
 				'employment_type' => 'on_call',
+				'work_mode'       => 'office',
 			);
 		}
 
@@ -238,8 +338,10 @@ class Dolly_Schedules {
 				if ( $wd < 1 || $wd > 7 || ! is_array( $d ) ) {
 					continue;
 				}
-				$t = self::clean_times( $d, 'day' . $wd . '_', $errors );
+				$mode = isset( $d['mode'] ) && isset( self::MODES[ $d['mode'] ] ) ? $d['mode'] : 'office';
+				$t    = 'mixed' === $mode ? self::clean_mixed( $d, 'day' . $wd . '_', $errors ) : self::clean_times( $d, 'day' . $wd . '_', $errors );
 				if ( $t ) {
+					$t['mode']   = $mode;
 					$days[ $wd ] = $t;
 				}
 			}
@@ -259,6 +361,7 @@ class Dolly_Schedules {
 				'lunch_end'       => $first['lunch_end'] ? $first['lunch_end'] . ':00' : null,
 				'day_times'       => wp_json_encode( $days ),
 				'employment_type' => $type,
+				'work_mode'       => 'office',
 			);
 		}
 
@@ -281,6 +384,7 @@ class Dolly_Schedules {
 			'lunch_end'       => $t['lunch_end'] ? $t['lunch_end'] . ':00' : null,
 			'day_times'       => null,
 			'employment_type' => $type,
+			'work_mode'       => ! empty( $data['smart'] ) ? 'smart' : 'office',
 		);
 	}
 
@@ -368,6 +472,12 @@ class Dolly_Schedules {
 			'closure_type'   => $closure ? $closure['type'] : null,
 			// Hours worked today get the holiday increase: closure for a holiday, or national holiday.
 			'festive'        => ( $closure && 'holiday' === $closure['type'] ) || null !== $holiday,
+			// Smart working: office | smart | mixed (blocks of the mixed day in office_* / smart_*).
+			'work_mode'      => 'office',
+			'office_start'   => null,
+			'office_end'     => null,
+			'smart_start'    => null,
+			'smart_end'      => null,
 		);
 		$wd = Dolly_Time::weekday( $date );
 		if ( ! $on_call && $s && in_array( $wd, self::weekdays( $s ), true ) ) {
@@ -380,6 +490,12 @@ class Dolly_Schedules {
 			$plan['lunch_start']    = $t['lunch_start'];
 			$plan['lunch_end']      = $t['lunch_end'];
 			$plan['authorized_end'] = $plan['end'];
+			$plan['work_mode']      = $t['mode'];
+			if ( 'mixed' === $t['mode'] ) {
+				foreach ( array( 'office_start', 'office_end', 'smart_start', 'smart_end' ) as $k ) {
+					$plan[ $k ] = $t[ $k ];
+				}
+			}
 		}
 		if ( ! $on_call ) {
 			foreach ( Dolly_Requests::approved_extra_for( $user_id, $date ) as $x ) {
@@ -408,5 +524,42 @@ class Dolly_Schedules {
 		}
 		$plan['lunch_auto'] = $plan['has_lunch'] && ! Dolly_Settings::get( 'lunch_punch' );
 		return $plan;
+	}
+
+	/**
+	 * Minute (from midnight) that separates the two blocks of a mixed day: the middle of the gap between
+	 * them, or the shared boundary when they touch. Null when the day is not mixed.
+	 */
+	public static function mixed_split( array $plan ) {
+		if ( 'mixed' !== ( $plan['work_mode'] ?? 'office' ) ) {
+			return null;
+		}
+		$oe = Dolly_Time::hm_to_min( $plan['office_end'] );
+		$ss = Dolly_Time::hm_to_min( $plan['smart_start'] );
+		if ( $oe <= $ss ) {
+			return array( 'smart_after' => true, 'at' => intdiv( $oe + $ss, 2 ) );
+		}
+		return array( 'smart_after' => false, 'at' => intdiv( Dolly_Time::hm_to_min( $plan['smart_end'] ) + Dolly_Time::hm_to_min( $plan['office_start'] ), 2 ) );
+	}
+
+	/**
+	 * True when a punch at the given minute belongs to smart working, so no presence verification is
+	 * needed. Mixed day: a punch that starts work (entry, end of break) belongs to the block it opens,
+	 * one that stops work (exit, start of break) to the block it closes; the split is mixed_split().
+	 */
+	public static function is_smart_punch( array $plan, $action, $minute ) {
+		$mode = $plan['work_mode'] ?? 'office';
+		if ( ! empty( $plan['on_call'] ) || ! empty( $plan['rest_day_extra'] ) || 'office' === $mode ) {
+			return false;
+		}
+		if ( 'smart' === $mode ) {
+			return true;
+		}
+		$split = self::mixed_split( $plan );
+		$opens = in_array( $action, array( 'entrata', 'fine_pausa' ), true );
+		if ( $split['smart_after'] ) {
+			return $opens ? $minute >= $split['at'] : $minute > $split['at'];
+		}
+		return $opens ? $minute < $split['at'] : $minute <= $split['at'];
 	}
 }

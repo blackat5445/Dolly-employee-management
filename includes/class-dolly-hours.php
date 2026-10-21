@@ -80,7 +80,8 @@ class Dolly_Hours {
 	 * @param array $plan Dolly_Schedules::day_plan()
 	 * @param array $calc Dolly_Attendance::compute()
 	 * @param array $ctx  { today, leave: approved full-day request|null, hourly: approved hourly leaves,
-	 *                      sickness: row|null, has_punches: bool, oncall: ''|pending|approved|rejected, since: Y-m-d }
+	 *                      sickness: row|null, has_punches: bool, oncall: ''|pending|approved|rejected,
+	 *                      smart: ''|pending|approved|rejected, since: Y-m-d }
 	 * @return array<string,int> code => minutes
 	 */
 	public static function day_codes( $date, array $plan, array $calc, array $ctx ) {
@@ -89,6 +90,10 @@ class Dolly_Hours {
 		// On-call shifts count once approved.
 		$counted  = '' === $ctx['oncall'] || 'approved' === $ctx['oncall'];
 		$worked   = $counted ? (int) $calc['worked'] : 0;
+		// Smart-working hours count once approved (automatically or by the administrator).
+		if ( in_array( $ctx['smart'] ?? '', array( 'pending', 'rejected' ), true ) ) {
+			$worked = max( 0, $worked - (int) ( $calc['smart'] ?? 0 ) );
+		}
 		// Overtime beyond the approved limit is not counted until the administrator approves it.
 		$over     = min( $worked, (int) ( $calc['extra_over'] ?? 0 ) );
 		$extra    = min( $worked - $over, (int) $calc['extra'] );

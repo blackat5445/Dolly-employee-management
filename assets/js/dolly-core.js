@@ -1031,12 +1031,17 @@
 		if (r.oncall_status === 'pending') { b = DOLLY.badge(__('Turno da approvare'), 'amber', 'hourglass'); }
 		else if (r.oncall_status === 'rejected') { b = DOLLY.badge(__('Turno non approvato'), 'neutral', 'ban'); }
 		else if (r.oncall_status === 'approved') { b = DOLLY.badge(__('Turno approvato'), 'green', 'circle-check'); }
+		// Smart working: the smart-working hours count once approved.
+		var sw = null;
+		if (r.smart_status === 'pending') { sw = DOLLY.badge(__('Smart working da approvare: ') + r.smart, 'amber', 'hourglass'); }
+		else if (r.smart_status === 'rejected') { sw = DOLLY.badge(__('Smart working non approvato: ') + r.smart, 'neutral', 'ban'); }
+		else if (r.smart_status === 'approved') { sw = DOLLY.badge(__('Smart working ') + r.smart, 'blue', 'house'); }
 		else if (r.provisional) { b = DOLLY.badge(__('Provvisorio'), 'amber'); }
 		// Closure / holiday days: how the hours count.
 		var kind = null;
 		if (r.festive) { kind = DOLLY.badge(__('Festive ') + r.festive + ' · +' + r.holiday_increase + '%', 'blue', 'party-popper'); }
 		else if (r.closure_type === 'collective') { kind = DOLLY.badge(__('Ore ordinarie (chiusura)'), 'neutral', 'calendar-off'); }
-		return h('span', {}, [r.worked, b ? h('div', {}, b) : null, kind ? h('div', {}, kind) : null]);
+		return h('span', {}, [r.worked, b ? h('div', {}, b) : null, sw ? h('div', {}, sw) : null, kind ? h('div', {}, kind) : null]);
 	};
 
 	/** Footer text of the monthly attendance: totals of overtime, holiday hours and pending shifts. */
@@ -1045,7 +1050,7 @@
 		if (d.total_extra && d.total_extra !== '0:00') { parts.push(__('Straordinario approvato: ') + d.total_extra); }
 		if (d.total_over && d.total_over !== '0:00') { parts.push(__('oltre il limite: ') + d.total_over); }
 		if (d.total_festive) { parts.push(__('ore festive: ') + d.total_festive + __(' (maggiorazione ') + d.holiday_increase + '%)'); }
-		if (d.total_oncall_pending) { parts.push(__('turni da approvare: ') + d.total_oncall_pending); }
+		if (d.total_oncall_pending) { parts.push(__('ore da approvare (turni a chiamata e smart working): ') + d.total_oncall_pending); }
 		return parts.join(' · ');
 	};
 

@@ -23,7 +23,7 @@ LANG_DIR = ROOT / 'languages'
 LABEL_CONSTS = {'PAGES', 'ABSENCE_GROUPS', 'SHORT_MONTHS', 'SHORT_WEEKDAYS', 'TYPES', 'RESOLUTIONS', 'SCHEMES', 'FONTS', 'TEXT_SIZES',
                 'BUTTON_SHAPES', 'SHADOWS', 'DENSITIES', 'ACTIONS', 'METHODS', 'LABELS', 'STATUSES', 'CERT_STATUSES', 'FIXED', 'CODES',
                 'LEAVE_KINDS', 'SHORT_DAYS', 'VERIFICATION_METHODS', 'CERTIFICATE_MODES', 'EVENTS', 'EMPLOYEE_EVENTS', 'ADMIN_EVENTS',
-                'KINDS', 'MONTHS', 'WEEKDAYS'}
+                'KINDS', 'MONTHS', 'WEEKDAYS', 'CATEGORIES', 'MODES'}
 KEY_IS_LABEL = {'ABSENCE_GROUPS'}
 CODES = {'', 'A', 'Av', 'O', 'FER', 'S', 'FS', 'FE', 'P', 'ROL', 'EO', 'Pn', 'PL', 'M', 'I'}
 # Default texts of Dolly_Appearance::defaults(), translated while unchanged (Dolly_Appearance::DEFAULT_TEXTS).

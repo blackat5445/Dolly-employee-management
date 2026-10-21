@@ -157,6 +157,7 @@ class Dolly_Anomalies {
 	 */
 	public static function evaluate_exit( $user_id, $date, $after_extra_approval = false ) {
 		Dolly_Requests::sync_oncall_shift( $user_id, $date );
+		Dolly_Requests::sync_smart_day( $user_id, $date );
 		$punches = Dolly_Attendance::punches_for( $user_id, $date );
 		if ( ! isset( $punches['entrata'] ) ) {
 			return;

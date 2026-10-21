@@ -98,6 +98,7 @@ class Dolly_Sickness {
 			'certificate_status' => $s->certificate_status,
 			'certificate_label'  => Dolly_I18n::t( self::CERT_STATUSES[ $s->certificate_status ] ?? $s->certificate_status ),
 			'certificate_due'    => $s->certificate_due,
+			'protocol'           => (string) ( $s->protocol ?? '' ),
 			'conflict'           => (bool) $s->conflict,
 			'conflict_details'   => (string) $s->conflict_details,
 			'reviewed'           => (bool) $s->reviewed_at,
@@ -257,12 +258,30 @@ class Dolly_Sickness {
 		);
 	}
 
+	/** What a medical certificate needs (settings): array( 'file' => bool, 'protocol' => bool ). */
+	public static function requirements() {
+		return array(
+			'file'     => (bool) Dolly_Settings::get( 'certificate_require_file' ),
+			'protocol' => (bool) Dolly_Settings::get( 'certificate_require_protocol' ),
+		);
+	}
+
+	/** Protocol number of a telematic certificate: letters, digits, spaces, "-", "/" and "."; up to 40 characters. */
+	public static function clean_protocol( $value ) {
+		$v = strtoupper( trim( preg_replace( '/\s+/', ' ', sanitize_text_field( (string) $value ) ) ) );
+		return preg_match( '#^[A-Z0-9][A-Z0-9 ./-]{2,39}$#', $v ) ? $v : ( '' === $v ? '' : false );
+	}
+
 	/**
-	 * Stores an uploaded certificate outside public uploads.
+	 * Certificate of a sickness report: the file (PDF, JPG or PNG, stored outside public uploads) and/or
+	 * the protocol number typed by the employee. The settings say which of the two are required; with
+	 * neither required, one of them is enough. Already provided parts count (a protocol can be added
+	 * after the file and vice versa).
 	 *
-	 * @param array $file Entry from $_FILES / WP_REST_Request::get_file_params().
+	 * @param array|null $file     Entry from $_FILES / WP_REST_Request::get_file_params().
+	 * @param string     $protocol Protocol number ('' = not given).
 	 */
-	public static function upload_certificate( $sickness_id, $file, $as_admin = false ) {
+	public static function upload_certificate( $sickness_id, $file, $as_admin = false, $protocol = '' ) {
 		global $wpdb;
 		$s = self::get( $sickness_id );
 		if ( ! $s ) {
@@ -271,30 +290,60 @@ class Dolly_Sickness {
 		if ( ! $as_admin && (int) $s->user_id !== get_current_user_id() ) {
 			return new WP_Error( 'dolly_forbidden', __( 'Non autorizzato.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
-		$stored = self::store_upload( $file );
-		if ( is_wp_error( $stored ) ) {
-			return $stored;
+		$has_file = ! empty( $file ) && isset( $file['tmp_name'] ) && UPLOAD_ERR_NO_FILE !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE );
+		$protocol = self::clean_protocol( $protocol );
+		if ( false === $protocol ) {
+			return new WP_Error( 'dolly_invalid', __( 'Numero di protocollo non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'protocol' => __( 'Usa lettere, cifre e i segni - / . (da 3 a 40 caratteri).', 'dolly-employee-management' ) ) ) );
 		}
-		$wpdb->insert(
-			Dolly_Install::t( 'certificates' ),
-			array(
-				'sickness_id'   => $sickness_id,
-				'user_id'       => (int) $s->user_id,
-				'file_name'     => $stored['file_name'],
-				'original_name' => $stored['original_name'],
-				'mime'          => $stored['mime'],
-				'size_bytes'    => $stored['size_bytes'],
-				'uploaded_by'   => get_current_user_id(),
-				'uploaded_at'   => Dolly_Time::now_utc(),
-			)
-		);
-		$cert_id = (int) $wpdb->insert_id;
+		$need     = self::requirements();
+		$had_file = (bool) self::certificates( $sickness_id );
+		$errors   = array();
+		if ( ! $has_file && '' === $protocol ) {
+			$errors[ $need['protocol'] && ! $need['file'] ? 'protocol' : 'file' ] = $need['protocol'] && ! $need['file'] ? __( 'Inserisci il numero di protocollo.', 'dolly-employee-management' ) : __( 'Scegli il file del certificato.', 'dolly-employee-management' );
+		}
+		if ( ! $as_admin ) {
+			if ( $need['file'] && ! $has_file && ! $had_file ) {
+				$errors['file'] = __( 'Il file del certificato è obbligatorio.', 'dolly-employee-management' );
+			}
+			if ( $need['protocol'] && '' === $protocol && empty( $s->protocol ) ) {
+				$errors['protocol'] = __( 'Il numero di protocollo è obbligatorio.', 'dolly-employee-management' );
+			}
+		}
+		if ( $errors ) {
+			return new WP_Error( 'dolly_invalid', reset( $errors ), array( 'status' => 400, 'fields' => $errors ) );
+		}
+		$cert_id = 0;
+		if ( $has_file ) {
+			$stored = self::store_upload( $file );
+			if ( is_wp_error( $stored ) ) {
+				return $stored;
+			}
+			$wpdb->insert(
+				Dolly_Install::t( 'certificates' ),
+				array(
+					'sickness_id'   => $sickness_id,
+					'user_id'       => (int) $s->user_id,
+					'file_name'     => $stored['file_name'],
+					'original_name' => $stored['original_name'],
+					'mime'          => $stored['mime'],
+					'size_bytes'    => $stored['size_bytes'],
+					'uploaded_by'   => get_current_user_id(),
+					'uploaded_at'   => Dolly_Time::now_utc(),
+				)
+			);
+			$cert_id = (int) $wpdb->insert_id;
+		}
+		if ( '' !== $protocol && $protocol !== (string) $s->protocol ) {
+			$wpdb->update( Dolly_Install::t( 'sickness' ), array( 'protocol' => $protocol ), array( 'id' => $sickness_id ) );
+			Dolly_Audit::log( 'certificate_protocol', 'sickness', $sickness_id, (int) $s->user_id, '', array( 'protocol' => (string) $s->protocol ), array( 'protocol' => $protocol ) );
+		}
 		if ( in_array( $s->certificate_status, array( 'missing', 'overdue', 'not_required', 'cleared' ), true ) ) {
 			$wpdb->update( Dolly_Install::t( 'sickness' ), array( 'certificate_status' => 'uploaded' ), array( 'id' => $sickness_id ) );
 		}
-		// Successful upload resolves the missing-certificate anomaly without requiring approval.
+		// The certificate resolves the missing-certificate anomaly without requiring approval.
 		Dolly_Anomalies::resolve_by_key( 'cert-' . $sickness_id, 'certificate_uploaded', __( 'Certificato caricato.', 'dolly-employee-management' ) );
-		Dolly_Notifications::notify_admins( 'certificate_uploaded', fn () => array( __( 'Certificato caricato da ', 'dolly-employee-management' ) . Dolly_Employees::display_name( (int) $s->user_id ), self::kind_label( self::kind_of( $s ) ) . ' ' . Dolly_Time::fmt_date( $s->start_date ) . ' – ' . Dolly_Time::fmt_date( $s->end_date ) ), null, 'dolly-requests#malattie', 'certup-' . $cert_id );
+		$what = trim( ( $has_file ? __( 'File caricato.', 'dolly-employee-management' ) : '' ) . ' ' . ( '' !== $protocol ? __( 'Protocollo: ', 'dolly-employee-management' ) . $protocol : '' ) );
+		Dolly_Notifications::notify_admins( 'certificate_uploaded', fn () => array( __( 'Certificato caricato da ', 'dolly-employee-management' ) . Dolly_Employees::display_name( (int) $s->user_id ), self::kind_label( self::kind_of( $s ) ) . ' ' . Dolly_Time::fmt_date( $s->start_date ) . ' – ' . Dolly_Time::fmt_date( $s->end_date ) . ' · ' . $what ), null, 'dolly-requests#malattie', 'certup-' . $sickness_id . '-' . ( $cert_id ? $cert_id : 'p' ) );
 		return self::format( self::get( $sickness_id ) );
 	}
 

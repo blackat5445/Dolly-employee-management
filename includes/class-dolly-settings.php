@@ -32,6 +32,8 @@ class Dolly_Settings {
 		'request_decided'      => 'Decisione su una richiesta',
 		'overtime_pending'     => 'Straordinario oltre il limite da approvare',
 		'oncall_pending'       => 'Turno a chiamata da approvare',
+		'smart_pending'        => 'Smart working da approvare',
+		'document_received'    => 'Nuovo documento',
 		'sickness_reported'    => 'Malattia o infortunio segnalato',
 		'certificate_required' => 'Certificato richiesto',
 		'certificate_overdue'  => 'Certificato scaduto',
@@ -50,6 +52,7 @@ class Dolly_Settings {
 		'certificate_overdue'  => 'Certificato scaduto (medico o di donazione)',
 		'anomaly_created'      => 'Nuova anomalia (assenza, uscita mancante…)',
 		'anomaly_resolved'     => 'Anomalia risolta',
+		'document_received'    => 'Nuovo documento (contratto, CU, busta paga…)',
 	);
 
 	/** Events the administrators can receive. */
@@ -57,6 +60,7 @@ class Dolly_Settings {
 		'request_submitted'    => 'Nuova richiesta di un dipendente',
 		'overtime_pending'     => 'Straordinario oltre il limite da approvare',
 		'oncall_pending'       => 'Turno a chiamata da approvare',
+		'smart_pending'        => 'Smart working da approvare',
 		'sickness_reported'    => 'Malattia o infortunio segnalato da un dipendente',
 		'certificate_required' => 'Certificato richiesto',
 		'certificate_overdue'  => 'Certificato scaduto',
@@ -88,6 +92,9 @@ class Dolly_Settings {
 			'default_radius'    => 100,
 			'certificate_mode'  => 'required',
 			'certificate_days'  => 3,
+			// What the employee must provide for a medical certificate: the file and/or its protocol number.
+			'certificate_require_file'     => true,
+			'certificate_require_protocol' => false,
 			'lunch_punch'       => true,
 			'late_tolerance'    => 0,
 			'exit_rounding'     => false,
@@ -97,6 +104,8 @@ class Dolly_Settings {
 			'absence_delay'     => 60,
 			'oncall_auto'       => true,
 			'oncall_threshold'  => 120,
+			// Smart working: the smart-working hours of a day are approved automatically, or by the administrator.
+			'smart_auto'        => true,
 			'holiday_increase'  => 30,
 			'require_install'   => true,
 			// Reminder mode: push reminders N minutes before the shift start / after the shift end.
@@ -210,7 +219,7 @@ class Dolly_Settings {
 		if ( isset( $input['oncall_threshold'] ) ) {
 			$new['oncall_threshold'] = max( 1, min( 1440, (int) $input['oncall_threshold'] ) );
 		}
-		foreach ( array( 'notify_portal', 'notify_email', 'admin_notify_portal', 'admin_notify_email', 'lunch_punch', 'exit_rounding', 'absence_check', 'oncall_auto', 'require_install', 'reminder_entry', 'reminder_exit', 'device_sessions' ) as $k ) {
+		foreach ( array( 'notify_portal', 'notify_email', 'admin_notify_portal', 'admin_notify_email', 'lunch_punch', 'exit_rounding', 'absence_check', 'oncall_auto', 'require_install', 'reminder_entry', 'reminder_exit', 'device_sessions', 'smart_auto', 'certificate_require_file', 'certificate_require_protocol' ) as $k ) {
 			if ( isset( $input[ $k ] ) ) {
 				$new[ $k ] = (bool) $input[ $k ];
 			}

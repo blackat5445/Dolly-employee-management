@@ -26,6 +26,7 @@ class Dolly_Attendance {
 		'gps_ble'    => 'GPS + Bluetooth',
 		'exception'  => 'Eccezione amministratore',
 		'correction' => 'Correzione amministratore',
+		'smart'      => 'Smart working',
 	);
 
 	/** Active punches for a user/date keyed by action. */
@@ -68,7 +69,8 @@ class Dolly_Attendance {
 			'time'         => Dolly_Time::utc_to_local( $p->punched_at, 'H:i' ),
 			'at'           => Dolly_Time::iso( $p->punched_at ),
 			'workplace_id' => $p->workplace_id ? (int) $p->workplace_id : null,
-			'workplace'    => $w ? $w->name : '',
+			'workplace'    => 'smart' === $p->method ? __( 'Smart working', 'dolly-employee-management' ) : ( $w ? $w->name : '' ),
+			'smart'        => 'smart' === $p->method,
 			'method'       => $p->method,
 			'method_label' => Dolly_I18n::t( self::METHODS[ $p->method ] ?? $p->method ),
 			'source'       => $p->source,
@@ -172,7 +174,17 @@ class Dolly_Attendance {
 			'previous_incomplete' => array_map( array( 'Dolly_Time', 'fmt_date' ), self::previous_incomplete( $user_id, $date ) ),
 			'exception'           => Dolly_Verification::format_exception( $exception ),
 			'verification'        => Dolly_Settings::verification(),
+			// Smart working: these punches, if made now, need no presence verification.
+			'smart'               => array(
+				'primary'   => ! $blocked && $next['primary'] ? self::smart_now( $plan, $next['primary'] ) : false,
+				'secondary' => ! $blocked && $next['secondary'] ? self::smart_now( $plan, $next['secondary'] ) : false,
+			),
 		);
+	}
+
+	/** True when the action, punched now, falls in smart working (see Dolly_Schedules::is_smart_punch()). */
+	public static function smart_now( array $plan, $action ) {
+		return Dolly_Schedules::is_smart_punch( $plan, $action, Dolly_Time::hm_to_min( Dolly_Time::now_hm() ) );
 	}
 
 	/**
@@ -231,7 +243,7 @@ class Dolly_Attendance {
 				return new WP_Error( 'dolly_invalid_transition', $msg, array( 'status' => 409, 'state' => self::state( $user_id ) ) );
 			}
 
-			$verified = self::verify( $user_id, $input, $punches );
+			$verified = self::smart_now( $plan, $action ) ? self::smart_verified( $user_id, $punches ) : self::verify( $user_id, $input, $punches );
 			if ( is_wp_error( $verified ) ) {
 				return $verified;
 			}
@@ -279,11 +291,27 @@ class Dolly_Attendance {
 		if ( 'uscita' === $action ) {
 			Dolly_Hours::touch( $user_id, $date ); // The day is complete: its hours enter the history.
 		}
-		$w = Dolly_Workplaces::get( (int) $verified['workplace_id'] );
+		$w = 'smart' === $verified['method'] ? null : Dolly_Workplaces::get( (int) $verified['workplace_id'] );
 		return array(
 			'duplicate' => false,
-			'message'   => sprintf( __( '%s registrata alle %s%s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ), Dolly_Time::utc_to_local( $row['punched_at'], 'H:i' ), $w ? __( ' presso ', 'dolly-employee-management' ) . $w->name : '' ),
+			'message'   => sprintf( __( '%s registrata alle %s%s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ), Dolly_Time::utc_to_local( $row['punched_at'], 'H:i' ), $w ? __( ' presso ', 'dolly-employee-management' ) . $w->name : ( 'smart' === $verified['method'] ? __( ' in smart working', 'dolly-employee-management' ) : '' ) ),
 			'state'     => self::state( $user_id ),
+		);
+	}
+
+	/**
+	 * Smart working: no presence verification. The punch keeps the employee's workplace (the one of the
+	 * day's entry, otherwise the first assigned) so the workplace views still list the employee.
+	 */
+	private static function smart_verified( $user_id, $punches ) {
+		$wid = isset( $punches['entrata'] ) && $punches['entrata']->workplace_id ? (int) $punches['entrata']->workplace_id : 0;
+		if ( ! $wid ) {
+			$ids = Dolly_Workplaces::ids_for_user( $user_id );
+			$wid = $ids ? $ids[0] : 0;
+		}
+		return array(
+			'workplace_id' => $wid ? $wid : null,
+			'method'       => 'smart',
 		);
 	}
 
@@ -580,6 +608,30 @@ class Dolly_Attendance {
 		return $out;
 	}
 
+	/** Seconds of the intervals that fall in smart working (see Dolly_Schedules::mixed_split()). */
+	private static function smart_seconds( $date, array $intervals, array $plan ) {
+		$mode = $plan['work_mode'] ?? 'office';
+		if ( ! empty( $plan['on_call'] ) || ! empty( $plan['rest_day_extra'] ) || 'office' === $mode ) {
+			return 0;
+		}
+		$from = PHP_INT_MIN;
+		$to   = PHP_INT_MAX;
+		if ( 'mixed' === $mode ) {
+			$split = Dolly_Schedules::mixed_split( $plan );
+			$at    = Dolly_Time::local_ts( $date, sprintf( '%02d:%02d', intdiv( $split['at'], 60 ), $split['at'] % 60 ) );
+			if ( $split['smart_after'] ) {
+				$from = $at;
+			} else {
+				$to = $at;
+			}
+		}
+		$sec = 0;
+		foreach ( $intervals as $iv ) {
+			$sec += max( 0, min( $iv[1], $to ) - max( $iv[0], $from ) );
+		}
+		return $sec;
+	}
+
 	/**
 	 * Calculates worked minutes for a day from the counted entry/exit (see effective_times()).
 	 * - Automatic lunch: when lunch is not clocked, the scheduled lunch window is deducted.
@@ -590,7 +642,7 @@ class Dolly_Attendance {
 	 * @param array $punches  [action => row]
 	 * @param array $plan     Dolly_Schedules::day_plan()
 	 * @param array $leaves   hourly leave rows (start_time/end_time)
-	 * @return array{worked:int, extra:int, extra_auto:int, extra_over:int, leave_deducted:int, lunch_deducted:int, complete:bool, entrata:?int, uscita:?int, late:int}
+	 * @return array{worked:int, extra:int, extra_auto:int, extra_over:int, leave_deducted:int, lunch_deducted:int, festive:int, smart:int, complete:bool, entrata:?int, uscita:?int, late:int}
 	 */
 	public static function compute( $date, array $punches, array $plan, array $leaves = array() ) {
 		$ts = array();
@@ -626,6 +678,7 @@ class Dolly_Attendance {
 		foreach ( $intervals as $iv ) {
 			$worked += max( 0, $iv[1] - $iv[0] );
 		}
+		$smart = self::smart_seconds( $date, $intervals, $plan );
 
 		$deducted = 0;
 		foreach ( $leaves as $l ) {
@@ -639,6 +692,7 @@ class Dolly_Attendance {
 			}
 		}
 		$worked = max( 0, $worked - $deducted );
+		$smart  = min( $smart, $worked );
 
 		$extra = 0;
 		$auto  = 0;
@@ -669,6 +723,8 @@ class Dolly_Attendance {
 			'lunch_deducted' => (int) round( $lunch / 60 ),
 			// Holiday closure or national holiday: all the hours worked get the holiday increase.
 			'festive'        => ! empty( $plan['festive'] ) ? (int) round( $worked / 60 ) : 0,
+			// Minutes worked in smart working (whole day, or the smart block of a mixed day).
+			'smart'          => (int) round( $smart / 60 ),
 			'complete'       => $complete,
 			'entrata'        => $eff['entrata'],
 			'uscita'         => $eff['uscita'],
