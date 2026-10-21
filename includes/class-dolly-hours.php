@@ -198,8 +198,8 @@ class Dolly_Hours {
 		foreach ( self::RENAMED as $old => $new ) {
 			// BINARY: the comparison must be case-sensitive ("Fs" and "FS" are equal for the default collation).
 			// IGNORE: a day that already has the new code keeps it; the old row is then removed.
-			$wpdb->query( $wpdb->prepare( "UPDATE IGNORE $t SET code = %s WHERE BINARY code = %s", $new, $old ) ); // phpcs:ignore
-			$wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE BINARY code = %s", $old ) ); // phpcs:ignore
+			$wpdb->query( $wpdb->prepare( "UPDATE IGNORE $t SET code = %s WHERE BINARY code = %s", $new, $old ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
+			$wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE BINARY code = %s", $old ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		}
 	}
 
@@ -223,9 +223,9 @@ class Dolly_Hours {
 		}
 		// One transaction: a reader (export) never sees the month half-written.
 		$wpdb->query( 'START TRANSACTION' );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE user_id = %d AND work_date BETWEEN %s AND %s", $user_id, $dates[0], end( $dates ) ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE user_id = %d AND work_date BETWEEN %s AND %s", $user_id, $dates[0], end( $dates ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( $vals ) {
-			$wpdb->query( $wpdb->prepare( "INSERT INTO $t (user_id, work_date, code, minutes, planned_minutes, provisional, updated_at) VALUES " . implode( ',', $vals ) . ' ON DUPLICATE KEY UPDATE minutes = VALUES(minutes), planned_minutes = VALUES(planned_minutes), provisional = VALUES(provisional), updated_at = VALUES(updated_at)', $args ) ); // phpcs:ignore
+			$wpdb->query( $wpdb->prepare( "INSERT INTO $t (user_id, work_date, code, minutes, planned_minutes, provisional, updated_at) VALUES " . implode( ',', $vals ) . ' ON DUPLICATE KEY UPDATE minutes = VALUES(minutes), planned_minutes = VALUES(planned_minutes), provisional = VALUES(provisional), updated_at = VALUES(updated_at)', $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- plugin tables ($wpdb->prefix), values prepared or cast.
 		}
 		$wpdb->query( 'COMMIT' );
 		return $data;
@@ -310,7 +310,7 @@ class Dolly_Hours {
 		}
 		$t    = Dolly_Install::t( 'hours' );
 		$in   = implode( ',', array_map( 'intval', $user_ids ) );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, code, SUM(minutes) AS minutes FROM $t WHERE user_id IN ($in) AND work_date BETWEEN %s AND %s GROUP BY user_id, code", $from, $to ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, code, SUM(minutes) AS minutes FROM $t WHERE user_id IN ($in) AND work_date BETWEEN %s AND %s GROUP BY user_id, code", $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $r ) {
 			$out[ (int) $r->user_id ][ $r->code ] = (int) $r->minutes;
 		}
@@ -323,7 +323,7 @@ class Dolly_Hours {
 	 */
 	public static function summary_csv( array $user_ids, $year, $month ) {
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 300 ); // phpcs:ignore
+			@set_time_limit( 300 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
 		}
 		$user_ids = array_values( array_filter( array_map( 'intval', $user_ids ), array( 'Dolly_Employees', 'is_employee' ) ) );
 		$planned  = array();

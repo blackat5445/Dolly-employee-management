@@ -138,7 +138,7 @@ class Dolly_Install {
 		foreach ( $files as $name => $content ) {
 			$path = trailingslashit( $dir ) . $name;
 			if ( ! file_exists( $path ) ) {
-				@file_put_contents( $path, $content ); // phpcs:ignore
+				@file_put_contents( $path, $content ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- failure handled by the caller; private files of the plugin.
 			}
 		}
 	}

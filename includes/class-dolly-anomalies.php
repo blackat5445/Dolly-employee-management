@@ -38,7 +38,7 @@ class Dolly_Anomalies {
 	public static function get( $id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'anomalies' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function format( $a ) {
@@ -73,7 +73,7 @@ class Dolly_Anomalies {
 		$now = Dolly_Time::now_utc();
 		$ok  = $wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO $t (user_id, work_date, type, status, overdue, uniq_key, related_type, related_id, details, created_at, updated_at) VALUES (%d, %s, %s, 'open', 0, %s, %s, %d, %s, %s, %s)", // phpcs:ignore
+				"INSERT IGNORE INTO $t (user_id, work_date, type, status, overdue, uniq_key, related_type, related_id, details, created_at, updated_at) VALUES (%d, %s, %s, 'open', 0, %s, %s, %d, %s, %s, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 				$user_id,
 				$date,
 				$type,
@@ -123,7 +123,7 @@ class Dolly_Anomalies {
 	public static function resolve_by_key( $key, $resolution, $note ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'anomalies' );
-		$a = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE uniq_key = %s AND status = 'open'", $key ) ); // phpcs:ignore
+		$a = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE uniq_key = %s AND status = 'open'", $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( $a ) {
 			self::close( $a, $resolution, $note );
 		}
@@ -132,14 +132,14 @@ class Dolly_Anomalies {
 	public static function mark_overdue( $key ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'anomalies' );
-		$wpdb->query( $wpdb->prepare( "UPDATE $t SET overdue = 1, updated_at = %s WHERE uniq_key = %s AND status = 'open'", Dolly_Time::now_utc(), $key ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( "UPDATE $t SET overdue = 1, updated_at = %s WHERE uniq_key = %s AND status = 'open'", Dolly_Time::now_utc(), $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/** Open exit anomalies for a user/date. */
 	private static function open_exit_anomalies( $user_id, $date ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'anomalies' );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND work_date = %s AND type IN ('missing_exit','late_exit') AND status = 'open'", $user_id, $date ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND work_date = %s AND type IN ('missing_exit','late_exit') AND status = 'open'", $user_id, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function resolve_exit_anomalies( $user_id, $date, $resolution, $note ) {
@@ -176,7 +176,7 @@ class Dolly_Anomalies {
 		if ( time() <= Dolly_Time::local_ts( $date, '23:59:59' ) ) {
 			return;
 		}
-		$details = sprintf( __( 'Uscita non registrata entro le 23:59 del %s (entrata alle %s).', 'dolly-employee-management' ), Dolly_Time::fmt_date( $date ), Dolly_Time::utc_to_local( $punches['entrata']->punched_at, 'H:i' ) );
+		$details = sprintf( /* translators: %1$s: date, %2$s: clock-in time (HH:MM). */ __( 'Uscita non registrata entro le 23:59 del %1$s (entrata alle %2$s).', 'dolly-employee-management' ), Dolly_Time::fmt_date( $date ), Dolly_Time::utc_to_local( $punches['entrata']->punched_at, 'H:i' ) );
 		self::open( $user_id, 'missing_exit', 'exit-' . $user_id . '-' . $date, $date, 'day', 0, $details );
 	}
 
@@ -204,7 +204,7 @@ class Dolly_Anomalies {
 			if ( ( $since && $date < $since ) || Dolly_Holidays::is_holiday( $date ) ) {
 				continue;
 			}
-			$flagged = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM $t WHERE type = 'unjustified_absence' AND work_date = %s", $date ) ) ); // phpcs:ignore
+			$flagged = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM $t WHERE type = 'unjustified_absence' AND work_date = %s", $date ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			$punches = Dolly_Attendance::punches_range( $users, $date, $date );
 			foreach ( $users as $uid ) {
 				if ( in_array( $uid, $flagged, true ) || ! empty( $punches[ $uid ][ $date ] ) ) {
@@ -229,7 +229,7 @@ class Dolly_Anomalies {
 					continue;
 				}
 				$details = sprintf(
-					__( 'Nessuna entrata registrata entro le %s (inizio previsto %s%s). Se la presenza c\'è stata, invia una richiesta di correzione timbratura.', 'dolly-employee-management' ),
+					/* translators: %1$s: time limit (HH:MM), %2$s: scheduled start (HH:MM), %3$s: optional workplace tolerance note. */ __( 'Nessuna entrata registrata entro le %1$s (inizio previsto %2$s%3$s). Se la presenza c\'è stata, invia una richiesta di correzione timbratura.', 'dolly-employee-management' ),
 					Dolly_Time::ts_to_hm( $deadline ),
 					$expected,
 					$delay ? ' + ' . $delay . __( ' minuti', 'dolly-employee-management' ) : ''
@@ -246,7 +246,7 @@ class Dolly_Anomalies {
 	public static function resolve_absence( $user_id, $from, $to, $resolution, $note, $actor = 0 ) {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'anomalies' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'unjustified_absence' AND status = 'open' AND work_date BETWEEN %s AND %s", $user_id, $from, $to ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'unjustified_absence' AND status = 'open' AND work_date BETWEEN %s AND %s", $user_id, $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $a ) {
 			self::close( $a, $resolution, $note, $actor );
 		}
@@ -260,15 +260,17 @@ class Dolly_Anomalies {
 		$p     = Dolly_Install::t( 'punches' );
 		$today = Dolly_Time::today();
 		$from  = Dolly_Time::add_days( $today, -7 );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Plugin tables (\$wpdb->prefix); values are prepared.
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT e.user_id, e.work_date FROM $p e
 				LEFT JOIN $p u ON u.user_id = e.user_id AND u.work_date = e.work_date AND u.action = 'uscita' AND u.is_active = 1
-				WHERE e.action = 'entrata' AND e.is_active = 1 AND e.work_date BETWEEN %s AND %s AND u.id IS NULL", // phpcs:ignore
+				WHERE e.action = 'entrata' AND e.is_active = 1 AND e.work_date BETWEEN %s AND %s AND u.id IS NULL",
 				$from,
 				$today
 			)
 		);
+		// phpcs:enable
 		foreach ( $rows as $r ) {
 			self::evaluate_exit( (int) $r->user_id, $r->work_date );
 		}
@@ -443,7 +445,7 @@ class Dolly_Anomalies {
 		$w     = implode( ' AND ', $where );
 		$per   = max( 1, min( 100, (int) ( $args['per_page'] ?? 10 ) ) );
 		$page  = max( 1, (int) ( $args['page'] ?? 1 ) );
-		$count = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t a WHERE $w", $params ) ) : $wpdb->get_var( "SELECT COUNT(*) FROM $t a WHERE $w" ) ); // phpcs:ignore
+		$count = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t a WHERE $w", $params ) ) : $wpdb->get_var( "SELECT COUNT(*) FROM $t a WHERE $w" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$params[] = $per;
 		$params[] = ( $page - 1 ) * $per;
 		$join     = '';
@@ -453,7 +455,7 @@ class Dolly_Anomalies {
 			list( $join, $by ) = Dolly_Employees::name_order_sql( 'a.user_id' );
 			$order             = $by . ", FIELD(a.status,'open') DESC, a.work_date DESC";
 		}
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT a.* FROM $t a $join WHERE $w ORDER BY $order, a.id DESC LIMIT %d OFFSET %d", $params ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT a.* FROM $t a $join WHERE $w ORDER BY $order, a.id DESC LIMIT %d OFFSET %d", $params ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- plugin tables ($wpdb->prefix), values prepared or cast.
 		return array(
 			'items' => array_map( array( __CLASS__, 'format' ), $rows ),
 			'total' => $count,
@@ -469,9 +471,9 @@ class Dolly_Anomalies {
 			if ( ! $user_ids ) {
 				return 0;
 			}
-			return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE status = 'open' AND user_id IN (" . implode( ',', array_map( 'intval', $user_ids ) ) . ')' ); // phpcs:ignore
+			return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE status = 'open' AND user_id IN (" . implode( ',', array_map( 'intval', $user_ids ) ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		}
-		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE status = 'open'" ); // phpcs:ignore
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t WHERE status = 'open'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/** Open anomalies for users over a date range: [user_id][date] => [labels]. */
@@ -483,7 +485,7 @@ class Dolly_Anomalies {
 		}
 		$t    = Dolly_Install::t( 'anomalies' );
 		$in   = implode( ',', array_map( 'intval', $user_ids ) );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, work_date, type, overdue FROM $t WHERE status = 'open' AND user_id IN ($in) AND work_date BETWEEN %s AND %s", $from, $to ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, work_date, type, overdue FROM $t WHERE status = 'open' AND user_id IN ($in) AND work_date BETWEEN %s AND %s", $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $r ) {
 			$out[ (int) $r->user_id ][ $r->work_date ][] = ( Dolly_I18n::t( self::TYPES[ $r->type ] ?? $r->type ) ) . ( $r->overdue ? __( ' (scaduto)', 'dolly-employee-management' ) : '' );
 		}

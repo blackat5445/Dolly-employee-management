@@ -104,7 +104,7 @@ class Dolly_Notifications {
 	public static function get_for( $user_id, $id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'notifications' );
-		$r = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d AND user_id = %d", $id, $user_id ) ); // phpcs:ignore
+		$r = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d AND user_id = %d", $id, $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		return $r ? self::format_row( $r ) : new WP_Error( 'dolly_not_found', __( 'Notifica non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 	}
 
@@ -112,7 +112,7 @@ class Dolly_Notifications {
 	public static function popups( $user_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'notifications' );
-		return array_map( array( __CLASS__, 'format_row' ), $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND popup = 1 AND read_at IS NULL ORDER BY id ASC LIMIT 5", $user_id ) ) ); // phpcs:ignore
+		return array_map( array( __CLASS__, 'format_row' ), $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND popup = 1 AND read_at IS NULL ORDER BY id ASC LIMIT 5", $user_id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/** Administrator "send test email": sends immediately and reports the mail error, if any. */
@@ -160,15 +160,16 @@ class Dolly_Notifications {
 		global $wpdb;
 		$text  = $body . "\n\n" . __( 'Apri: ', 'dolly-employee-management' ) . $link . "\n\n" . Dolly_Appearance::email_signature();
 		$now   = Dolly_Time::now_utc();
+		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- The values are passed as one array.
 		$sql   = $wpdb->prepare(
-			'INSERT IGNORE INTO ' . Dolly_Install::t( 'email_queue' ) . ' (user_id, event, dedupe_key, to_email, subject, body, status, attempts, next_attempt_at, created_at) VALUES (%d, %s, ' . ( $dedupe ? '%s' : 'NULL' ) . ", %s, %s, %s, 'pending', 0, %s, %s)", // phpcs:ignore
+			'INSERT IGNORE INTO ' . Dolly_Install::t( 'email_queue' ) . ' (user_id, event, dedupe_key, to_email, subject, body, status, attempts, next_attempt_at, created_at) VALUES (%d, %s, ' . ( $dedupe ? '%s' : 'NULL' ) . ", %s, %s, %s, 'pending', 0, %s, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			array_merge(
 				array( $user_id, $event ),
 				$dedupe ? array( $dedupe ) : array(),
 				array( $to, Dolly_Appearance::email_subject( mb_substr( $title, 0, 200 ) ), $text, $now, $now )
 			)
 		);
-		$wpdb->query( $sql ); // phpcs:ignore
+		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/**
@@ -178,16 +179,16 @@ class Dolly_Notifications {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'email_queue' );
 		$now  = Dolly_Time::now_utc();
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id FROM $t WHERE status = 'pending' AND next_attempt_at <= %s AND (locked_until IS NULL OR locked_until < %s) ORDER BY id ASC LIMIT %d", $now, $now, $limit ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id FROM $t WHERE status = 'pending' AND next_attempt_at <= %s AND (locked_until IS NULL OR locked_until < %s) ORDER BY id ASC LIMIT %d", $now, $now, $limit ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$sent = 0;
 		add_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
 		add_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
 		foreach ( $rows as $r ) {
-			$claimed = $wpdb->query( $wpdb->prepare( "UPDATE $t SET locked_until = %s WHERE id = %d AND status = 'pending' AND (locked_until IS NULL OR locked_until < %s)", gmdate( 'Y-m-d H:i:s', time() + 300 ), $r->id, $now ) ); // phpcs:ignore
+			$claimed = $wpdb->query( $wpdb->prepare( "UPDATE $t SET locked_until = %s WHERE id = %d AND status = 'pending' AND (locked_until IS NULL OR locked_until < %s)", gmdate( 'Y-m-d H:i:s', time() + 300 ), $r->id, $now ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			if ( ! $claimed ) {
 				continue;
 			}
-			$m                     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $r->id ) ); // phpcs:ignore
+			$m                     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $r->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			self::$last_mail_error = '';
 			$ok                    = wp_mail( $m->to_email, $m->subject, $m->body, self::mail_headers() );
 			if ( $ok ) {
@@ -228,12 +229,12 @@ class Dolly_Notifications {
 	public static function queue_stats() {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'email_queue' );
-		$rows = $wpdb->get_results( "SELECT status, COUNT(*) AS n FROM $t GROUP BY status" ); // phpcs:ignore
+		$rows = $wpdb->get_results( "SELECT status, COUNT(*) AS n FROM $t GROUP BY status" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$out  = array( 'pending' => 0, 'sent' => 0, 'failed' => 0 );
 		foreach ( $rows as $r ) {
 			$out[ $r->status ] = (int) $r->n;
 		}
-		$out['last_error'] = (string) $wpdb->get_var( "SELECT last_error FROM $t WHERE last_error IS NOT NULL ORDER BY id DESC LIMIT 1" ); // phpcs:ignore
+		$out['last_error'] = (string) $wpdb->get_var( "SELECT last_error FROM $t WHERE last_error IS NOT NULL ORDER BY id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		return $out;
 	}
 
@@ -242,8 +243,8 @@ class Dolly_Notifications {
 		$t     = Dolly_Install::t( 'notifications' );
 		$per   = max( 1, min( 50, (int) $per ) );
 		$page  = max( 1, (int) $page );
-		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d", $user_id ) ); // phpcs:ignore
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d ORDER BY id DESC LIMIT %d OFFSET %d", $user_id, $per, ( $page - 1 ) * $per ) ); // phpcs:ignore
+		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d ORDER BY id DESC LIMIT %d OFFSET %d", $user_id, $per, ( $page - 1 ) * $per ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$items = array_map( array( __CLASS__, 'format_row' ), $rows );
 		return array(
 			'items'  => $items,
@@ -257,16 +258,16 @@ class Dolly_Notifications {
 	public static function unread_count( $user_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'notifications' );
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d AND read_at IS NULL", $user_id ) ); // phpcs:ignore
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d AND read_at IS NULL", $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function mark_read( $user_id, $id = 0 ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'notifications' );
 		if ( $id ) {
-			$wpdb->query( $wpdb->prepare( "UPDATE $t SET read_at = %s WHERE id = %d AND user_id = %d AND read_at IS NULL", Dolly_Time::now_utc(), $id, $user_id ) ); // phpcs:ignore
+			$wpdb->query( $wpdb->prepare( "UPDATE $t SET read_at = %s WHERE id = %d AND user_id = %d AND read_at IS NULL", Dolly_Time::now_utc(), $id, $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		} else {
-			$wpdb->query( $wpdb->prepare( "UPDATE $t SET read_at = %s WHERE user_id = %d AND read_at IS NULL", Dolly_Time::now_utc(), $user_id ) ); // phpcs:ignore
+			$wpdb->query( $wpdb->prepare( "UPDATE $t SET read_at = %s WHERE user_id = %d AND read_at IS NULL", Dolly_Time::now_utc(), $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		}
 		return self::unread_count( $user_id );
 	}

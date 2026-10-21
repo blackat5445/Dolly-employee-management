@@ -18,7 +18,7 @@ class Dolly_Cron {
 	const HOOK = 'dolly_minute_tick';
 
 	public static function init() {
-		add_filter( 'cron_schedules', array( __CLASS__, 'schedules' ) ); // phpcs:ignore
+		add_filter( 'cron_schedules', array( __CLASS__, 'schedules' ) );
 		add_action( self::HOOK, array( __CLASS__, 'tick' ) );
 		if ( ! wp_next_scheduled( self::HOOK ) ) {
 			self::schedule();
@@ -34,7 +34,7 @@ class Dolly_Cron {
 	}
 
 	public static function schedule() {
-		add_filter( 'cron_schedules', array( __CLASS__, 'schedules' ) ); // phpcs:ignore
+		add_filter( 'cron_schedules', array( __CLASS__, 'schedules' ) );
 		if ( ! wp_next_scheduled( self::HOOK ) ) {
 			wp_schedule_event( time() + 60, 'dolly_every_minute', self::HOOK );
 		}

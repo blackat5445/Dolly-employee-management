@@ -23,7 +23,7 @@ class Dolly_Broadcasts {
 	public static function get( $id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'broadcasts' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	private static function recipients_of( $b ) {
@@ -45,7 +45,7 @@ class Dolly_Broadcasts {
 			'message'          => $b->message,
 			'all'              => $all,
 			'recipient_ids'    => $ids,
-			'recipients_label' => $all ? __( 'Tutti i dipendenti', 'dolly-employee-management' ) : ( sprintf( 1 === count( $ids ) ? __( '%d dipendente', 'dolly-employee-management' ) : __( '%d dipendenti', 'dolly-employee-management' ), count( $ids ) ) . ( $names ? ': ' . implode( ', ', $names ) . ( count( $ids ) > 5 ? '…' : '' ) : '' ) ),
+			'recipients_label' => $all ? __( 'Tutti i dipendenti', 'dolly-employee-management' ) : ( sprintf( 1 === count( $ids ) ? /* translators: %d: number of employees. */ __( '%d dipendente', 'dolly-employee-management' ) : /* translators: %d: number of employees. */ __( '%d dipendenti', 'dolly-employee-management' ), count( $ids ) ) . ( $names ? ': ' . implode( ', ', $names ) . ( count( $ids ) > 5 ? '…' : '' ) : '' ) ),
 			'email'            => (bool) $b->send_email,
 			'portal'           => (bool) $b->send_portal,
 			'popup'            => ! empty( $b->show_popup ),
@@ -176,7 +176,7 @@ class Dolly_Broadcasts {
 	public static function process_due() {
 		global $wpdb;
 		$t   = Dolly_Install::t( 'broadcasts' );
-		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM $t WHERE status = 'scheduled' AND send_at <= %s ORDER BY send_at ASC LIMIT 10", Dolly_Time::now_utc() ) ); // phpcs:ignore
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM $t WHERE status = 'scheduled' AND send_at <= %s ORDER BY send_at ASC LIMIT 10", Dolly_Time::now_utc() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $ids as $id ) {
 			self::dispatch( (int) $id );
 		}
@@ -187,8 +187,8 @@ class Dolly_Broadcasts {
 		$t     = Dolly_Install::t( 'broadcasts' );
 		$per   = max( 1, min( 100, (int) ( $args['per_page'] ?? 10 ) ) );
 		$page  = max( 1, (int) ( $args['page'] ?? 1 ) );
-		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t" ); // phpcs:ignore
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t ORDER BY FIELD(status,'scheduled') DESC, send_at DESC, id DESC LIMIT %d OFFSET %d", $per, ( $page - 1 ) * $per ) ); // phpcs:ignore
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $t" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t ORDER BY FIELD(status,'scheduled') DESC, send_at DESC, id DESC LIMIT %d OFFSET %d", $per, ( $page - 1 ) * $per ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		return array(
 			'items' => array_map( array( __CLASS__, 'format' ), $rows ),
 			'total' => $count,

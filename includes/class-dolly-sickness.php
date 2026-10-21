@@ -49,13 +49,13 @@ class Dolly_Sickness {
 	public static function get( $id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'sickness' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function covers( $user_id, $date ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'sickness' );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND status = 'active' AND start_date <= %s AND end_date >= %s LIMIT 1", $user_id, $date, $date ) ); // phpcs:ignore
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND status = 'active' AND start_date <= %s AND end_date >= %s LIMIT 1", $user_id, $date, $date ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function range( array $user_ids, $from, $to ) {
@@ -65,13 +65,13 @@ class Dolly_Sickness {
 		}
 		$t  = Dolly_Install::t( 'sickness' );
 		$in = implode( ',', array_map( 'intval', $user_ids ) );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id IN ($in) AND status = 'active' AND start_date <= %s AND end_date >= %s", $to, $from ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id IN ($in) AND status = 'active' AND start_date <= %s AND end_date >= %s", $to, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function certificates( $sickness_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'certificates' );
-		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE sickness_id = %d ORDER BY uploaded_at ASC", $sickness_id ) ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE sickness_id = %d ORDER BY uploaded_at ASC", $sickness_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	public static function format( $s, $with_notes = true ) {
@@ -170,7 +170,7 @@ class Dolly_Sickness {
 			Dolly_Audit::log( 'sickness_created_admin', 'sickness', $id, $user_id, sanitize_textarea_field( $data['notes'] ?? '' ), null, array( 'kind' => $label, 'period' => $period ) );
 			Dolly_Notifications::notify_user( $user_id, 'sickness_reported', fn () => array( 'infortunio' === $kind ? __( 'Infortunio registrato dall\'amministratore', 'dolly-employee-management' ) : __( 'Malattia registrata dall\'amministratore', 'dolly-employee-management' ), __( 'Periodo: ', 'dolly-employee-management' ) . $period ), null, 'malattia' );
 		} else {
-			Dolly_Notifications::notify_admins( 'sickness_reported', fn () => array( sprintf( 'infortunio' === $kind ? __( 'Infortunio segnalato da %s', 'dolly-employee-management' ) : __( 'Malattia segnalata da %s', 'dolly-employee-management' ), $name ), __( 'Periodo: ', 'dolly-employee-management' ) . $period ), null, 'dolly-requests#malattie', 'sickness-' . $id );
+			Dolly_Notifications::notify_admins( 'sickness_reported', fn () => array( sprintf( 'infortunio' === $kind ? /* translators: %s: employee name. */ __( 'Infortunio segnalato da %s', 'dolly-employee-management' ) : /* translators: %s: employee name. */ __( 'Malattia segnalata da %s', 'dolly-employee-management' ), $name ), __( 'Periodo: ', 'dolly-employee-management' ) . $period ), null, 'dolly-requests#malattie', 'sickness-' . $id );
 		}
 
 		if ( 'missing' === $status ) {
@@ -192,17 +192,17 @@ class Dolly_Sickness {
 		global $wpdb;
 		$out = array();
 		$p   = Dolly_Install::t( 'punches' );
-		$dates = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT work_date FROM $p WHERE user_id = %d AND is_active = 1 AND work_date BETWEEN %s AND %s ORDER BY work_date", $user_id, $start, $end ) ); // phpcs:ignore
+		$dates = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT work_date FROM $p WHERE user_id = %d AND is_active = 1 AND work_date BETWEEN %s AND %s ORDER BY work_date", $user_id, $start, $end ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( $dates ) {
 			$out[] = __( 'Timbrature presenti il ', 'dolly-employee-management' ) . implode( ', ', array_map( array( 'Dolly_Time', 'fmt_date' ), $dates ) ) . '.';
 		}
 		$r    = Dolly_Install::t( 'requests' );
-		$reqs = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $r WHERE user_id = %d AND type IN ('ferie','permesso','donazione') AND status IN ('pending','approved') AND " . Dolly_Requests::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s', $user_id, $end, $start ) ); // phpcs:ignore
+		$reqs = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $r WHERE user_id = %d AND type IN ('ferie','permesso','donazione') AND status IN ('pending','approved') AND " . Dolly_Requests::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s', $user_id, $end, $start ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $reqs as $q ) {
 			$out[] = ( 'approved' === $q->status ? __( 'Approvata: ', 'dolly-employee-management' ) : __( 'In attesa: ', 'dolly-employee-management' ) ) . Dolly_Requests::summary( $q ) . '.';
 		}
 		$s    = Dolly_Install::t( 'sickness' );
-		$sick = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $s WHERE user_id = %d AND status = 'active' AND start_date <= %s AND end_date >= %s", $user_id, $end, $start ) ); // phpcs:ignore
+		$sick = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $s WHERE user_id = %d AND status = 'active' AND start_date <= %s AND end_date >= %s", $user_id, $end, $start ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $sick as $x ) {
 			$out[] = __( 'Altra segnalazione (', 'dolly-employee-management' ) . strtolower( self::kind_label( self::kind_of( $x ) ) ) . ') ' . Dolly_Time::fmt_date( $x->start_date ) . ' – ' . Dolly_Time::fmt_date( $x->end_date ) . '.';
 		}
@@ -246,10 +246,10 @@ class Dolly_Sickness {
 		wp_mkdir_p( $dir );
 		$name = bin2hex( random_bytes( 20 ) );
 		$dest = $dir . '/' . $name;
-		if ( ! @move_uploaded_file( $file['tmp_name'], $dest ) ) { // phpcs:ignore
+		if ( ! @move_uploaded_file( $file['tmp_name'], $dest ) ) {
 			return new WP_Error( 'dolly_upload', __( 'Impossibile salvare il file. Contatta l\'amministratore.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 		}
-		@chmod( $dest, 0640 ); // phpcs:ignore
+		@chmod( $dest, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_chmod -- failure handled by the caller; private files of the plugin.
 		return array(
 			'file_name'     => gmdate( 'Y' ) . '/' . $name,
 			'original_name' => sanitize_file_name( $file['name'] ),
@@ -353,7 +353,7 @@ class Dolly_Sickness {
 	public static function download( $cert_id ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'certificates' );
-		$c = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $cert_id ) ); // phpcs:ignore
+		$c = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $cert_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( ! $c ) {
 			return new WP_Error( 'dolly_not_found', __( 'Certificato non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
@@ -374,7 +374,7 @@ class Dolly_Sickness {
 		header( 'Content-Length: ' . filesize( $path ) );
 		header( 'Content-Disposition: attachment; filename="' . rawurlencode( $c->original_name ) . '"; filename*=UTF-8\'\'' . rawurlencode( $c->original_name ) );
 		header( 'X-Content-Type-Options: nosniff' );
-		readfile( $path ); // phpcs:ignore
+		readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- private files of the plugin.
 		exit;
 	}
 
@@ -382,11 +382,11 @@ class Dolly_Sickness {
 	public static function clear_outstanding_requirements() {
 		global $wpdb;
 		$t   = Dolly_Install::t( 'sickness' );
-		$ids = array_map( 'intval', $wpdb->get_col( "SELECT id FROM $t WHERE certificate_status IN ('missing','overdue')" ) ); // phpcs:ignore
+		$ids = array_map( 'intval', $wpdb->get_col( "SELECT id FROM $t WHERE certificate_status IN ('missing','overdue')" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		if ( ! $ids ) {
 			return 0;
 		}
-		$wpdb->query( "UPDATE $t SET certificate_status = 'cleared' WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore
+		$wpdb->query( "UPDATE $t SET certificate_status = 'cleared' WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $ids as $id ) {
 			Dolly_Anomalies::resolve_by_key( 'cert-' . $id, 'certificates_disabled', __( 'Requisito certificato disattivato dalle impostazioni.', 'dolly-employee-management' ) );
 		}
@@ -399,7 +399,7 @@ class Dolly_Sickness {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'sickness' );
 		$days = (int) Dolly_Settings::get( 'certificate_days' );
-		foreach ( $wpdb->get_results( "SELECT id, reported_at FROM $t WHERE certificate_status IN ('missing','overdue')" ) as $s ) { // phpcs:ignore
+		foreach ( $wpdb->get_results( "SELECT id, reported_at FROM $t WHERE certificate_status IN ('missing','overdue')" ) as $s ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			$reported = Dolly_Time::utc_to_local( $s->reported_at, 'Y-m-d' );
 			$wpdb->update( $t, array( 'certificate_due' => Dolly_Time::add_days( $reported, $days ) ), array( 'id' => $s->id ) );
 		}
@@ -412,14 +412,14 @@ class Dolly_Sickness {
 			return;
 		}
 		$t    = Dolly_Install::t( 'sickness' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE certificate_status = 'missing' AND certificate_due IS NOT NULL AND certificate_due < %s", Dolly_Time::today() ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE certificate_status = 'missing' AND certificate_due IS NOT NULL AND certificate_due < %s", Dolly_Time::today() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		foreach ( $rows as $s ) {
 			$wpdb->update( $t, array( 'certificate_status' => 'overdue' ), array( 'id' => $s->id, 'certificate_status' => 'missing' ) );
 			Dolly_Anomalies::mark_overdue( 'cert-' . $s->id );
 			$name   = Dolly_Employees::display_name( (int) $s->user_id );
 			$period = Dolly_Time::fmt_date( $s->start_date ) . ' – ' . Dolly_Time::fmt_date( $s->end_date );
 			$kind   = self::kind_of( $s );
-			Dolly_Notifications::notify_user( (int) $s->user_id, 'certificate_overdue', fn () => array( __( 'Certificato scaduto', 'dolly-employee-management' ), sprintf( 'infortunio' === $kind ? __( 'Il termine per il certificato dell\'infortunio %s è scaduto. Caricalo appena possibile.', 'dolly-employee-management' ) : __( 'Il termine per il certificato della malattia %s è scaduto. Caricalo appena possibile.', 'dolly-employee-management' ), $period ) ), null, 'malattia', 'certover-' . $s->id );
+			Dolly_Notifications::notify_user( (int) $s->user_id, 'certificate_overdue', fn () => array( __( 'Certificato scaduto', 'dolly-employee-management' ), sprintf( 'infortunio' === $kind ? /* translators: %s: period of the report (dates). */ __( 'Il termine per il certificato dell\'infortunio %s è scaduto. Caricalo appena possibile.', 'dolly-employee-management' ) : /* translators: %s: period of the report (dates). */ __( 'Il termine per il certificato della malattia %s è scaduto. Caricalo appena possibile.', 'dolly-employee-management' ), $period ) ), null, 'malattia', 'certover-' . $s->id );
 			Dolly_Notifications::notify_admins( 'certificate_overdue', fn () => array( __( 'Certificato scaduto: ', 'dolly-employee-management' ) . $name, self::kind_label( $kind ) . ' ' . $period ), null, 'dolly-anomalies', 'certover-' . $s->id );
 		}
 	}
@@ -464,7 +464,7 @@ class Dolly_Sickness {
 		$w     = implode( ' AND ', $where );
 		$per   = max( 1, min( 100, (int) ( $args['per_page'] ?? 10 ) ) );
 		$page  = max( 1, (int) ( $args['page'] ?? 1 ) );
-		$count = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t s WHERE $w", $params ) ) : $wpdb->get_var( "SELECT COUNT(*) FROM $t s WHERE $w" ) ); // phpcs:ignore
+		$count = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t s WHERE $w", $params ) ) : $wpdb->get_var( "SELECT COUNT(*) FROM $t s WHERE $w" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$params[] = $per;
 		$params[] = ( $page - 1 ) * $per;
 		$join     = '';
@@ -473,7 +473,7 @@ class Dolly_Sickness {
 			list( $join, $by ) = Dolly_Employees::name_order_sql( 's.user_id' );
 			$order             = $by . ', s.start_date DESC';
 		}
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT s.* FROM $t s $join WHERE $w ORDER BY $order, s.id DESC LIMIT %d OFFSET %d", $params ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT s.* FROM $t s $join WHERE $w ORDER BY $order, s.id DESC LIMIT %d OFFSET %d", $params ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- plugin tables ($wpdb->prefix), values prepared or cast.
 		return array(
 			'items' => array_map( array( __CLASS__, 'format' ), $rows ),
 			'total' => $count,

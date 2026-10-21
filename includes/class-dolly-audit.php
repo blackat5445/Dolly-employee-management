@@ -92,10 +92,10 @@ class Dolly_Audit {
 		$per    = max( 1, min( 100, (int) ( $args['per_page'] ?? 20 ) ) );
 		$page   = max( 1, (int) ( $args['page'] ?? 1 ) );
 		$w      = implode( ' AND ', $where );
-		$count  = (int) $wpdb->get_var( $params ? $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE $w", $params ) : "SELECT COUNT(*) FROM $t WHERE $w" ); // phpcs:ignore
+		$count  = (int) $wpdb->get_var( $params ? $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE $w", $params ) : "SELECT COUNT(*) FROM $t WHERE $w" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$params[] = $per;
 		$params[] = ( $page - 1 ) * $per;
-		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE $w ORDER BY id DESC LIMIT %d OFFSET %d", $params ) ); // phpcs:ignore
+		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE $w ORDER BY id DESC LIMIT %d OFFSET %d", $params ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$items  = array();
 		foreach ( $rows as $r ) {
 			$items[] = array(

@@ -41,7 +41,7 @@ class Dolly_Closures {
 	public static function between( $from, $to ) {
 		global $wpdb;
 		$t    = Dolly_Install::t( 'closures' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE closure_date BETWEEN %s AND %s ORDER BY closure_date, workplace_id", $from, $to ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE closure_date BETWEEN %s AND %s ORDER BY closure_date, workplace_id", $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$out  = array();
 		foreach ( $rows as $r ) {
 			if ( ! isset( $out[ $r->closure_date ] ) ) {
@@ -97,7 +97,7 @@ class Dolly_Closures {
 		}
 		$a    = Dolly_Install::t( 'assignments' );
 		$w    = Dolly_Install::t( 'workplaces' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT a.user_id, a.workplace_id, a.valid_from, a.valid_to FROM $a a INNER JOIN $w w ON w.id = a.workplace_id WHERE w.active = 1 AND a.user_id IN (" . implode( ',', array_map( 'intval', $users ) ) . ') AND a.valid_from <= %s AND (a.valid_to IS NULL OR a.valid_to >= %s)', $to, $from ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT a.user_id, a.workplace_id, a.valid_from, a.valid_to FROM $a a INNER JOIN $w w ON w.id = a.workplace_id WHERE w.active = 1 AND a.user_id IN (" . implode( ',', array_map( 'intval', $users ) ) . ') AND a.valid_from <= %s AND (a.valid_to IS NULL OR a.valid_to >= %s)', $to, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$out  = array();
 		foreach ( $rows as $r ) {
 			$out[ (int) $r->user_id ][] = $r;
@@ -186,7 +186,7 @@ class Dolly_Closures {
 		// Unjustified absences already flagged in the range: closed below when the closure covers them.
 		$a_t      = Dolly_Install::t( 'anomalies' );
 		$absences = array();
-		foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT user_id, work_date FROM $a_t WHERE type = 'unjustified_absence' AND status = 'open' AND work_date BETWEEN %s AND %s", $from, $to ) ) as $r ) { // phpcs:ignore
+		foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT user_id, work_date FROM $a_t WHERE type = 'unjustified_absence' AND status = 'open' AND work_date BETWEEN %s AND %s", $from, $to ) ) as $r ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 			$absences[ (int) $r->user_id . '|' . $r->work_date ] = true;
 		}
 		foreach ( $dates as $date ) {

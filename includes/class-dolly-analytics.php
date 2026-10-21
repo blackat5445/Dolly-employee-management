@@ -123,7 +123,7 @@ class Dolly_Analytics {
 			return new WP_Error( 'dolly_invalid', __( 'Scegli una data fino a oggi.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 120 ); // phpcs:ignore
+			@set_time_limit( 120 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
 		}
 		$rows    = array();
 		$summary = array();
@@ -213,7 +213,7 @@ class Dolly_Analytics {
 			return new WP_Error( 'dolly_invalid', __( 'Dipendente non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 300 ); // phpcs:ignore
+			@set_time_limit( 300 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- failure handled by the caller.
 		}
 
 		$ids = $user_id ? array( (int) $user_id ) : self::employees( $from, $to, $workplace_id );
@@ -404,7 +404,7 @@ class Dolly_Analytics {
 		}
 		$t    = Dolly_Install::t( 'anomalies' );
 		$in   = implode( ',', array_map( 'intval', $ids ) );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, type, status, COUNT(*) AS n FROM $t WHERE user_id IN ($in) AND work_date BETWEEN %s AND %s GROUP BY user_id, type, status", $from, $to ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, type, status, COUNT(*) AS n FROM $t WHERE user_id IN ($in) AND work_date BETWEEN %s AND %s GROUP BY user_id, type, status", $from, $to ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$types = array();
 		foreach ( $rows as $r ) {
 			$n = (int) $r->n;
@@ -434,7 +434,7 @@ class Dolly_Analytics {
 		$t    = Dolly_Install::t( 'requests' );
 		$in   = implode( ',', array_map( 'intval', $ids ) );
 		$eff  = Dolly_Requests::EFFECTIVE_ROW;
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT type, status, COUNT(*) AS n FROM $t WHERE user_id IN ($in) AND $eff AND status <> 'superseded' AND start_date <= %s AND end_date >= %s GROUP BY type, status", $to, $from ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT type, status, COUNT(*) AS n FROM $t WHERE user_id IN ($in) AND $eff AND status <> 'superseded' AND start_date <= %s AND end_date >= %s GROUP BY type, status", $to, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$types = array();
 		foreach ( $rows as $r ) {
 			$n = (int) $r->n;
@@ -448,7 +448,7 @@ class Dolly_Analytics {
 			$out['pending'] += 'pending' === $r->status ? $n : 0;
 		}
 		$out['by_type'] = array_values( $types );
-		$avg            = $wpdb->get_var( $wpdb->prepare( "SELECT AVG(TIMESTAMPDIFF(MINUTE, created_at, decided_at)) FROM $t WHERE user_id IN ($in) AND $eff AND decided_at IS NOT NULL AND decided_by IS NOT NULL AND decided_by > 0 AND start_date <= %s AND end_date >= %s", $to, $from ) ); // phpcs:ignore
+		$avg            = $wpdb->get_var( $wpdb->prepare( "SELECT AVG(TIMESTAMPDIFF(MINUTE, created_at, decided_at)) FROM $t WHERE user_id IN ($in) AND $eff AND decided_at IS NOT NULL AND decided_by IS NOT NULL AND decided_by > 0 AND start_date <= %s AND end_date >= %s", $to, $from ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		$out['response_hours'] = null === $avg ? null : round( (float) $avg / 60, 1 );
 		return $out;
 	}

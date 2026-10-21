@@ -20,7 +20,7 @@ class Dolly_Onboarding {
 	const REDIRECT      = 'dolly_onboarding_redirect';
 	const TOUR_META     = 'dolly_admin_tour';
 	const NOTICE_META   = 'dolly_theme_notice_dismissed';
-	const THEME_VERSION = '1.2.0';
+	const THEME_VERSION = '1.3.0';
 
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ) );

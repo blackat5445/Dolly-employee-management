@@ -1,0 +1,7 @@
+# Development files are not part of the plugin package (GitHub zip / git archive).
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.distignore export-ignore
+/.github export-ignore
+/tools export-ignore
+/README.md export-ignore

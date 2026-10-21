@@ -68,7 +68,7 @@ class Dolly_Reminders {
 	private static function claim( $user_id, $date, $kind, $offset ) {
 		global $wpdb;
 		$t = Dolly_Install::t( 'reminders' );
-		return (bool) $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO $t (user_id, work_date, kind, offset_min, sent_at) VALUES (%d, %s, %s, %d, %s)", $user_id, $date, $kind, $offset, Dolly_Time::now_utc() ) ); // phpcs:ignore
+		return (bool) $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO $t (user_id, work_date, kind, offset_min, sent_at) VALUES (%d, %s, %s, %d, %s)", $user_id, $date, $kind, $offset, Dolly_Time::now_utc() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 	}
 
 	/** Absent for the whole day: vacation, blood donation, sickness or injury. */
@@ -133,14 +133,14 @@ class Dolly_Reminders {
 					}
 					$title = __( 'Promemoria: timbra l\'entrata', 'dolly-employee-management' );
 					$body  = $now < $start_ts
-						? sprintf( __( 'Il tuo turno inizia alle %s. Ricordati di timbrare l\'entrata.', 'dolly-employee-management' ), $shift[0] )
-						: sprintf( __( 'Il tuo turno è iniziato alle %s. Ricordati di timbrare l\'entrata.', 'dolly-employee-management' ), $shift[0] );
+						? sprintf( /* translators: %s: shift start time (HH:MM). */ __( 'Il tuo turno inizia alle %s. Ricordati di timbrare l\'entrata.', 'dolly-employee-management' ), $shift[0] )
+						: sprintf( /* translators: %s: shift start time (HH:MM). */ __( 'Il tuo turno è iniziato alle %s. Ricordati di timbrare l\'entrata.', 'dolly-employee-management' ), $shift[0] );
 				} else {
 					if ( ! isset( $punches['entrata'] ) || isset( $punches['uscita'] ) || self::leave_covers( $leaves, $shift[1], true ) ) {
 						continue;
 					}
 					$title = __( 'Promemoria: timbra l\'uscita', 'dolly-employee-management' );
-					$body  = sprintf( __( 'Il tuo turno è terminato alle %s e non risulta ancora l\'uscita. Ricordati di timbrarla.', 'dolly-employee-management' ), $shift[1] );
+					$body  = sprintf( /* translators: %s: shift end time (HH:MM). */ __( 'Il tuo turno è terminato alle %s e non risulta ancora l\'uscita. Ricordati di timbrarla.', 'dolly-employee-management' ), $shift[1] );
 				}
 				if ( ! self::claim( $uid, $today, $kind, $m ) ) {
 					continue;
@@ -162,7 +162,7 @@ class Dolly_Reminders {
 			return;
 		}
 		$t = Dolly_Install::t( 'reminders' );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE work_date < %s", Dolly_Time::add_days( $today, -7 ) ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( "DELETE FROM $t WHERE work_date < %s", Dolly_Time::add_days( $today, -7 ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- plugin tables ($wpdb->prefix), values prepared or cast.
 		update_option( 'dolly_reminders_cleaned', $today, false );
 	}
 }
