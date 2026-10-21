@@ -1,0 +1,120 @@
+/*
+ * Gestione Dipendenti admin screens. Scoped to .dolly-app / .dolly-admin-screen so that
+ * native WordPress screens and icons elsewhere remain unchanged.
+ */
+
+.dolly-admin-screen #wpcontent { background: #F5F6F8; }
+/* Full width: the content uses all the space next to the WordPress menu, with the same gutter on both sides. */
+.dolly-admin-screen .wrap.dolly-wrap { margin: 16px 20px 0 0; max-width: none; }
+@media (max-width: 782px) { .dolly-admin-screen .wrap.dolly-wrap { margin: 8px 10px 0 0; } }
+
+/* WordPress side menu hidden with the button at the top left (preference saved in this browser). */
+@media (min-width: 783px) {
+	.dolly-wpmenu-hidden .dolly-admin-screen #adminmenumain { display: none; }
+	.dolly-wpmenu-hidden .dolly-admin-screen #wpcontent,
+	.dolly-wpmenu-hidden .dolly-admin-screen #wpfooter { margin-left: 0; }
+}
+.dolly-app .dolly-admin__menu-toggle { color: #fff; margin-left: -8px; flex: none; }
+.dolly-app .dolly-admin__menu-toggle:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+@media (max-width: 782px) { .dolly-app .dolly-admin__menu-toggle { display: none; } }
+/* Notices from other plugins stay visible but do not break the layout. */
+.dolly-admin-screen .wrap.dolly-wrap > .notice { margin: 0 0 16px; }
+
+.dolly-app.dolly-admin { color: var(--dolly-text); }
+.dolly-app .dolly-admin__header {
+	display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+	background: var(--dolly-navy); color: #fff; border-radius: var(--dolly-radius) var(--dolly-radius) 0 0;
+	padding: 16px 24px;
+}
+.dolly-app .dolly-admin__header .dolly-brand__wordmark { color: #fff; }
+.dolly-app .dolly-admin__header .dolly-brand__sub { color: #D5DEE5; }
+.dolly-app .dolly-admin__title { color: #fff; margin: 0; font-size: 1.25rem; flex: 1; padding: 0; }
+.dolly-app .dolly-admin__bell { position: relative; color: #fff; }
+.dolly-app .dolly-admin__bell:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.dolly-app .dolly-admin__bell .dolly-count { position: absolute; top: 2px; right: 0; background: var(--dolly-gold); color: var(--dolly-navy); }
+
+.dolly-app .dolly-admin__nav {
+	display: flex; gap: 4px; overflow-x: auto; background: #fff; border: 1px solid var(--dolly-border); border-top: 0;
+	border-radius: 0 0 var(--dolly-radius) var(--dolly-radius); padding: 0 8px; margin-bottom: 24px;
+}
+.dolly-app .dolly-admin__navlink {
+	display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px;
+	color: var(--dolly-muted); font-weight: 600; text-decoration: none; white-space: nowrap;
+	border-bottom: 3px solid transparent;
+}
+.dolly-app .dolly-admin__navlink:hover { color: var(--dolly-navy); }
+.dolly-app .dolly-admin__navlink.is-active { color: var(--dolly-navy); border-bottom-color: var(--dolly-gold); }
+.dolly-app .dolly-admin__navlink:focus { box-shadow: none; }
+.dolly-app .dolly-admin__main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
+.dolly-app .dolly-admin__main:focus { outline: none; }
+
+/* WordPress core styles override inputs inside wp-admin; restore the component look. */
+.dolly-app input.dolly-input, .dolly-app select.dolly-select, .dolly-app textarea.dolly-textarea {
+	min-height: 44px; line-height: 1.4; border-radius: 8px; border-color: var(--dolly-border-strong); box-shadow: none; max-width: none;
+}
+.dolly-app select.dolly-select { padding-right: 32px; }
+.dolly-app .dolly-btn { box-sizing: border-box; }
+.dolly-app a.dolly-btn { text-decoration: none; }
+.dolly-app a.dolly-btn--primary, .dolly-app a.dolly-btn--primary:hover, .dolly-app a.dolly-btn--primary:focus { color: #fff; }
+.dolly-app .dolly-table th, .dolly-app .dolly-table td { font-size: .875rem; }
+
+/* Dashboard */
+.dolly-app .dolly-dash__toolbar { align-items: center; }
+.dolly-app .dolly-dash__date { font-size: 1.125rem; font-weight: 700; color: var(--dolly-navy); text-transform: capitalize; }
+.dolly-app .dolly-dash__updated { display: inline-flex; align-items: center; gap: 6px; align-self: center; }
+.dolly-app .dolly-dash__updated svg.lucide { width: 16px; height: 16px; color: var(--dolly-muted); }
+.dolly-app .dolly-kpi__icon--green { background: var(--dolly-green-bg); color: var(--dolly-green); }
+.dolly-app .dolly-kpi__icon--red { background: var(--dolly-red-bg); color: var(--dolly-red); }
+.dolly-app .dolly-kpi__icon--amber { background: var(--dolly-amber-bg); color: var(--dolly-amber); }
+.dolly-app .dolly-kpi__sub .dolly-badge { margin: 2px 0; }
+.dolly-app .dolly-dash__bottom > .dolly-card { display: flex; flex-direction: column; }
+.dolly-app .dolly-chart { position: relative; height: 360px; }
+/* Dashboard calendar: every day opens the collective closure pop-up. */
+.dolly-app .dolly-dash__bottom .fc .fc-daygrid-day-frame { cursor: pointer; }
+.dolly-app .dolly-dash__bottom .fc .fc-daygrid-day:hover { background: var(--dolly-navy-050); }
+@media (max-width: 640px) { .dolly-app .dolly-chart { height: 280px; } }
+
+.dolly-app .dolly-code {
+	background: #0F1B26; color: #E6EDF2; padding: 12px 16px; border-radius: 8px; overflow-x: auto;
+	font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre;
+}
+.dolly-app details summary { cursor: pointer; color: var(--dolly-navy); font-weight: 600; min-height: 32px; }
+.dolly-app .dolly-settings__save {
+	position: sticky; bottom: 0; z-index: 5; background: rgba(245, 246, 248, .95); padding: 12px 0;
+}
+.dolly-app .dolly-dialog .dolly-card { box-shadow: none; }
+.dolly-app .dolly-dialog h3 { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+
+/* Presenze › Per giorno */
+.dolly-app .dolly-att-modes { margin-bottom: 0; }
+.dolly-app .dolly-att-date__toolbar, .dolly-app .dolly-an__filters { align-items: flex-start; }
+.dolly-app .dolly-att-date__pick { display: flex; align-items: flex-start; gap: 6px; flex-wrap: wrap; }
+.dolly-app .dolly-att-date__pick .dolly-field { min-width: 150px; }
+.dolly-app .dolly-att-date__pick > .dolly-btn, .dolly-app .dolly-an__filters > .dolly-btn, .dolly-app .dolly-an__actions { margin-top: 28px; }
+@media (min-width: 641px) { .dolly-app .dolly-att-date__table td:first-child { min-width: 230px; } }
+.dolly-app .dolly-att-date__table td:first-child .dolly-small { display: block; line-height: 1.35; }
+.dolly-app .dolly-att-date__title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.dolly-app .dolly-att-date__title h2 { margin: 0; }
+.dolly-app .dolly-att-date__summary { display: grid; gap: 8px; margin: 8px 0 12px; }
+.dolly-app .dolly-att-date__off { margin-left: 6px; }
+
+/* Analytics */
+.dolly-app .dolly-an__presets { margin-top: 4px; }
+.dolly-app .dolly-an__meta { margin: 12px 0 0; }
+.dolly-app .dolly-an__kpis { margin: var(--dolly-s3, 16px) 0; }
+.dolly-app .dolly-an__kpis .dolly-kpi__value { font-size: 1.875rem; }
+.dolly-app .dolly-an__wide { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--dolly-s3, 16px); margin-bottom: var(--dolly-s3, 16px); }
+.dolly-app .dolly-an__grid { margin-bottom: var(--dolly-s3, 16px); }
+.dolly-app .dolly-an__grid .dolly-chart { height: 300px; }
+.dolly-app .dolly-an__chart .dolly-empty { min-height: 200px; }
+.dolly-app .dolly-neg { color: var(--dolly-red); font-weight: 600; }
+.dolly-app .dolly-pos { color: var(--dolly-green); font-weight: 600; }
+
+@media print {
+	#wpadminbar, #adminmenumain, #wpfooter, .dolly-admin__nav, .dolly-admin__menu-toggle, .dolly-admin__bell,
+	.dolly-an__filters, .dolly-an__presets, .dolly-att-modes, .dolly-att-date__toolbar, .dolly-toast-region { display: none !important; }
+	#wpcontent, #wpbody-content { margin: 0 !important; padding: 0 !important; }
+	.dolly-app .dolly-card, .dolly-app .dolly-chart { break-inside: avoid; box-shadow: none; }
+	.dolly-app .dolly-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+	.dolly-app .dolly-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

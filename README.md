@@ -97,20 +97,20 @@ define( 'DOLLY_PRIVATE_DIR', '/absolute/path/outside/webroot' );
 
 | Role | Created for | Capability |
 |---|---|---|
-| `dipendenti` | Employees | `mem_employee` |
-| `dolly_sede` | Workplace display accounts, one per workplace (created automatically) | `mem_workplace` |
-| `administrator` | Plugin administrators | `mem_manage` (added on activation) |
+| `dipendenti` | Employees | `dolly_employee` |
+| `dolly_sede` | Workplace display accounts, one per workplace (created automatically) | `dolly_workplace` |
+| `administrator` | Plugin administrators | `dolly_manage` (added on activation) |
 
 ## Theme integration
 
 The plugin works with any theme through its built-in fallback layout. To use your theme's own layout for the portal pages, add a template named `dolly/{view}.php` to the theme, where `{view}` is one of `login`, `login-sede`, `recupero-password`, `portale` or `sede`. Use `templates/fallback.php` as the starting point. A template must:
 
 - call `wp_head()` and `wp_footer()`;
-- call `MEM_Frontend::render_view()`.
+- call `Dolly_Frontend::render_view()`.
 
 Other filters you can use:
 
-- `mem_redirect_front_page`: return `false` to stop the plugin redirecting the site's front page to the portal or login page.
+- `dolly_redirect_front_page`: return `false` to stop the plugin redirecting the site's front page to the portal or login page.
 
 ## REST API
 
@@ -118,7 +118,7 @@ The admin screens and the portal run on an authenticated REST API under `/wp-jso
 
 ## Data
 
-The plugin creates its tables with the `{prefix}mem_` prefix. Data is never deleted on deactivation or upgrade, so historical records are always kept.
+The plugin creates its tables with the `{prefix}dolly_` prefix. Data is never deleted on deactivation or upgrade, so historical records are always kept.
 
 ## Third-party libraries
 

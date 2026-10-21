@@ -15,9 +15,9 @@ defined( 'ABSPATH' ) || exit;
 	<meta name="theme-color" content="#002F4D">
 	<?php wp_head(); ?>
 </head>
-<body <?php body_class( 'mem-body mem-view-' . sanitize_html_class( MEM_Frontend::current_view() ) ); ?>>
+<body <?php body_class( 'dolly-body dolly-view-' . sanitize_html_class( Dolly_Frontend::current_view() ) ); ?>>
 <?php wp_body_open(); ?>
-<?php MEM_Frontend::render_view(); ?>
+<?php Dolly_Frontend::render_view(); ?>
 <?php wp_footer(); ?>
 </body>
 </html>
