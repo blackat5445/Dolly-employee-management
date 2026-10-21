@@ -1004,8 +1004,12 @@
 					{ label: 'Raggio', render: function (w) { return w.radius_m + ' m'; }, num: true },
 					{ label: 'Tolleranza ritardo', render: function (w) { return w.late_tolerance === null || w.late_tolerance === undefined ? h('span', { class: 'dolly-muted', text: 'Predefinita (' + (CFG.lateTolerance || 0) + ' min)' }) : w.late_tolerance + ' min'; } },
 					{ label: 'Account sede', render: function (w) { return w.account_username ? w.account_username : DOLLY.badge('Mancante', 'amber', 'triangle-alert'); } },
+					{ label: 'Bluetooth', render: function (w) { return w.bluetooth ? DOLLY.badge('Attivo', 'green', 'bluetooth') : h('span', { class: 'dolly-muted', text: 'No' }); } },
 					{ label: 'Stato', render: function (w) { return w.active ? DOLLY.badge('Attiva', 'green', 'circle-check') : DOLLY.badge('Disattivata', 'neutral', 'ban'); } },
-					{ label: '', srLabel: 'Azioni', render: function (w) { return h('div', { class: 'dolly-actions' }, DOLLY.button('Modifica', { size: 'sm', icon: 'pencil', ariaLabel: 'Modifica ' + w.name, onClick: function () { workplaceDialog(w, load); } })); } }
+					{ label: '', srLabel: 'Azioni', render: function (w) { return h('div', { class: 'dolly-actions' }, [
+						DOLLY.button('Bluetooth', { size: 'sm', icon: 'bluetooth', ariaLabel: 'Dispositivo Bluetooth di ' + w.name, onClick: function () { bluetoothDialog(w, load); } }),
+						DOLLY.button('Modifica', { size: 'sm', icon: 'pencil', ariaLabel: 'Modifica ' + w.name, onClick: function () { workplaceDialog(w, load); } })
+					]); } }
 				], list, { empty: ['Nessuna sede', 'Crea la prima sede per assegnare i dipendenti.', 'map-pin'], caption: 'Sedi' }));
 			}, function (err) { DOLLY.render(box, DOLLY.errorState(err, load)); });
 		}
@@ -1066,6 +1070,69 @@
 				DOLLY.busy(btn, p).then(function () { close(); DOLLY.toast('Sede salvata.', 'success'); done(); }, function (err) { DOLLY.formError(form, err, alertBox); });
 			} }]
 		});
+	}
+
+	/**
+	 * Bluetooth device of a workplace: activation, configuration file for the firmware,
+	 * current code for testing and key regeneration.
+	 */
+	function bluetoothDialog(w, done) {
+		var body = h('div', { class: 'dolly-stack' }, DOLLY.loading());
+		var dlg = DOLLY.dialog({ title: 'Bluetooth · ' + w.name, body: body, wide: true, onClose: done, actions: [{ label: 'Chiudi' }] });
+		var guide = h('details', {}, [
+			h('summary', { text: 'Dispositivo consigliato e installazione' }),
+			h('div', { class: 'dolly-stack', style: 'margin-top:12px' }, [
+				h('p', { text: 'Serve una piccola scheda ESP32 con Bluetooth e Wi-Fi, alimentata da un caricatore USB-C, fissata vicino all\'ingresso:' }),
+				h('ul', {}, [
+					h('li', {}, [h('strong', { text: 'M5Stack AtomS3 Lite' }), ' (consigliato, circa 9–12 €): già in un guscio di plastica, con LED di stato e pulsante.']),
+					h('li', {}, [h('strong', { text: 'Seeed Studio XIAO ESP32-C3' }), ' (circa 5–7 €): più economico, da mettere in una scatolina.'])
+				]),
+				h('ol', {}, [
+					h('li', { text: 'Installa Arduino IDE e il supporto per le schede "esp32" di Espressif (Strumenti › Scheda › Gestore schede).' }),
+					h('li', {}, ['Apri il firmware: cartella ', h('code', { text: 'firmware/dolly-ble-beacon' }), ' del plugin (', h('a', { href: CFG.firmwareUrl, target: '_blank', rel: 'noopener', text: 'istruzioni complete' }), ').']),
+					h('li', {}, ['Sostituisci il file ', h('code', { text: 'config.h' }), ' con quello qui sotto e, se il dispositivo deve funzionare da solo, inserisci nome e password del Wi-Fi.']),
+					h('li', { text: 'Collega la scheda al computer con un cavo USB-C e premi Carica.' }),
+					h('li', { text: 'Con il Wi-Fi il dispositivo calcola il codice da solo (ora da internet). Senza Wi-Fi, apri lo schermo sede su un tablet Android con Chrome e tocca «Collega il Bluetooth»: il tablet invierà il codice al dispositivo.' })
+				]),
+				DOLLY.alert('I telefoni Android leggono il dispositivo con Chrome, Edge o Samsung Internet. Su iPhone Safari non supporta il Bluetooth per i siti web: serve l\'app gratuita Bluefy, oppure lascia attivi anche QR/PIN o GPS.', 'info')
+			])
+		]);
+		function render(d) {
+			if (!d.configured) {
+				DOLLY.render(body, [
+					h('p', { text: 'I dipendenti potranno timbrare avvicinando il telefono al dispositivo Bluetooth della sede: il telefono legge un codice che cambia ogni 30 secondi e che arriva solo a pochi metri.' }),
+					guide,
+					h('div', { class: 'dolly-btn-row' }, DOLLY.button('Attiva il Bluetooth per questa sede', { variant: 'primary', icon: 'bluetooth', onClick: function (e) { save({ enabled: true }, e.currentTarget); } }))
+				]);
+				return;
+			}
+			var enabled = DOLLY.switchControl({ label: 'Bluetooth attivo per questa sede', checked: d.enabled, description: 'Disattivato: i codici del dispositivo non vengono accettati.', onChange: function (on) { save({ enabled: on }); } });
+			var code = h('pre', { class: 'dolly-code', text: d.config });
+			var copy = DOLLY.button('Copia', { size: 'sm', icon: 'copy', onClick: function () {
+				(navigator.clipboard ? navigator.clipboard.writeText(d.config) : Promise.reject()).then(function () { DOLLY.toast('Configurazione copiata.', 'success'); }, function () { DOLLY.toast('Copia non riuscita: seleziona il testo e copialo.', 'error'); });
+			} });
+			var download = DOLLY.button('Scarica config.h', { size: 'sm', icon: 'download', onClick: function () {
+				var a = h('a', { href: URL.createObjectURL(new Blob([d.config], { type: 'text/plain' })), download: 'config.h' });
+				document.body.appendChild(a); a.click(); a.remove();
+			} });
+			var regen = DOLLY.button('Genera una nuova chiave', { size: 'sm', icon: 'key-round', variant: 'ghost', onClick: function () {
+				DOLLY.confirm('Generare una nuova chiave?', 'Il dispositivo attuale smetterà di funzionare finché non carichi la nuova configurazione. Usala se il dispositivo è stato perso o la chiave è stata condivisa.', 'Genera nuova chiave', 'danger').then(function (ok) { if (ok) { save({ regenerate: true }); } });
+			} });
+			DOLLY.render(body, [
+				enabled,
+				h('dl', { class: 'dolly-dl' }, [
+					h('dt', { text: 'Codice attuale' }), h('dd', {}, [h('strong', { text: d.test_code ? d.test_code.slice(0, 3) + ' ' + d.test_code.slice(3) : '—' }), h('span', { class: 'dolly-help', text: ' Per una prova: deve coincidere con quello del dispositivo (monitor seriale di Arduino IDE).' })]),
+					h('dt', { text: 'Chiave creata' }), h('dd', { text: d.created_at ? DOLLY.fmt.dateTime(d.created_at) : '—' })
+				]),
+				h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: 'Configurazione del dispositivo (config.h)' }), code, h('div', { class: 'dolly-btn-row' }, [copy, download, regen]), h('span', { class: 'dolly-help', text: 'Contiene la chiave segreta della sede: non condividerla. Chi la possiede può generare codici validi.' })]),
+				guide
+			]);
+		}
+		function save(data, btn) {
+			DOLLY.busy(btn, DOLLY.api('admin/workplaces/' + w.id + '/bluetooth', { method: 'POST', body: data })).then(function (d) { render(d); DOLLY.toast('Bluetooth aggiornato.', 'success'); }, function (err) { DOLLY.toast(err.message, 'error'); });
+		}
+		DOLLY.api('admin/workplaces/' + w.id + '/bluetooth').then(render, function (err) { DOLLY.render(body, DOLLY.errorState(err)); });
+		return dlg;
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -1841,7 +1908,9 @@
 	function renderSettings(d) {
 		var s = d.settings;
 		var alertBox = h('div', { hidden: true });
-		var vm = DOLLY.radios({ label: 'Modalità di verifica della timbratura', name: 'verification_mode', value: s.verification_mode, options: Object.keys(d.verification_modes).map(function (k) { return { value: k, label: d.verification_modes[k] + (k === 'either' ? ' (predefinita)' : '') }; }) });
+		var methods = DOLLY.chips({ label: 'Metodi per verificare la presenza', name: 'verification_methods', full: true, selected: s.verification_methods, options: Object.keys(d.verification_methods).map(function (k) { return { value: k, label: d.verification_methods[k] }; }), help: 'Il dipendente sceglie uno dei metodi attivi. Il Bluetooth richiede un dispositivo in sede: configuralo in Sedi › Bluetooth.' });
+		var requireGps = DOLLY.switchControl({ label: 'Richiedi sempre anche la posizione GPS', name: 'verification_require_gps', checked: !!s.verification_require_gps, description: 'Oltre al codice della sede (QR/PIN o Bluetooth) il telefono deve trovarsi entro il raggio della sede.' });
+		var bleNote = DOLLY.alert('Bluetooth: funziona con Chrome, Edge e Samsung Internet su Android. Su iPhone serve l\'app gratuita Bluefy, perché Safari non supporta il Bluetooth per i siti web: lascia attivo anche un altro metodo se alcuni dipendenti usano iPhone.', 'info');
 		var radius = DOLLY.field({ label: 'Raggio GPS predefinito per le nuove sedi (metri)', name: 'default_radius', type: 'number', value: s.default_radius, attrs: { min: 10, max: 5000 } });
 		var cm = DOLLY.radios({ label: 'Certificato medico', name: 'certificate_mode', value: s.certificate_mode, options: Object.keys(d.certificate_modes).map(function (k) { return { value: k, label: d.certificate_modes[k] + (k === 'required' ? ' (predefinito)' : ''), description: k === 'disabled' ? 'Disattivando, i requisiti in sospeso vengono annullati con registrazione nel registro.' : null }; }) });
 		var cdays = DOLLY.field({ label: 'Giorni di calendario per il certificato', name: 'certificate_days', type: 'number', value: s.certificate_days, attrs: { min: 1, max: 365 }, help: 'Usato solo con la scadenza attiva.' });
@@ -1966,14 +2035,14 @@
 		var empN = notifyGroup('', d.employee_events || d.events, s.events, 'Notifiche nell\'app', 'Campanella del portale e notifica push sul telefono (se attivata dal dipendente).');
 		var admN = notifyGroup('admin_', d.admin_events || d.events, s.admin_events || s.events, 'Notifiche nel pannello', 'Campanella in alto nel pannello di amministrazione e push sul telefono (se attivata).');
 		var recipients = DOLLY.chips({ label: 'Amministratori che ricevono le notifiche', name: 'admin_recipients', help: 'Nessuna selezione = tutti gli amministratori.', selected: s.admin_recipients, options: d.admins.map(function (a) { return { value: a.id, label: a.name + ' (' + a.email + ')' }; }) });
-		var pinMax = DOLLY.field({ label: 'Tentativi PIN errati prima del blocco', name: 'pin_max_attempts', type: 'number', value: s.pin_max_attempts, attrs: { min: 1, max: 50 } });
+		var pinMax = DOLLY.field({ label: 'Tentativi PIN o Bluetooth errati prima del blocco', name: 'pin_max_attempts', type: 'number', value: s.pin_max_attempts, attrs: { min: 1, max: 50 } });
 		var pinLock = DOLLY.field({ label: 'Durata del blocco PIN (minuti)', name: 'pin_lock_minutes', type: 'number', value: s.pin_lock_minutes, attrs: { min: 1, max: 1440 } });
 		var grace = DOLLY.field({ label: 'Tolleranza di rete per QR/PIN (secondi)', name: 'challenge_grace', type: 'number', value: s.challenge_grace, attrs: { min: 0, max: 10 }, help: 'Accetta il codice precedente per pochi secondi dopo la rotazione (0–10).' });
 
 		var saveBtn = DOLLY.button('Salva impostazioni', { type: 'submit', variant: 'primary', icon: 'save' });
 		var form = h('form', { class: 'dolly-stack', novalidate: true }, [
 			alertBox,
-			DOLLY.card('Verifica timbrature', 'shield-check', h('div', { class: 'dolly-form' }, [vm, radius, grace, h('div', { class: 'dolly-form-grid' }, [pinMax, pinLock])]), { level: 'h2' }),
+			DOLLY.card('Verifica timbrature', 'shield-check', h('div', { class: 'dolly-form' }, [methods, requireGps, bleNote, radius, grace, h('div', { class: 'dolly-form-grid' }, [pinMax, pinLock])]), { level: 'h2' }),
 			DOLLY.card('Presenze e orari', 'clock', h('div', { class: 'dolly-form' }, [lunchPunch, h('div', { class: 'dolly-form-grid' }, [lateTol]), rounding, stepBox, h('div', { class: 'dolly-form-grid' }, [overtime, holidayIncrease])]), { level: 'h2' }),
 			DOLLY.card('Portale dipendenti', 'smartphone', h('div', { class: 'dolly-form' }, [requireInstall]), { level: 'h2' }),
 			DOLLY.card('Sessioni dispositivo', 'shield-check', h('div', { class: 'dolly-form' }, [deviceSessions]), { level: 'h2' }),
@@ -2012,7 +2081,7 @@
 		form.addEventListener('submit', function (ev) {
 			ev.preventDefault(); DOLLY.clearErrors(form); alertBox.hidden = true;
 			var body = {
-				verification_mode: vm.value(), default_radius: radius.input.value, certificate_mode: cm.value(), certificate_days: cdays.input.value,
+				verification_methods: methods.values(), verification_require_gps: requireGps.control.isOn(), default_radius: radius.input.value, certificate_mode: cm.value(), certificate_days: cdays.input.value,
 				lunch_punch: lunchPunch.control.isOn(), late_tolerance: lateTol.input.value, exit_rounding: rounding.control.isOn(), rounding_step: step.input.value,
 				overtime_auto: overtime.input.value, absence_check: absCheck.control.isOn(), absence_delay: absDelay.input.value,
 				oncall_auto: ocAuto.control.isOn(), oncall_threshold: ocThreshold.input.value, holiday_increase: holidayIncrease.input.value, require_install: requireInstall.control.isOn(),

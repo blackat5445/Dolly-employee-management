@@ -105,6 +105,8 @@ class Dolly_REST {
 			array( '/admin/workplaces', 'GET', 'admin_workplaces', $adm ),
 			array( '/admin/workplaces', 'POST', 'admin_workplace_create', $adm ),
 			array( '/admin/workplaces/(?P<id>\d+)', 'PUT', 'admin_workplace_update', $adm ),
+			array( '/admin/workplaces/(?P<id>\d+)/bluetooth', 'GET', 'admin_workplace_bluetooth', $adm ),
+			array( '/admin/workplaces/(?P<id>\d+)/bluetooth', 'POST', 'admin_workplace_bluetooth_update', $adm ),
 			array( '/admin/requests', 'GET', 'admin_requests', $adm ),
 			array( '/admin/requests/(?P<id>\d+)/decision', 'POST', 'admin_request_decide', $adm ),
 			array( '/admin/requests/(?P<id>\d+)/revoke', 'POST', 'admin_request_revoke', $adm ),
@@ -183,7 +185,8 @@ class Dolly_REST {
 		$e['popups']         = Dolly_Notifications::popups( $uid );
 		$e['tour_done']      = (bool) get_user_meta( $uid, 'dolly_tour_done', true );
 		$e['settings'] = array(
-			'verification_mode'  => Dolly_Settings::get( 'verification_mode' ),
+			'verification'       => Dolly_Settings::verification(),
+			'bluetooth'          => Dolly_Bluetooth::client_config(),
 			'certificate_mode'   => Dolly_Settings::get( 'certificate_mode' ),
 			'certificate_days'   => (int) Dolly_Settings::get( 'certificate_days' ),
 			'lunch_punch'        => (bool) Dolly_Settings::get( 'lunch_punch' ),
@@ -241,7 +244,12 @@ class Dolly_REST {
 	public static function attendance_verify( WP_REST_Request $req ) {
 		$b   = self::body( $req );
 		$uid = get_current_user_id();
-		$r   = 'pin' === ( $b['type'] ?? '' ) ? Dolly_Verification::verify_pin( $uid, $b['code'] ?? '' ) : Dolly_Verification::verify_qr( $uid, $b['code'] ?? '' );
+		$type = $b['type'] ?? '';
+		if ( 'ble' === $type ) {
+			$r = Dolly_Bluetooth::verify( $uid, $b['code'] ?? '' );
+		} else {
+			$r = 'pin' === $type ? Dolly_Verification::verify_pin( $uid, $b['code'] ?? '' ) : Dolly_Verification::verify_qr( $uid, $b['code'] ?? '' );
+		}
 		if ( is_wp_error( $r ) ) {
 			return $r;
 		}
@@ -394,6 +402,8 @@ class Dolly_REST {
 				'server_time' => microtime( true ),
 				'period'      => Dolly_Verification::WINDOW,
 				'nonce'       => wp_create_nonce( 'wp_rest' ),
+				// Code relayed to the Bluetooth device by this tablet (tablet mode), if the workplace uses one.
+				'bluetooth'   => Dolly_Bluetooth::current_code( (int) $w->id ),
 			)
 		);
 		$response->header( 'Cache-Control', 'no-store' );
@@ -732,7 +742,7 @@ class Dolly_REST {
 		$admins = get_users( array( 'capability' => 'dolly_manage' ) );
 		return array(
 			'settings'          => $s,
-			'verification_modes'=> Dolly_Settings::VERIFICATION_MODES,
+			'verification_methods' => Dolly_Settings::VERIFICATION_METHODS,
 			'certificate_modes' => Dolly_Settings::CERTIFICATE_MODES,
 			'events'            => Dolly_Settings::EVENTS,
 			'employee_events'   => Dolly_Settings::EMPLOYEE_EVENTS,
@@ -752,8 +762,32 @@ class Dolly_REST {
 	}
 
 	public static function admin_settings_update( WP_REST_Request $req ) {
-		Dolly_Settings::update( self::body( $req ) );
-		return self::admin_settings_get();
+		$r = Dolly_Settings::update( self::body( $req ) );
+		return is_wp_error( $r ) ? $r : self::admin_settings_get();
+	}
+
+	/* ---------- Bluetooth device of a workplace ---------- */
+
+	public static function admin_workplace_bluetooth( WP_REST_Request $req ) {
+		$id = (int) $req['id'];
+		if ( ! Dolly_Workplaces::get( $id ) ) {
+			return new WP_Error( 'dolly_not_found', 'Sede non trovata.', array( 'status' => 404 ) );
+		}
+		return Dolly_Bluetooth::admin_info( $id );
+	}
+
+	public static function admin_workplace_bluetooth_update( WP_REST_Request $req ) {
+		$id = (int) $req['id'];
+		if ( ! Dolly_Workplaces::get( $id ) ) {
+			return new WP_Error( 'dolly_not_found', 'Sede non trovata.', array( 'status' => 404 ) );
+		}
+		$b = self::body( $req );
+		if ( ! empty( $b['regenerate'] ) ) {
+			Dolly_Bluetooth::regenerate( $id );
+		} elseif ( isset( $b['enabled'] ) ) {
+			Dolly_Bluetooth::enable( $id, (bool) $b['enabled'] );
+		}
+		return Dolly_Bluetooth::admin_info( $id );
 	}
 
 	public static function admin_appearance_get() {

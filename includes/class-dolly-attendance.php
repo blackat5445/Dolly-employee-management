@@ -20,8 +20,10 @@ class Dolly_Attendance {
 		'gps'        => 'GPS',
 		'qr'         => 'QR',
 		'pin'        => 'PIN',
+		'ble'        => 'Bluetooth',
 		'gps_qr'     => 'GPS + QR',
 		'gps_pin'    => 'GPS + PIN',
+		'gps_ble'    => 'GPS + Bluetooth',
 		'exception'  => 'Eccezione amministratore',
 		'correction' => 'Correzione amministratore',
 	);
@@ -169,7 +171,7 @@ class Dolly_Attendance {
 			'last'                => $last ? self::format_punch( $last ) : null,
 			'previous_incomplete' => array_map( array( 'Dolly_Time', 'fmt_date' ), self::previous_incomplete( $user_id, $date ) ),
 			'exception'           => Dolly_Verification::format_exception( $exception ),
-			'verification_mode'   => Dolly_Settings::get( 'verification_mode' ),
+			'verification'        => Dolly_Settings::verification(),
 		);
 	}
 
@@ -306,60 +308,63 @@ class Dolly_Attendance {
 			);
 		}
 
-		$mode       = Dolly_Settings::get( 'verification_mode' );
+		$v          = Dolly_Settings::verification();
+		$methods    = $v['methods'];
 		$has_ticket = ! empty( $input['ticket'] );
 		$has_gps    = ! empty( $input['gps'] );
 
-		switch ( $mode ) {
-			case 'gps':
-				return Dolly_Verification::verify_gps( $user_id, $input['gps'] ?? null );
-
-			case 'qrpin':
-				if ( ! $has_ticket ) {
-					return new WP_Error( 'dolly_need_qrpin', 'Scansiona il QR o inserisci il PIN della sede.', array( 'status' => 400 ) );
-				}
-				return Dolly_Verification::read_ticket( $user_id, $input['ticket'] );
-
-			case 'both':
-				if ( ! $has_ticket ) {
-					return new WP_Error( 'dolly_need_qrpin', 'Sono richiesti sia la posizione GPS sia il QR/PIN della sede.', array( 'status' => 400 ) );
-				}
-				$t = Dolly_Verification::read_ticket( $user_id, $input['ticket'] );
-				if ( is_wp_error( $t ) ) {
-					return $t;
-				}
-				$g = Dolly_Verification::verify_gps( $user_id, $input['gps'] ?? null );
-				if ( is_wp_error( $g ) ) {
-					return $g;
-				}
-				$w = Dolly_Workplaces::get( $t['workplace_id'] );
-				if ( null === $w->lat || null === $w->lng ) {
-					return new WP_Error( 'dolly_gps_no_workplace', 'La sede non ha coordinate configurate.', array( 'status' => 400 ) );
-				}
-				$d = Dolly_Workplaces::distance( $g['lat'], $g['lng'], (float) $w->lat, (float) $w->lng );
-				if ( $d > (int) $w->radius_m ) {
-					return new WP_Error( 'dolly_gps_out_of_range', sprintf( 'La tua posizione non corrisponde alla sede %s (circa %d m).', $w->name, (int) round( $d ) ), array( 'status' => 403 ) );
-				}
-				return array_merge(
-					$g,
-					array(
-						'workplace_id' => $t['workplace_id'],
-						'method'       => 'gps_' . $t['method'],
-						'ref'          => $t['ref'],
-						'distance'     => (int) round( $d ),
-					)
-				);
-
-			case 'either':
-			default:
-				if ( $has_ticket ) {
-					return Dolly_Verification::read_ticket( $user_id, $input['ticket'] );
-				}
-				if ( $has_gps ) {
-					return Dolly_Verification::verify_gps( $user_id, $input['gps'] );
-				}
-				return new WP_Error( 'dolly_need_verification', 'Condividi la posizione oppure usa il QR/PIN della sede.', array( 'status' => 400 ) );
+		if ( $has_ticket ) {
+			$t = Dolly_Verification::read_ticket( $user_id, $input['ticket'] );
+			if ( is_wp_error( $t ) ) {
+				return $t;
+			}
+			$kind = 'ble' === $t['method'] ? 'ble' : 'qrpin';
+			if ( ! in_array( $kind, $methods, true ) ) {
+				return new WP_Error( 'dolly_method_not_allowed', 'Questo metodo di verifica non è attivo. Usa uno dei metodi indicati nell\'app.', array( 'status' => 400 ) );
+			}
+			if ( ! $v['require_gps'] ) {
+				return $t;
+			}
+			// GPS as well: the position must be within the radius of the workplace of the code.
+			$g = Dolly_Verification::verify_gps( $user_id, $input['gps'] ?? null );
+			if ( is_wp_error( $g ) ) {
+				return $g;
+			}
+			$w = Dolly_Workplaces::get( $t['workplace_id'] );
+			if ( null === $w->lat || null === $w->lng ) {
+				return new WP_Error( 'dolly_gps_no_workplace', 'La sede non ha coordinate configurate.', array( 'status' => 400 ) );
+			}
+			$d = Dolly_Workplaces::distance( $g['lat'], $g['lng'], (float) $w->lat, (float) $w->lng );
+			if ( $d > (int) $w->radius_m ) {
+				return new WP_Error( 'dolly_gps_out_of_range', sprintf( 'La tua posizione non corrisponde alla sede %s (circa %d m).', $w->name, (int) round( $d ) ), array( 'status' => 403 ) );
+			}
+			return array_merge(
+				$g,
+				array(
+					'workplace_id' => $t['workplace_id'],
+					'method'       => 'gps_' . $t['method'],
+					'ref'          => $t['ref'],
+					'distance'     => (int) round( $d ),
+				)
+			);
 		}
+		if ( $v['require_gps'] ) {
+			return new WP_Error( 'dolly_need_qrpin', 'Sono richiesti la posizione GPS e un codice della sede (' . self::code_methods_label( $methods ) . ').', array( 'status' => 400 ) );
+		}
+		if ( $has_gps && in_array( 'gps', $methods, true ) ) {
+			return Dolly_Verification::verify_gps( $user_id, $input['gps'] );
+		}
+		if ( ! in_array( 'gps', $methods, true ) ) {
+			return new WP_Error( 'dolly_need_qrpin', 'Verifica la presenza con ' . self::code_methods_label( $methods ) . '.', array( 'status' => 400 ) );
+		}
+		return new WP_Error( 'dolly_need_verification', 'Verifica la presenza: ' . implode( ', ', array_intersect_key( Dolly_Settings::VERIFICATION_METHODS, array_flip( $methods ) ) ) . '.', array( 'status' => 400 ) );
+	}
+
+	/** "QR o PIN", "Bluetooth" or "QR, PIN o Bluetooth" for the allowed code methods. */
+	private static function code_methods_label( $methods ) {
+		$qr  = in_array( 'qrpin', $methods, true );
+		$ble = in_array( 'ble', $methods, true );
+		return $qr && $ble ? 'QR, PIN o Bluetooth' : ( $ble ? 'Bluetooth' : 'QR o PIN' );
 	}
 
 	/**

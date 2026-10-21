@@ -298,7 +298,7 @@ class Dolly_Frontend {
 			wp_localize_script( 'dolly-core', 'DOLLY_CONFIG', self::js_config( array_merge( self::install_config(), array( 'view' => 'portale', 'push' => Dolly_Push::client_config() ) ) ) );
 		} elseif ( 'sede' === $view ) {
 			wp_enqueue_script( 'dolly-workplace', DOLLY_URL . 'assets/js/dolly-workplace.js', array( 'dolly-core', 'dolly-qrcode' ), DOLLY_VERSION, true );
-			wp_localize_script( 'dolly-core', 'DOLLY_CONFIG', self::js_config( array( 'view' => 'sede' ) ) );
+			wp_localize_script( 'dolly-core', 'DOLLY_CONFIG', self::js_config( array( 'view' => 'sede', 'bluetooth' => Dolly_Bluetooth::client_config() ) ) );
 		} elseif ( 'login' === $view ) {
 			wp_localize_script( 'dolly-core', 'DOLLY_CONFIG', self::js_config( array_merge( self::install_config(), array( 'view' => $view ) ) ) );
 		} else {

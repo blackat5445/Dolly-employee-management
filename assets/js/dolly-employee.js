@@ -191,7 +191,7 @@
 			plan.holiday ? h('dt', { text: 'Festività' }) : null, plan.holiday ? h('dd', { text: plan.holiday }) : null,
 			h('dt', { text: 'Orario' }), h('dd', { text: sched }),
 			h('dt', { text: 'Sedi' }), h('dd', { text: me.workplaces.map(function (w) { return w.name; }).join(', ') || 'Nessuna' }),
-			h('dt', { text: 'Verifica' }), h('dd', { text: modeLabel(st.verification_mode) })
+			h('dt', { text: 'Verifica' }), h('dd', { text: verificationLabel(st.verification) })
 		])));
 
 		// Open anomalies.
@@ -209,8 +209,21 @@
 		}
 	}
 
-	function modeLabel(m) {
-		return { gps: 'Posizione GPS', qrpin: 'QR o PIN della sede', either: 'Posizione GPS oppure QR/PIN', both: 'Posizione GPS e QR/PIN' }[m] || m;
+	/** "Posizione GPS oppure QR/PIN della sede", "Posizione GPS e Bluetooth"… */
+	function verificationLabel(v) {
+		v = v || { methods: ['gps', 'qrpin'], require_gps: false };
+		var names = { gps: 'posizione GPS', qrpin: 'QR/PIN della sede', ble: 'Bluetooth' };
+		var codes = v.methods.filter(function (m) { return m !== 'gps'; }).map(function (m) { return names[m]; });
+		var label = v.require_gps ? 'Posizione GPS e ' + codes.join(' oppure ') : v.methods.map(function (m) { return names[m]; }).join(' oppure ');
+		return label.charAt(0).toUpperCase() + label.slice(1);
+	}
+
+	/** Web Bluetooth is available in Chrome, Edge and Samsung Internet on Android, not in Safari on iPhone. */
+	var bleSupported = !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
+	function bleUnsupportedMessage() {
+		return /iPhone|iPad|iPod/.test(navigator.userAgent)
+			? 'Su iPhone e iPad Safari non permette ai siti di usare il Bluetooth. Apri il portale con l\'app Bluefy (gratuita su App Store) oppure usa un altro metodo.'
+			: 'Questo browser non permette ai siti di usare il Bluetooth. Apri il portale con Chrome oppure usa un altro metodo.';
 	}
 
 	function anomalyItem(a) {
@@ -325,11 +338,12 @@
 		var st = state.me.state;
 		// Tutorial: same screens, but no GPS/QR request and nothing is sent to the server.
 		var demo = tour.active;
-		var mode = demo ? 'either' : st.verification_mode;
+		var v = demo ? { methods: ['gps', 'qrpin'], require_gps: false } : (st.verification || { methods: ['gps', 'qrpin'], require_gps: false });
 		var exceptionActive = !demo && st.exception && st.exception.active;
-		var needsGps = !exceptionActive && (mode === 'gps' || mode === 'both');
-		var needsQr = !exceptionActive && (mode === 'qrpin' || mode === 'both');
-		var either = !exceptionActive && mode === 'either';
+		var allowGps = v.methods.indexOf('gps') !== -1, allowQr = v.methods.indexOf('qrpin') !== -1, allowBle = v.methods.indexOf('ble') !== -1;
+		// "GPS as well": position first, then a workplace code (QR/PIN or Bluetooth).
+		var requireGps = !exceptionActive && v.require_gps;
+		var BLE = (state.me && state.me.settings && state.me.settings.bluetooth) || {};
 		var ctx = { action: action, key: DOLLY.requestKey(), gps: null, ticket: null, workplace: null, scanner: null };
 		var body = h('div', { class: 'dolly-stack' });
 		var dlg = DOLLY.dialog({
@@ -349,45 +363,90 @@
 
 		function stepStart() {
 			if (exceptionActive) { return stepConfirm(); }
-			if (presetQr) { var c = presetQr; presetQr = null; return verifyCode('qr', c, afterQr); }
-			if (either) {
-				var gpsBtn = DOLLY.button('Usa la mia posizione', { icon: 'locate-fixed', variant: 'primary', block: true, onClick: function () { stepGps(stepConfirm); } });
-				var qrBtn = DOLLY.button('Scansiona il QR della sede', { icon: 'scan-line', block: true, onClick: function () { stepQr(stepConfirm); } });
-				gpsBtn.dataset.tour = 'gps';
-				qrBtn.dataset.tour = 'qr';
-				show([
-					h('p', { text: 'Scegli come verificare la tua presenza in sede.' }),
-					h('div', { class: 'dolly-stack', dataset: { tour: 'methods' } }, [
-						gpsBtn,
-						qrBtn,
-						DOLLY.button('Inserisci il PIN della sede', { icon: 'hash', block: true, onClick: function () { stepPin(stepConfirm); } })
-					])
-				]);
-				return;
+			if (presetQr) { var c = presetQr; presetQr = null; return verifyCode('qr', c, afterCode); }
+			if (requireGps) { return stepGps(stepCodeChoice); }
+			var count = (allowGps ? 1 : 0) + (allowQr ? 1 : 0) + (allowBle ? 1 : 0);
+			if (count === 1) {
+				if (allowGps) { return stepGps(stepConfirm); }
+				return allowQr ? stepCodeChoice() : stepBle(stepConfirm);
 			}
-			if (needsGps) { return stepGps(needsQr ? stepQrChoice : stepConfirm); }
-			if (needsQr) { return stepQrChoice(); }
-			stepConfirm();
-		}
-		function afterQr() { return needsGps && !ctx.gps ? stepGps(stepConfirm) : stepConfirm(); }
-
-		function stepQrChoice() {
+			var gpsBtn = allowGps ? DOLLY.button('Usa la mia posizione', { icon: 'locate-fixed', variant: 'primary', block: true, onClick: function () { stepGps(stepConfirm); } }) : null;
+			var qrBtn = allowQr ? DOLLY.button('Scansiona il QR della sede', { icon: 'scan-line', variant: allowGps ? null : 'primary', block: true, onClick: function () { stepQr(stepConfirm); } }) : null;
+			if (gpsBtn) { gpsBtn.dataset.tour = 'gps'; }
+			if (qrBtn) { qrBtn.dataset.tour = 'qr'; }
 			show([
-				needsGps && ctx.gps ? DOLLY.alert('Posizione acquisita.', 'success') : null,
-				h('p', { text: 'Verifica con il codice mostrato sullo schermo della sede.' }),
-				h('div', { class: 'dolly-stack' }, [
-					DOLLY.button('Scansiona il QR', { icon: 'scan-line', variant: 'primary', block: true, onClick: function () { stepQr(stepConfirm); } }),
-					DOLLY.button('Inserisci il PIN', { icon: 'hash', block: true, onClick: function () { stepPin(stepConfirm); } })
+				h('p', { text: 'Scegli come verificare la tua presenza in sede.' }),
+				h('div', { class: 'dolly-stack', dataset: { tour: 'methods' } }, [
+					gpsBtn,
+					qrBtn,
+					allowQr ? DOLLY.button('Inserisci il PIN della sede', { icon: 'hash', block: true, onClick: function () { stepPin(stepConfirm); } }) : null,
+					allowBle ? DOLLY.button('Usa il Bluetooth della sede', { icon: 'bluetooth', block: true, onClick: function () { stepBle(stepConfirm); } }) : null
 				])
 			]);
+		}
+		function afterCode() { return requireGps && !ctx.gps ? stepGps(stepConfirm) : stepConfirm(); }
+
+		/** Workplace code: QR, PIN and/or Bluetooth, whichever are allowed. */
+		function stepCodeChoice() {
+			if (allowBle && !allowQr) { return stepBle(stepConfirm); }
+			show([
+				requireGps && ctx.gps ? DOLLY.alert('Posizione acquisita.', 'success') : null,
+				h('p', { text: allowBle ? 'Verifica con il codice della sede: dallo schermo (QR o PIN) oppure dal dispositivo Bluetooth.' : 'Verifica con il codice mostrato sullo schermo della sede.' }),
+				h('div', { class: 'dolly-stack' }, [
+					DOLLY.button('Scansiona il QR', { icon: 'scan-line', variant: 'primary', block: true, onClick: function () { stepQr(stepConfirm); } }),
+					DOLLY.button('Inserisci il PIN', { icon: 'hash', block: true, onClick: function () { stepPin(stepConfirm); } }),
+					allowBle ? DOLLY.button('Usa il Bluetooth', { icon: 'bluetooth', block: true, onClick: function () { stepBle(stepConfirm); } }) : null
+				])
+			]);
+		}
+
+		/** Bluetooth: the user picks the workplace device in the browser list (it requires a tap). */
+		function stepBle(next) {
+			var otherBtn = allowQr ? DOLLY.button('Usa QR o PIN', { icon: 'scan-line', block: true, onClick: stepCodeChoiceQr }) : null;
+			if (!bleSupported) { return fail(new Error(bleUnsupportedMessage()), null, otherBtn); }
+			show([
+				requireGps && ctx.gps ? DOLLY.alert('Posizione acquisita.', 'success') : null,
+				h('p', { text: 'Avvicinati al dispositivo Bluetooth della sede (a pochi metri), tocca «Cerca il dispositivo» e scegli la sede nell\'elenco.' }),
+				h('div', { class: 'dolly-stack' }, [
+					DOLLY.button('Cerca il dispositivo', { icon: 'bluetooth-searching', variant: 'primary', block: true, onClick: function () { readBle(next); } }),
+					otherBtn
+				])
+			]);
+		}
+		function stepCodeChoiceQr() { allowBle = false; stepCodeChoice(); }
+
+		function readBle(next) {
+			var device = null;
+			var done = function () { try { if (device && device.gatt.connected) { device.gatt.disconnect(); } } catch (e) { /* Already disconnected. */ } };
+			// requestDevice must run directly in the tap handler: the browser shows its own device list.
+			navigator.bluetooth.requestDevice({ filters: [{ services: [BLE.service] }] }).then(function (d) {
+				device = d;
+				show(DOLLY.loading('Lettura del codice dal dispositivo…'));
+				return d.gatt.connect();
+			}).then(function (server) {
+				return server.getPrimaryService(BLE.service);
+			}).then(function (service) {
+				return service.getCharacteristic(BLE.code);
+			}).then(function (ch) {
+				return ch.readValue();
+			}).then(function (value) {
+				done();
+				verifyCode('ble', new TextDecoder().decode(value).trim(), next);
+			}, function (err) {
+				done();
+				var name = err && err.name;
+				var msg = name === 'NotFoundError' ? 'Nessun dispositivo scelto. Avvicinati al dispositivo della sede, controlla che il Bluetooth del telefono sia acceso e riprova.'
+					: (name === 'NotAllowedError' || name === 'SecurityError' ? 'Il Bluetooth non è consentito per questo sito. Attivalo nelle impostazioni del browser e riprova.'
+						: 'Impossibile leggere il dispositivo Bluetooth. Avvicinati e riprova.');
+				fail(new Error(msg), function () { stepBle(next); }, allowQr ? DOLLY.button('Usa QR o PIN', { icon: 'scan-line', onClick: stepCodeChoiceQr }) : null);
+			});
 		}
 
 		function stepGps(next) {
 			if (demo) { ctx.gps = { accuracy: 10 }; next(); return; }
 			show(DOLLY.loading('Rilevamento della posizione in corso… La posizione viene letta solo ora, per questa timbratura.'));
 			getPosition().then(function (pos) { ctx.gps = pos; next(); }, function (err) {
-				var alt = (either || needsQr) ? DOLLY.button('Usa QR o PIN', { icon: 'scan-line', onClick: function () { needsGps = false; either = false; needsQr = true; stepQrChoice(); } }) : null;
-				if (mode === 'both') { alt = null; }
+				var alt = !requireGps && (allowQr || allowBle) ? DOLLY.button(allowQr ? 'Usa QR o PIN' : 'Usa il Bluetooth', { icon: allowQr ? 'scan-line' : 'bluetooth', onClick: stepCodeChoice }) : null;
 				fail(err, function () { stepGps(next); }, alt);
 			});
 		}
@@ -424,8 +483,10 @@
 				ctx.ticket = res.ticket; ctx.workplace = res.workplace; next();
 			}, function (err) {
 				if (form && err.status === 400 && err.code === 'dolly_pin_invalid') { DOLLY.showErrors(form, { pin: err.message }); return; }
-				var retry = type === 'qr' ? function () { stepQr(next); } : function () { stepPin(next); };
-				fail(err, retry, type === 'qr' ? DOLLY.button('Inserisci il PIN', { icon: 'hash', onClick: function () { stepPin(next); } }) : null);
+				var retry = type === 'qr' ? function () { stepQr(next); } : (type === 'ble' ? function () { stepBle(next); } : function () { stepPin(next); });
+				var alt = type === 'qr' ? DOLLY.button('Inserisci il PIN', { icon: 'hash', onClick: function () { stepPin(next); } })
+					: (type === 'ble' && allowQr ? DOLLY.button('Usa QR o PIN', { icon: 'scan-line', onClick: stepCodeChoiceQr }) : null);
+				fail(err, retry, alt);
 			});
 		}
 
@@ -457,7 +518,7 @@
 				if (err.data && err.data.state) { state.me.state = err.data.state; }
 				if (err.code === 'dolly_challenge_expired' || err.code === 'dolly_ticket_invalid') {
 					ctx.ticket = null;
-					fail(err, function () { stepQrChoice(); });
+					fail(err, function () { stepCodeChoice(); });
 				} else if (err.status === 0) {
 					// Network failure: retry with the same idempotency key.
 					fail(err, function () { stepConfirm(); });

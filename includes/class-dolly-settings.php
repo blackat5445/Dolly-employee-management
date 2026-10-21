@@ -11,12 +11,15 @@ class Dolly_Settings {
 
 	const OPTION = 'dolly_settings';
 
-	const VERIFICATION_MODES = array(
-		'gps'    => 'Solo GPS',
-		'qrpin'  => 'Solo QR/PIN',
-		'either' => 'GPS oppure QR/PIN',
-		'both'   => 'GPS e QR/PIN',
+	/** Ways an employee can prove presence at the workplace; several can be allowed at once. */
+	const VERIFICATION_METHODS = array(
+		'gps'   => 'Posizione GPS',
+		'qrpin' => 'QR o PIN dello schermo della sede',
+		'ble'   => 'Bluetooth (dispositivo in sede)',
 	);
+
+	/** Methods that prove presence with a code from the workplace (screen or Bluetooth device). */
+	const CODE_METHODS = array( 'qrpin', 'ble' );
 
 	const CERTIFICATE_MODES = array(
 		'required' => 'Obbligatorio senza scadenza',
@@ -77,7 +80,9 @@ class Dolly_Settings {
 		// "events": employee notifications; "admin_events": administrator notifications.
 		$events = self::all_on( self::EVENTS );
 		return array(
-			'verification_mode' => 'either',
+			'verification_methods'     => array( 'gps', 'qrpin' ),
+			// On: GPS is checked as well, together with a workplace code (QR/PIN or Bluetooth).
+			'verification_require_gps' => false,
 			'default_radius'    => 100,
 			'certificate_mode'  => 'required',
 			'certificate_days'  => 3,
@@ -121,6 +126,19 @@ class Dolly_Settings {
 		$saved = get_option( self::OPTION, array() );
 		$saved = is_array( $saved ) ? $saved : array();
 		unset( $saved['exit_delay'] ); // Replaced by automatic overtime (version 1.1).
+		// Before version 1.10 a single mode was stored: gps, qrpin, either (GPS or QR/PIN) or both (GPS and QR/PIN).
+		if ( ! isset( $saved['verification_methods'] ) && isset( $saved['verification_mode'] ) ) {
+			$map                               = array(
+				'gps'    => array( array( 'gps' ), false ),
+				'qrpin'  => array( array( 'qrpin' ), false ),
+				'either' => array( array( 'gps', 'qrpin' ), false ),
+				'both'   => array( array( 'qrpin' ), true ),
+			);
+			$old                               = $map[ $saved['verification_mode'] ] ?? $map['either'];
+			$saved['verification_methods']     = $old[0];
+			$saved['verification_require_gps'] = $old[1];
+		}
+		unset( $saved['verification_mode'] );
 		// Before version 1.5 one set of switches served everybody: administrators start from those values.
 		foreach ( array( 'admin_events' => 'events', 'admin_notify_portal' => 'notify_portal', 'admin_notify_email' => 'notify_email' ) as $new => $old ) {
 			if ( ! isset( $saved[ $new ] ) && isset( $saved[ $old ] ) ) {
@@ -147,8 +165,18 @@ class Dolly_Settings {
 		$current = self::all();
 		$new     = $current;
 
-		if ( isset( $input['verification_mode'] ) && isset( self::VERIFICATION_MODES[ $input['verification_mode'] ] ) ) {
-			$new['verification_mode'] = $input['verification_mode'];
+		if ( isset( $input['verification_methods'] ) && is_array( $input['verification_methods'] ) ) {
+			$methods = array_values( array_intersect( array_keys( self::VERIFICATION_METHODS ), $input['verification_methods'] ) );
+			if ( ! $methods ) {
+				return new WP_Error( 'dolly_invalid', 'Scegli almeno un metodo di verifica.', array( 'status' => 400, 'fields' => array( 'verification_methods' => 'Scegli almeno un metodo di verifica.' ) ) );
+			}
+			$new['verification_methods'] = $methods;
+		}
+		if ( isset( $input['verification_require_gps'] ) ) {
+			$new['verification_require_gps'] = (bool) $input['verification_require_gps'];
+		}
+		if ( $new['verification_require_gps'] && ! array_intersect( self::CODE_METHODS, $new['verification_methods'] ) ) {
+			return new WP_Error( 'dolly_invalid', 'Con il GPS sempre richiesto serve anche QR/PIN o Bluetooth.', array( 'status' => 400, 'fields' => array( 'verification_require_gps' => 'Attiva anche QR/PIN o Bluetooth, oppure disattiva questa opzione.' ) ) );
 		}
 		if ( isset( $input['default_radius'] ) ) {
 			$new['default_radius'] = max( 10, min( 5000, (int) $input['default_radius'] ) );
@@ -255,6 +283,15 @@ class Dolly_Settings {
 		}
 
 		return $new;
+	}
+
+	/** Allowed presence checks, as shown to the employee's app. */
+	public static function verification() {
+		$methods = (array) self::get( 'verification_methods' );
+		return array(
+			'methods'     => $methods,
+			'require_gps' => (bool) self::get( 'verification_require_gps' ) && (bool) array_intersect( self::CODE_METHODS, $methods ),
+		);
 	}
 
 	/** Reminder offsets: unique whole minutes between 1 and 240, sorted, at most 6. */

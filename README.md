@@ -9,7 +9,7 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 ## Features
 
 ### Employee portal (`/portale/`)
-- **Clock in/out:** entry, break start, break end and exit. Each punch is verified by GPS geofence, by scanning the workplace QR code, by a 6-digit PIN, or by a combination of these, depending on your settings.
+- **Clock in/out:** entry, break start, break end and exit. Each punch is verified in one of the ways you allow: GPS geofence, the workplace QR code or 6-digit PIN, or a [Bluetooth device](firmware/README.md) at the workplace. You can also require GPS on top of a workplace code.
 - **Requests:** holidays, hourly leave, overtime, punch corrections, on-call shifts and blood-donation leave. Approved requests can be edited or cancelled, and each change needs approval again.
 - **Sickness and injury reports,** with a private medical-certificate upload (PDF/JPG/PNG).
 - **Calendar and history:** a calendar, the monthly attendance history and in-app notifications.
@@ -44,7 +44,8 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
   - `openssl` for push notifications.
   - `zip` for exports. Without it the plugin falls back to PclZip.
 - **MySQL or MariaDB.**
-- **HTTPS.** Browsers allow GPS and camera access (for QR scanning) only on secure origins.
+- **HTTPS.** Browsers allow GPS, camera (QR scanning) and Bluetooth access only on secure origins.
+- **Optional, for Bluetooth clock-in:** an ESP32 board at each workplace, such as the M5Stack AtomS3 Lite. See [firmware/README.md](firmware/README.md).
 - **A system cron** that calls the plugin's scheduler every minute (see below).
 
 ## Installation
@@ -74,6 +75,18 @@ define( 'DISABLE_WP_CRON', true );
 ```
 
 *Impostazioni › Stato del sistema* shows the exact commands for your site and whether the scheduler is running.
+
+## Bluetooth clock-in
+
+Bluetooth is a third way to verify presence, next to GPS and QR/PIN. An ESP32 board near the entrance serves a 6-digit code that changes every 30 seconds (TOTP). The employee's phone reads it over Bluetooth from a few metres away.
+
+1. In *Sedi*, click **Bluetooth** on a workplace, activate it and download `config.h`.
+2. Flash the firmware in [`firmware/dolly-ble-beacon`](firmware/dolly-ble-beacon) to the board.
+3. In *Impostazioni › Verifica timbrature*, enable **Bluetooth**.
+
+The board either gets the time over Wi-Fi and computes the code itself, or runs without Wi-Fi: the workplace display on an Android tablet relays the code to it over Bluetooth (**Collega il Bluetooth** button).
+
+Phones need Chrome, Edge or Samsung Internet on Android. Safari on iPhone does not support Web Bluetooth, so iPhone users need the Bluefy browser, or another method must stay enabled. The full guide, recommended boards and security notes are in [firmware/README.md](firmware/README.md).
 
 ## Configuration
 

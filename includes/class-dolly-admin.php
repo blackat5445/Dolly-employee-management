@@ -106,6 +106,7 @@ class Dolly_Admin {
 					'defaultRadius' => (int) Dolly_Settings::get( 'default_radius' ),
 					'lateTolerance' => (int) Dolly_Settings::get( 'late_tolerance' ),
 					'holidayIncrease' => (int) Dolly_Settings::get( 'holiday_increase' ),
+					'firmwareUrl'     => 'https://github.com/blackat5445/Dolly-employee-management/tree/main/firmware',
 				)
 			)
 		);

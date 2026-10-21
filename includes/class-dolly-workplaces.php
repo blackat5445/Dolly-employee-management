@@ -46,6 +46,7 @@ class Dolly_Workplaces {
 			'active'           => (bool) $w->active,
 			'account_user_id'  => $w->account_user_id ? (int) $w->account_user_id : null,
 			'account_username' => $account ? $account->user_login : '',
+			'bluetooth'        => Dolly_Bluetooth::enabled_for( (int) $w->id ),
 		);
 	}
 

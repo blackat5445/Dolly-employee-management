@@ -1,6 +1,9 @@
 /**
  * Workplace display: workplace name, large rotating QR code, six-digit PIN, countdown,
  * connection status and logout. Challenges refresh without reloading the page.
+ *
+ * Tablet mode for Bluetooth: when the workplace uses a Bluetooth device, this screen can connect to it
+ * (Web Bluetooth, Chrome on Android) and write the current code into it, so the device needs no Wi-Fi.
  */
 (function (window, document) {
 	'use strict';
@@ -18,6 +21,7 @@
 
 	function build() {
 		el.status = h('span', { class: 'dolly-wp__status', role: 'status', 'aria-live': 'polite' });
+		el.ble = h('span', { hidden: true });
 		el.name = h('h1', { class: 'dolly-wp__name', text: 'Sede' });
 		el.qr = h('div', { class: 'dolly-wp__qr', role: 'img', 'aria-label': 'Codice QR presenze' });
 		el.pin = h('div', { class: 'dolly-wp__pin', 'aria-live': 'off' });
@@ -45,7 +49,7 @@
 					DOLLY.brandMark(true),
 					CFG.displaySub ? h('span', { class: 'dolly-brand__sub', text: CFG.displaySub }) : null
 				]),
-				h('div', { class: 'dolly-btn-row' }, [el.status, DOLLY.button('Esci', { href: CFG.logoutUrl, icon: 'log-out' })])
+				h('div', { class: 'dolly-btn-row' }, [el.ble, el.status, DOLLY.button('Esci', { href: CFG.logoutUrl, icon: 'log-out' })])
 			]),
 			h('main', { class: 'dolly-wp__main' }, [el.panel, el.unavailable])
 		]);
@@ -73,6 +77,7 @@
 			current = c;
 			show(c);
 			setStatus(true);
+			bleUpdate(c);
 		}, function (err) {
 			setStatus(false, err.status === 0 ? 'Non connesso' : 'Errore');
 			if (err.status === 401 || err.status === 403) {
@@ -121,12 +126,83 @@
 		window.requestAnimationFrame(function () { setTimeout(loop, 250); });
 	}
 
+	/* ---------- Bluetooth device (tablet mode) ---------- */
+
+	var BLE = CFG.bluetooth || {};
+	var ble = { device: null, push: null, sent: '', retry: null, busy: false };
+	var bleSupported = !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
+
+	function bleUpdate(c) {
+		if (!c.bluetooth || !bleSupported) { el.ble.hidden = true; return; }
+		el.ble.hidden = false;
+		if (!ble.push && !ble.busy) { bleRender(false); }
+		bleWrite(c);
+	}
+
+	function bleRender(connected, text) {
+		DOLLY.render(el.ble, connected
+			? h('span', { class: 'dolly-wp__status is-online' }, [DOLLY.icon('bluetooth-connected'), h('span', { text: text || 'Bluetooth collegato' })])
+			: DOLLY.button(text || 'Collega il Bluetooth', { icon: 'bluetooth', onClick: blePick }));
+	}
+
+	// Value written into the device: "<workplace>:<code>:<seconds of validity>".
+	function bleWrite(c) {
+		if (!ble.push || !c.bluetooth) { return; }
+		var left = Math.max(1, Math.round(c.bluetooth.expires_at - now() / 1000));
+		var value = c.workplace.id + ':' + c.bluetooth.code + ':' + left;
+		if (value.split(':')[1] === ble.sent) { return; }
+		ble.push.writeValue(new TextEncoder().encode(value)).then(function () { ble.sent = c.bluetooth.code; }, function () { bleLost(); });
+	}
+
+	function blePick() {
+		// The browser shows its own list; the choice is remembered for this site.
+		navigator.bluetooth.requestDevice({ filters: [{ services: [BLE.service] }] }).then(bleConnect, function (err) {
+			if (err && err.name !== 'NotFoundError') { bleRender(false, 'Bluetooth non disponibile'); }
+		});
+	}
+
+	function bleConnect(device) {
+		if (ble.device !== device) {
+			ble.device = device;
+			device.addEventListener('gattserverdisconnected', bleLost);
+		}
+		ble.busy = true;
+		bleRender(true, 'Collegamento…');
+		return device.gatt.connect().then(function (server) {
+			return server.getPrimaryService(BLE.service);
+		}).then(function (service) {
+			return service.getCharacteristic(BLE.push);
+		}).then(function (ch) {
+			ble.push = ch; ble.sent = ''; ble.busy = false;
+			bleRender(true);
+			if (current) { bleWrite(current); }
+		}, function () {
+			ble.busy = false;
+			bleLost();
+		});
+	}
+
+	function bleLost() {
+		ble.push = null; ble.sent = '';
+		bleRender(false, ble.device ? 'Bluetooth scollegato · ricollega' : null);
+		// Out of range or restarted: try again every 10 seconds while the page is open.
+		clearTimeout(ble.retry);
+		if (ble.device) { ble.retry = setTimeout(function () { if (!ble.push && !ble.busy) { bleConnect(ble.device); } }, 10000); }
+	}
+
+	// After a reload, a device chosen before can be reconnected without a tap where the browser allows it.
+	function bleRestore() {
+		if (!bleSupported || !navigator.bluetooth.getDevices) { return; }
+		navigator.bluetooth.getDevices().then(function (list) { if (list && list.length && !ble.device) { bleConnect(list[0]); } }, function () {});
+	}
+
 	function keepAwake() {
 		if (!('wakeLock' in navigator)) { return; }
 		navigator.wakeLock.request('screen').then(function (l) { wakeLock = l; }, function () {});
 	}
 
 	build();
+	bleRestore();
 	fetchChallenge();
 	loop();
 	keepAwake();
