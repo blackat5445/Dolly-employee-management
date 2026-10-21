@@ -410,15 +410,20 @@ class Dolly_Frontend {
 	/* ---------- Rendering (used by theme templates and plugin fallbacks) ---------- */
 
 	/**
-	 * Brand mark: configured logo or the text wordmark.
+	 * Brand mark: configured logo, or the Dolly icon (unless turned off) and the text wordmark.
 	 *
-	 * @param string $subtitle  Text next to the brand.
+	 * @param string $subtitle  Text under the brand.
 	 * @param bool   $on_header True on the colored header, which may use its own logo.
 	 */
 	public static function brand( $subtitle = '', $on_header = false ) {
 		$logo = $on_header ? Dolly_Appearance::header_logo_url() : Dolly_Appearance::logo_url();
 		$name = Dolly_Appearance::brand();
+		$icon = $logo ? '' : Dolly_Appearance::brand_icon_url();
 		echo '<div class="dolly-brand">';
+		if ( $icon ) {
+			echo '<span class="dolly-brand__icon"><img src="' . esc_url( $icon ) . '" alt=""></span>';
+		}
+		echo '<div class="dolly-brand__text">';
 		if ( $logo ) {
 			echo '<img class="dolly-brand__logo" src="' . esc_url( $logo ) . '" alt="' . esc_attr( $name ) . '">';
 		} else {
@@ -427,7 +432,7 @@ class Dolly_Frontend {
 		if ( $subtitle ) {
 			echo '<span class="dolly-brand__sub">' . esc_html( $subtitle ) . '</span>';
 		}
-		echo '</div>';
+		echo '</div></div>';
 	}
 
 	private static function render_messages() {

@@ -4,7 +4,7 @@ Tags: employee, attendance, time tracking, timesheet, hr
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.14.2
+Stable tag: 1.15.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -121,6 +121,10 @@ Distributed under the terms of the GNU General Public License, version 2 or (at 
 
 == Changelog ==
 
+= 1.15.0 =
+* New Dolly logo: shown next to the brand name while no logo is uploaded (Appearance › Brand › Dolly icon next to the name), as the default home-screen and notification icon, and as the admin menu icon.
+* Plugin directory icon and banners.
+
 = 1.14.2 =
 * The brand subtitle is shown under the brand name (admin header, employee portal, sign-in page, workplace display).
 * Dashboard: the last-update time is under the date; the workplace filter stands alone on the right.
@@ -152,6 +156,9 @@ Distributed under the terms of the GNU General Public License, version 2 or (at 
 * Theme integration, English translation, Bluetooth clock-in.
 
 == Upgrade Notice ==
+
+= 1.15.0 =
+New Dolly logo and icons. With your own brand name and no logo, you can hide the Dolly icon in Appearance › Brand.
 
 = 1.14.2 =
 Layout refinements for the brand and the dashboard.

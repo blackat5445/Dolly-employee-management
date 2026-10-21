@@ -124,7 +124,10 @@
 }
 
 /* ---------- Brand ---------- */
-.dolly-app .dolly-brand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.dolly-app .dolly-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dolly-app .dolly-brand__text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.dolly-app .dolly-brand__icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 10px; background: #FFFFFF; }
+.dolly-app .dolly-brand__icon img { display: block; width: 30px; height: auto; }
 .dolly-app .dolly-brand__wordmark {
 	font-weight: 800; letter-spacing: .02em; font-size: 1.375rem; line-height: 1.15; color: var(--dolly-primary);
 }

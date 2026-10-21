@@ -2791,6 +2791,7 @@
 		var portalSub = text('portal_subtitle', __('Portal subtitle'), { optional: true, help: __('Next to the brand on the sign-in pages.') });
 		var adminTitle = text('admin_title', __('Admin dashboard name'), { max: 40, help: __('WordPress menu item and header of these pages.') });
 		var displaySub = text('display_subtitle', __('Workplace display subtitle'), { optional: true });
+		var brandIcon = DOLLY.switchControl({ label: __('Dolly icon next to the name'), name: 'brand_icon', checked: !!a.brand_icon, description: __('Only when there is no logo. Turn it off if you use your own brand name without a logo.'), onChange: changed });
 		var mark = DOLLY.switchControl({ label: __('Small colored square after the name'), name: 'wordmark_mark', checked: !!a.wordmark_mark, description: __('Small detail in the accent color, only when there is no logo.'), onChange: changed });
 
 		// Logos and icons.
@@ -2895,8 +2896,11 @@
 		function drawPreviewBrand(v) {
 			var src = logoHeader.url() || logo.url();
 			DOLLY.render(previewBrand, [
-				src ? h('img', { class: 'dolly-brand__logo', src: src, alt: '' }) : h('span', { class: 'dolly-brand__wordmark', text: v.brand_name || '…' }),
-				previewSub
+				!src && v.brand_icon ? h('span', { class: 'dolly-brand__icon' }, h('img', { src: CFG.dollyIcon, alt: '' })) : null,
+				h('div', { class: 'dolly-brand__text' }, [
+					src ? h('img', { class: 'dolly-brand__logo', src: src, alt: '' }) : h('span', { class: 'dolly-brand__wordmark', text: v.brand_name || '…' }),
+					previewSub
+				])
 			]);
 			previewSub.textContent = v.portal_subtitle;
 		}
@@ -2909,6 +2913,7 @@
 			Object.keys(colors).forEach(function (k) { v[k] = colors[k].value(); });
 			Object.keys(darkColors).forEach(function (k) { v[k] = darkColors[k].value(); });
 			v.wordmark_mark = mark.control.isOn();
+			v.brand_icon = brandIcon.control.isOn();
 			v.color_scheme = scheme.value();
 			v.button_shape = btnShape.value();
 			return v;
@@ -2938,7 +2943,7 @@
 		};
 		var form = h('form', { class: 'dolly-stack', novalidate: true }, [
 			alertBox,
-			card(__('Brand'), 'tag', [h('div', { class: 'dolly-form-grid' }, [brandName, appName, portalSub, adminTitle, displaySub]), mark], __('While they keep their default values, the subtitles, the panel name and the sign-in page texts are shown in each user\'s language.')),
+			card(__('Brand'), 'tag', [h('div', { class: 'dolly-form-grid' }, [brandName, appName, portalSub, adminTitle, displaySub]), brandIcon, mark], __('While they keep their default values, the subtitles, the panel name and the sign-in page texts are shown in each user\'s language.')),
 			card(__('Logo and icon'), 'image', [h('div', { class: 'dolly-form-grid' }, [logo, logoHeader]), h('div', { class: 'dolly-form-grid' }, [logoHeight]), appIcon]),
 			card(__('Colors'), 'palette', [
 				h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: __('Ready-made schemes') }), presets, h('span', { class: 'dolly-help', text: __('Sets the primary, accent and header colors together.') })]),
