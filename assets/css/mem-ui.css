@@ -1,0 +1,766 @@
+/*
+ * Dolly shared UI components.
+ * Primary palette is fixed: navy #002F4D, gold #CCB166.
+ * White text on navy, navy text on gold. Never white on gold or gold body text on white.
+ * Every rule is scoped to .mem-app so unrelated WordPress screens are unaffected.
+ */
+
+.mem-app {
+	--dolly-navy: #002F4D;
+	--dolly-gold: #CCB166;
+
+	--mem-navy-700: #00253D;
+	--mem-navy-050: #E6EDF2;
+	--mem-gold-100: #F6F0DE;
+	--mem-bg: #F5F6F8;
+	--mem-surface: #FFFFFF;
+	--mem-border: #E1E5EA;
+	--mem-border-strong: #C7CED6;
+	--mem-text: #1B2530;
+	--mem-muted: #56616E;
+	--mem-focus: #002F4D;
+
+	--mem-green: #17693A;
+	--mem-green-bg: #E6F4EC;
+	--mem-amber: #8A5A00;
+	--mem-amber-bg: #FFF3D6;
+	--mem-red: #B42318;
+	--mem-red-bg: #FDECEA;
+	--mem-blue: #1F5FAD;
+	--mem-blue-bg: #E8F1FC;
+
+	--mem-s1: 8px;
+	--mem-s2: 16px;
+	--mem-s3: 24px;
+	--mem-s4: 32px;
+	--mem-s5: 40px;
+	--mem-radius: 12px;
+	--mem-radius-sm: 8px;
+	--mem-shadow: 0 1px 2px rgba(0, 31, 51, .06), 0 4px 16px rgba(0, 31, 51, .06);
+	--mem-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+	--mem-touch: 44px;
+
+	font-family: var(--mem-font);
+	font-size: 16px;
+	line-height: 1.5;
+	color: var(--mem-text);
+	-webkit-text-size-adjust: 100%;
+}
+
+.mem-app *,
+.mem-app *::before,
+.mem-app *::after { box-sizing: border-box; }
+
+.mem-app [hidden] { display: none !important; }
+
+.mem-app h1, .mem-app h2, .mem-app h3, .mem-app h4 {
+	color: var(--dolly-navy);
+	font-family: var(--mem-font);
+	line-height: 1.25;
+	margin: 0 0 var(--mem-s1);
+	font-weight: 700;
+}
+.mem-app h1 { font-size: 1.5rem; }
+.mem-app h2 { font-size: 1.25rem; }
+.mem-app h3 { font-size: 1.0625rem; }
+.mem-app p { margin: 0 0 var(--mem-s2); }
+.mem-app a { color: var(--dolly-navy); text-underline-offset: 2px; }
+.mem-app .mem-muted { color: var(--mem-muted); }
+.mem-app .mem-small { font-size: .875rem; }
+.mem-app .mem-sr-only {
+	position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+	overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* Icons (Lucide output) */
+.mem-app svg.lucide { width: 20px; height: 20px; stroke-width: 2; flex: none; vertical-align: middle; }
+.mem-app .mem-icon-lg svg.lucide, .mem-app svg.lucide.mem-icon-lg { width: 28px; height: 28px; }
+
+/* Focus */
+.mem-app :focus { outline: none; }
+.mem-app :focus-visible {
+	outline: 3px solid var(--mem-focus);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 5px rgba(204, 177, 102, .55);
+	border-radius: 6px;
+}
+
+/* ---------- Brand ---------- */
+.mem-app .mem-brand { display: flex; align-items: baseline; gap: var(--mem-s1); flex-wrap: wrap; }
+.mem-app .mem-brand__wordmark {
+	font-weight: 800; letter-spacing: .02em; font-size: 1.375rem; color: var(--dolly-navy);
+}
+.mem-app .mem-brand__wordmark::after {
+	content: ""; display: inline-block; width: 8px; height: 8px; margin-left: 4px;
+	background: var(--dolly-gold); border-radius: 2px; vertical-align: baseline;
+}
+.mem-app .mem-brand__logo { max-height: 40px; width: auto; display: block; }
+.mem-app .mem-brand__sub { font-size: .875rem; color: var(--mem-muted); }
+
+/* ---------- Buttons ---------- */
+.mem-app .mem-btn {
+	display: inline-flex; align-items: center; justify-content: center; gap: var(--mem-s1);
+	min-height: var(--mem-touch); min-width: var(--mem-touch);
+	padding: 0 var(--mem-s2);
+	border-radius: var(--mem-radius-sm);
+	border: 1px solid transparent;
+	font: 600 1rem/1.2 var(--mem-font);
+	cursor: pointer; text-decoration: none; white-space: nowrap;
+	transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s;
+	background: var(--mem-surface); color: var(--dolly-navy); border-color: var(--mem-border-strong);
+}
+.mem-app .mem-btn:hover { background: var(--mem-navy-050); }
+.mem-app .mem-btn[disabled], .mem-app .mem-btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+.mem-app .mem-btn--primary { background: var(--dolly-navy); color: #fff; border-color: var(--dolly-navy); }
+.mem-app .mem-btn--primary:hover { background: var(--mem-navy-700); color: #fff; }
+.mem-app .mem-btn--gold { background: var(--dolly-gold); color: var(--dolly-navy); border-color: var(--dolly-gold); }
+.mem-app .mem-btn--gold:hover { background: #BFA353; color: var(--dolly-navy); }
+.mem-app .mem-btn--danger { background: var(--mem-red); color: #fff; border-color: var(--mem-red); }
+.mem-app .mem-btn--danger:hover { background: #8F1C13; color: #fff; }
+.mem-app .mem-btn--success { background: var(--mem-green); color: #fff; border-color: var(--mem-green); }
+.mem-app .mem-btn--ghost { background: transparent; border-color: transparent; }
+.mem-app .mem-btn--ghost:hover { background: var(--mem-navy-050); }
+.mem-app .mem-btn--sm { min-height: 36px; padding: 0 12px; font-size: .875rem; }
+.mem-app .mem-btn--block { width: 100%; }
+.mem-app .mem-btn--icon { padding: 0; width: var(--mem-touch); }
+.mem-app .mem-btn.is-loading { position: relative; color: transparent !important; pointer-events: none; }
+.mem-app .mem-btn.is-loading::after {
+	content: ""; position: absolute; width: 20px; height: 20px; border-radius: 50%;
+	border: 3px solid currentColor; border-color: rgba(255,255,255,.9) rgba(255,255,255,.3) rgba(255,255,255,.3);
+	animation: mem-spin .8s linear infinite;
+}
+.mem-app .mem-btn:not(.mem-btn--primary):not(.mem-btn--danger):not(.mem-btn--success).is-loading::after {
+	border-color: var(--dolly-navy) rgba(0,47,77,.2) rgba(0,47,77,.2);
+}
+.mem-app .mem-btn-row { display: flex; flex-wrap: wrap; gap: var(--mem-s1); align-items: center; }
+.mem-app .mem-btn-row--end { justify-content: flex-end; }
+
+/* ---------- Cards ---------- */
+.mem-app .mem-card {
+	background: var(--mem-surface);
+	border: 1px solid var(--mem-border);
+	border-radius: var(--mem-radius);
+	box-shadow: var(--mem-shadow);
+	padding: var(--mem-s3);
+	min-width: 0;
+}
+.mem-app .mem-card__head {
+	display: flex; align-items: center; justify-content: space-between; gap: var(--mem-s2);
+	flex-wrap: wrap; margin-bottom: var(--mem-s2);
+}
+.mem-app .mem-card__head h2, .mem-app .mem-card__head h3 { margin: 0; display: flex; align-items: center; gap: var(--mem-s1); }
+.mem-app .mem-card--accent { border-top: 4px solid var(--dolly-gold); }
+.mem-app .mem-stack > * + * { margin-top: var(--mem-s3); }
+.mem-app .mem-grid { display: grid; gap: var(--mem-s3); }
+.mem-app .mem-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mem-app .mem-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .mem-app .mem-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .mem-app .mem-grid--2 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .mem-app .mem-grid--4 { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- KPI ---------- */
+.mem-app .mem-kpi { display: flex; flex-direction: column; gap: 4px; }
+.mem-app .mem-kpi__top { display: flex; align-items: center; justify-content: space-between; color: var(--mem-muted); font-weight: 600; font-size: .9375rem; }
+.mem-app .mem-kpi__icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--mem-navy-050); color: var(--dolly-navy); }
+.mem-app .mem-kpi__value { font-size: 2.25rem; font-weight: 800; color: var(--dolly-navy); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.mem-app .mem-kpi__sub { font-size: .875rem; color: var(--mem-muted); }
+
+/* ---------- Forms ---------- */
+.mem-app .mem-form { display: grid; gap: var(--mem-s2); }
+.mem-app .mem-form-grid { display: grid; gap: var(--mem-s2); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mem-app .mem-form-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mem-app .mem-form-grid .mem-field--full { grid-column: 1 / -1; }
+@media (max-width: 640px) {
+	.mem-app .mem-form-grid, .mem-app .mem-form-grid--3 { grid-template-columns: minmax(0, 1fr); }
+}
+.mem-app .mem-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mem-app .mem-label { font-weight: 600; font-size: .9375rem; color: var(--mem-text); }
+.mem-app .mem-label .mem-optional { font-weight: 400; color: var(--mem-muted); }
+.mem-app .mem-help { font-size: .8125rem; color: var(--mem-muted); }
+.mem-app .mem-input,
+.mem-app .mem-select,
+.mem-app .mem-textarea {
+	width: 100%; min-height: var(--mem-touch);
+	padding: 10px 12px;
+	border: 1px solid var(--mem-border-strong);
+	border-radius: var(--mem-radius-sm);
+	background: #fff; color: var(--mem-text);
+	font: 400 1rem/1.4 var(--mem-font);
+	box-shadow: none;
+	max-width: none;
+}
+.mem-app .mem-textarea { min-height: 96px; resize: vertical; }
+.mem-app .mem-select { appearance: auto; }
+.mem-app .mem-input:focus, .mem-app .mem-select:focus, .mem-app .mem-textarea:focus {
+	border-color: var(--dolly-navy); outline: 2px solid var(--dolly-navy); outline-offset: 0; box-shadow: 0 0 0 4px rgba(204,177,102,.45);
+}
+.mem-app .mem-field.has-error .mem-input,
+.mem-app .mem-field.has-error .mem-select,
+.mem-app .mem-field.has-error .mem-textarea { border-color: var(--mem-red); }
+.mem-app .mem-error { color: var(--mem-red); font-size: .875rem; display: flex; align-items: center; gap: 6px; }
+.mem-app .mem-error svg.lucide { width: 16px; height: 16px; }
+.mem-app .mem-input-group { display: flex; gap: var(--mem-s1); }
+.mem-app .mem-input-group .mem-input { flex: 1; }
+.mem-app .mem-pin-input { font-size: 2rem; letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+/* ---------- Switch (WAI-ARIA switch pattern) ---------- */
+.mem-app .mem-switch {
+	display: inline-flex; align-items: center; gap: 12px;
+	min-height: var(--mem-touch); padding: 4px 0;
+	background: none; border: 0; cursor: pointer; text-align: left;
+	font: 500 1rem/1.3 var(--mem-font); color: var(--mem-text);
+}
+.mem-app .mem-switch__track {
+	position: relative; flex: none; width: 48px; height: 28px; border-radius: 14px;
+	background: #9AA4AF; transition: background-color .15s;
+}
+.mem-app .mem-switch__thumb {
+	position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+	background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .15s;
+}
+.mem-app .mem-switch[aria-checked="true"] .mem-switch__track { background: var(--dolly-navy); }
+.mem-app .mem-switch[aria-checked="true"] .mem-switch__thumb { transform: translateX(20px); background: var(--dolly-gold); }
+.mem-app .mem-switch__state { font-size: .8125rem; color: var(--mem-muted); min-width: 2.5em; }
+.mem-app .mem-switch[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* ---------- Radio cards (mutually exclusive choices) ---------- */
+.mem-app .mem-radio-group { display: grid; gap: var(--mem-s1); border: 0; padding: 0; margin: 0; }
+.mem-app .mem-radio-group legend { font-weight: 600; margin-bottom: var(--mem-s1); padding: 0; }
+.mem-app .mem-radio {
+	position: relative; display: flex; align-items: flex-start; gap: 12px; padding: 12px var(--mem-s2);
+	border: 1px solid var(--mem-border-strong); border-radius: var(--mem-radius-sm); cursor: pointer; min-height: var(--mem-touch);
+	background: #fff;
+}
+.mem-app .mem-radio input { position: absolute; opacity: 0; pointer-events: none; }
+.mem-app .mem-radio__dot { flex: none; width: 20px; height: 20px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--mem-border-strong); display: grid; place-items: center; }
+.mem-app .mem-radio input:checked + .mem-radio__dot { border-color: var(--dolly-navy); }
+.mem-app .mem-radio input:checked + .mem-radio__dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--dolly-navy); }
+.mem-app .mem-radio:has(input:checked) { border-color: var(--dolly-navy); background: var(--mem-gold-100); box-shadow: inset 4px 0 0 var(--dolly-gold); }
+.mem-app .mem-radio input:focus-visible + .mem-radio__dot { outline: 3px solid var(--mem-focus); outline-offset: 2px; }
+.mem-app .mem-radio__text strong { display: block; }
+.mem-app .mem-radio__text span { font-size: .875rem; color: var(--mem-muted); }
+
+/* ---------- Chips (multi-select for weekdays / workplaces) ---------- */
+.mem-app .mem-chips { display: flex; flex-wrap: wrap; gap: var(--mem-s1); }
+.mem-app .mem-chip {
+	display: inline-flex; align-items: center; gap: 6px; min-height: var(--mem-touch);
+	padding: 0 14px; border-radius: 999px; border: 1px solid var(--mem-border-strong);
+	background: #fff; color: var(--mem-text); font: 600 .9375rem/1 var(--mem-font); cursor: pointer;
+}
+.mem-app .mem-chip[aria-pressed="true"] { background: var(--dolly-gold); border-color: var(--dolly-gold); color: var(--dolly-navy); }
+.mem-app .mem-chip svg.lucide { width: 16px; height: 16px; }
+
+/* ---------- Badges (color + label + icon) ---------- */
+.mem-app .mem-badge {
+	display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px;
+	font-size: .8125rem; font-weight: 700; line-height: 1.3; white-space: nowrap;
+	background: var(--mem-navy-050); color: var(--dolly-navy);
+}
+.mem-app .mem-badge svg.lucide { width: 14px; height: 14px; }
+.mem-app .mem-badge--green { background: var(--mem-green-bg); color: var(--mem-green); }
+.mem-app .mem-badge--amber { background: var(--mem-amber-bg); color: var(--mem-amber); }
+.mem-app .mem-badge--red { background: var(--mem-red-bg); color: var(--mem-red); }
+.mem-app .mem-badge--blue { background: var(--mem-blue-bg); color: var(--mem-blue); }
+.mem-app .mem-badge--gold { background: var(--dolly-gold); color: var(--dolly-navy); }
+.mem-app .mem-badge--neutral { background: #EEF0F3; color: #3E4955; }
+.mem-app .mem-count {
+	display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px;
+	background: var(--mem-red); color: #fff; font-size: .75rem; font-weight: 700;
+}
+
+/* ---------- Alerts / toasts ---------- */
+.mem-app .mem-alert {
+	display: flex; gap: 10px; align-items: flex-start; padding: 12px var(--mem-s2);
+	border-radius: var(--mem-radius-sm); border: 1px solid; margin-bottom: var(--mem-s2); font-size: .9375rem;
+}
+.mem-app .mem-alert--error { background: var(--mem-red-bg); border-color: #F4C7C2; color: #7A1A12; }
+.mem-app .mem-alert--success { background: var(--mem-green-bg); border-color: #BFE3CD; color: #0F4D29; }
+.mem-app .mem-alert--warning { background: var(--mem-amber-bg); border-color: #F2DDA6; color: #5E3E00; }
+.mem-app .mem-alert--info { background: var(--mem-blue-bg); border-color: #C5DAF4; color: #173F72; }
+.mem-app .mem-alert > svg.lucide { margin-top: 1px; }
+.mem-app .mem-alert__body { flex: 1; min-width: 0; }
+
+.mem-layer { position: relative; z-index: 100000; }
+.mem-app.mem-layer .mem-toasts {
+	position: fixed; z-index: 100001; left: 50%; bottom: 16px; transform: translateX(-50%);
+	display: grid; gap: 8px; width: min(480px, calc(100vw - 32px));
+}
+.mem-app .mem-toast {
+	display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; border-radius: 10px;
+	background: var(--dolly-navy); color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.2); font-size: .9375rem;
+}
+.mem-app .mem-toast--error { background: #7A1A12; }
+.mem-app .mem-toast--success { background: #0F4D29; }
+.mem-app .mem-toast button { margin-left: auto; color: #fff; background: none; border: 0; cursor: pointer; min-width: 32px; min-height: 32px; }
+
+/* ---------- Tables ---------- */
+.mem-app .mem-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--mem-border); border-radius: var(--mem-radius-sm); }
+.mem-app .mem-table { width: 100%; border-collapse: collapse; font-size: .9375rem; background: #fff; }
+.mem-app .mem-table th, .mem-app .mem-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--mem-border); vertical-align: middle; }
+.mem-app .mem-table th { background: #F0F3F6; color: var(--dolly-navy); font-weight: 700; font-size: .8125rem; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+.mem-app .mem-table tbody tr:last-child td { border-bottom: 0; }
+.mem-app .mem-table tbody tr:hover { background: #FAFBFC; }
+.mem-app .mem-table td.num, .mem-app .mem-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.mem-app .mem-table td.time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mem-app .mem-table tr.is-weekend td { background: #FAFAFB; }
+.mem-app .mem-table tr.is-today td { box-shadow: inset 4px 0 0 var(--dolly-gold); }
+.mem-app .mem-table tfoot td { font-weight: 700; background: #F0F3F6; }
+.mem-app .mem-table .mem-actions { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
+@media (max-width: 640px) {
+	.mem-app .mem-table--stack thead { display: none; }
+	.mem-app .mem-table--stack, .mem-app .mem-table--stack tbody, .mem-app .mem-table--stack tfoot { display: block; width: 100%; }
+	.mem-app .mem-table--stack tfoot tr { display: flex; flex-wrap: wrap; }
+	.mem-app .mem-table--stack tr { display: block; border-bottom: 1px solid var(--mem-border); padding: 8px 0; }
+	.mem-app .mem-table--stack td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 6px 12px; text-align: right; }
+	.mem-app .mem-table--stack td::before { content: attr(data-label); font-weight: 600; color: var(--mem-muted); text-align: left; }
+	.mem-app .mem-table--stack .mem-actions { justify-content: flex-end; }
+}
+
+/* ---------- Pagination ---------- */
+.mem-app .mem-pagination { display: flex; align-items: center; justify-content: space-between; gap: var(--mem-s1); margin-top: 12px; flex-wrap: wrap; }
+.mem-app .mem-pagination__info { font-size: .875rem; color: var(--mem-muted); }
+.mem-app .mem-pagination__btns { display: flex; gap: 4px; }
+
+/* ---------- Tabs ---------- */
+.mem-app .mem-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--mem-border); margin-bottom: var(--mem-s2); overflow-x: auto; }
+.mem-app .mem-tab {
+	min-height: var(--mem-touch); padding: 0 var(--mem-s2); border: 0; background: none; cursor: pointer;
+	font: 600 .9375rem/1 var(--mem-font); color: var(--mem-muted); border-bottom: 3px solid transparent; white-space: nowrap;
+	display: inline-flex; align-items: center; gap: 6px;
+}
+.mem-app .mem-tab[aria-selected="true"] { color: var(--dolly-navy); border-bottom-color: var(--dolly-gold); }
+
+/* ---------- Dialog ---------- */
+.mem-app .mem-dialog-backdrop {
+	position: fixed; inset: 0; z-index: 100000; background: rgba(0, 25, 41, .55);
+	display: flex; align-items: flex-end; justify-content: center; padding: 0;
+}
+@media (min-width: 640px) { .mem-app .mem-dialog-backdrop { align-items: center; padding: var(--mem-s3); } }
+.mem-app .mem-dialog {
+	background: #fff; width: 100%; max-width: 640px; max-height: 92vh; overflow: auto;
+	border-radius: 16px 16px 0 0; box-shadow: 0 20px 60px rgba(0,0,0,.3); display: flex; flex-direction: column;
+}
+@media (min-width: 640px) { .mem-app .mem-dialog { border-radius: 16px; } }
+.mem-app .mem-dialog--wide { max-width: 880px; }
+.mem-app .mem-dialog__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: var(--mem-s2) var(--mem-s3); border-bottom: 1px solid var(--mem-border); position: sticky; top: 0; background: #fff; z-index: 1; }
+.mem-app .mem-dialog__head h2 { margin: 0; font-size: 1.125rem; }
+.mem-app .mem-dialog__body { padding: var(--mem-s3); }
+.mem-app .mem-dialog__foot { display: flex; justify-content: flex-end; gap: var(--mem-s1); padding: var(--mem-s2) var(--mem-s3); border-top: 1px solid var(--mem-border); flex-wrap: wrap; position: sticky; bottom: 0; background: #fff; }
+
+/* ---------- States ---------- */
+.mem-app .mem-loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: var(--mem-s4); color: var(--mem-muted); }
+.mem-app .mem-spinner { width: 24px; height: 24px; border-radius: 50%; border: 3px solid rgba(0,47,77,.15); border-top-color: var(--dolly-navy); animation: mem-spin .8s linear infinite; }
+.mem-app .mem-empty { text-align: center; padding: var(--mem-s4) var(--mem-s2); color: var(--mem-muted); }
+.mem-app .mem-empty svg.lucide { width: 36px; height: 36px; color: var(--dolly-gold); margin-bottom: 8px; }
+.mem-app .mem-empty strong { display: block; color: var(--mem-text); margin-bottom: 4px; }
+@keyframes mem-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+	.mem-app *, .mem-app *::before, .mem-app *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ---------- Toolbar ---------- */
+.mem-app .mem-toolbar { display: flex; flex-wrap: wrap; gap: var(--mem-s1) var(--mem-s2); align-items: flex-end; margin-bottom: var(--mem-s2); }
+.mem-app .mem-toolbar .mem-field { min-width: 160px; flex: 0 1 220px; }
+.mem-app .mem-toolbar__spacer { flex: 1; }
+
+/* ---------- Description list ---------- */
+.mem-app .mem-dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+.mem-app .mem-dl dt { color: var(--mem-muted); font-weight: 600; }
+.mem-app .mem-dl dd { margin: 0; }
+
+/* ---------- Auth pages ---------- */
+.mem-app.mem-auth { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: var(--mem-s2); background: var(--mem-bg); }
+.mem-app .mem-auth__card { width: 100%; max-width: 440px; border-top: 4px solid var(--dolly-gold); }
+.mem-app .mem-auth__title { margin-top: var(--mem-s3); }
+.mem-app .mem-auth__links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--mem-s1); margin-top: var(--mem-s2); }
+.mem-app .mem-auth__links a { display: inline-flex; align-items: center; gap: 6px; min-height: var(--mem-touch); font-weight: 600; }
+
+/* ---------- FullCalendar theme ---------- */
+.mem-app .fc {
+	--fc-border-color: var(--mem-border);
+	--fc-button-bg-color: #fff;
+	--fc-button-border-color: var(--mem-border-strong);
+	--fc-button-text-color: var(--dolly-navy);
+	--fc-button-hover-bg-color: var(--mem-navy-050);
+	--fc-button-hover-border-color: var(--mem-border-strong);
+	--fc-button-active-bg-color: var(--dolly-navy);
+	--fc-button-active-border-color: var(--dolly-navy);
+	--fc-today-bg-color: var(--mem-gold-100);
+	--fc-event-bg-color: var(--mem-navy-050);
+	--fc-event-border-color: transparent;
+	--fc-event-text-color: var(--dolly-navy);
+	font-size: .875rem;
+}
+.mem-app .fc .fc-toolbar-title { font-size: 1.125rem; color: var(--dolly-navy); font-weight: 700; text-transform: capitalize; }
+.mem-app .fc .fc-button { min-height: 40px; min-width: 40px; font-weight: 600; text-transform: capitalize; }
+.mem-app .fc .fc-button-primary:not(:disabled).fc-button-active, .mem-app .fc .fc-button-primary:not(:disabled):active { color: #fff; }
+.mem-app .fc .fc-col-header-cell-cushion, .mem-app .fc .fc-daygrid-day-number { color: var(--dolly-navy); text-decoration: none; }
+.mem-app .fc .fc-daygrid-day { cursor: pointer; }
+.mem-app .fc-event.mem-ev { font-weight: 600; padding: 1px 4px; border-radius: 4px; }
+.mem-app .fc-event.mem-ev--ferie { background: var(--mem-blue-bg); color: var(--mem-blue); }
+.mem-app .fc-event.mem-ev--permesso { background: #EDE9FE; color: #4C2A9E; }
+.mem-app .fc-event.mem-ev--straordinario { background: var(--mem-gold-100); color: var(--dolly-navy); border-left: 3px solid var(--dolly-gold); }
+.mem-app .fc-event.mem-ev--malattia { background: var(--mem-red-bg); color: var(--mem-red); }
+.mem-app .fc-event.mem-ev--pending { background: #fff; color: var(--mem-amber); border: 1px dashed var(--mem-amber); }
+.mem-app .fc-event.mem-ev--worked { background: var(--mem-green-bg); color: var(--mem-green); }
+.mem-app .fc-event.mem-ev--incomplete { background: var(--mem-amber-bg); color: var(--mem-amber); }
+.mem-app .fc-event.mem-ev--chiusura { background: #E3EEF3; color: var(--dolly-navy); border-left: 3px solid var(--dolly-navy); }
+.mem-app .fc-event.mem-ev--chiusura-festiva { background: #FBE9D6; color: #7A3E00; border-left: 3px solid #C96A00; }
+.mem-app .mem-notice-body { white-space: pre-line; font-size: 1rem; line-height: 1.55; overflow-wrap: anywhere; }
+.mem-app .fc .fc-daygrid-day { cursor: default; }
+
+/* Per-day working hours editor */
+.mem-app .mem-dayrows { display: grid; gap: 8px; }
+.mem-app .mem-dayrow {
+	display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 8px 16px; align-items: start;
+	padding: 8px 12px; border: 1px solid var(--mem-border); border-radius: var(--mem-radius-sm); background: var(--mem-surface);
+}
+.mem-app .mem-dayrow__times { display: grid; grid-template-columns: repeat(2, minmax(0, 140px)) auto; gap: 8px 16px; align-items: end; }
+.mem-app .mem-dayrow__lunch { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 140px)); gap: 8px 16px; }
+.mem-app .mem-dayrow .mem-field { margin: 0; }
+.mem-app .mem-dayrow .mem-help { display: none; }
+@media (max-width: 640px) {
+	.mem-app .mem-dayrow { grid-template-columns: minmax(0, 1fr); }
+	.mem-app .mem-dayrow__times, .mem-app .mem-dayrow__lunch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.mem-app .mem-closure__sites { gap: 4px 24px; }
+
+.mem-app .fc-event.mem-ev--festivo { background: #F1E4F7; color: #6B2C85; border-left: 3px solid #9C4DBF; }
+.mem-app .fc .fc-event-title, .mem-app .fc .fc-event-main { color: inherit; }
+.mem-app .mem-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: .8125rem; margin-top: 12px; }
+.mem-app .mem-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.mem-app .mem-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+/* ---------- Employee portal ---------- */
+.mem-body { margin: 0; background: #F5F6F8; }
+.mem-app.mem-portal { min-height: 100vh; min-height: 100dvh; background: var(--mem-bg); padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+.mem-app .mem-topbar {
+	position: sticky; top: 0; z-index: 50; background: var(--dolly-navy); color: #fff;
+	display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px var(--mem-s2);
+	padding-top: calc(8px + env(safe-area-inset-top));
+}
+.mem-app .mem-topbar .mem-brand__wordmark { color: #fff; }
+.mem-app .mem-topbar .mem-brand__sub { color: #D5DEE5; }
+.mem-app .mem-topbar .mem-btn--ghost { color: #fff; }
+.mem-app .mem-topbar .mem-btn--ghost:hover { background: rgba(255,255,255,.12); }
+.mem-app .mem-topbar__actions { display: flex; align-items: center; gap: 4px; }
+.mem-app .mem-topbar .mem-bell { position: relative; }
+.mem-app .mem-topbar .mem-bell .mem-count { position: absolute; top: 2px; right: 0; background: var(--dolly-gold); color: var(--dolly-navy); }
+.mem-app .mem-topbar .mem-btn--ghost[aria-current="page"] { background: rgba(255,255,255,.16); box-shadow: inset 0 -3px 0 var(--dolly-gold); }
+
+.mem-app .mem-shell { max-width: 1120px; margin: 0 auto; padding: var(--mem-s2); display: grid; gap: var(--mem-s3); }
+@media (min-width: 960px) {
+	.mem-app.mem-portal { padding-bottom: 0; }
+	.mem-app .mem-shell { grid-template-columns: 240px minmax(0, 1fr); align-items: start; padding: var(--mem-s3); }
+}
+.mem-app .mem-nav {
+	position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: #fff; border-top: 1px solid var(--mem-border);
+	display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-bottom: env(safe-area-inset-bottom);
+}
+.mem-app .mem-nav__link {
+	display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 60px;
+	font-size: .6875rem; font-weight: 600; color: var(--mem-muted); text-decoration: none; background: none; border: 0; cursor: pointer; position: relative;
+	padding: 4px 2px; text-align: center; line-height: 1.15;
+}
+.mem-app .mem-nav__link[aria-current="page"] { color: var(--dolly-navy); }
+.mem-app .mem-nav__link[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 20%; right: 20%; height: 3px; background: var(--dolly-gold); border-radius: 0 0 3px 3px; }
+.mem-app .mem-nav__link .mem-count { position: absolute; top: 4px; right: calc(50% - 22px); }
+@media (min-width: 960px) {
+	.mem-app .mem-nav {
+		position: sticky; top: 80px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--mem-border);
+		border-radius: var(--mem-radius); padding: var(--mem-s1); box-shadow: var(--mem-shadow);
+	}
+	.mem-app .mem-nav__link { flex-direction: row; justify-content: flex-start; gap: 12px; padding: 0 var(--mem-s2); min-height: 48px; font-size: .9375rem; border-radius: 8px; }
+	.mem-app .mem-nav__link[aria-current="page"] { background: var(--mem-navy-050); }
+	.mem-app .mem-nav__link[aria-current="page"]::before { top: 8px; bottom: 8px; left: 0; right: auto; width: 4px; height: auto; border-radius: 0 3px 3px 0; }
+	.mem-app .mem-nav__link .mem-count { position: static; margin-left: auto; }
+}
+.mem-app .mem-page-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: var(--mem-s2); }
+.mem-app .mem-page-title h1 { margin: 0; }
+
+/* Clock card */
+.mem-app .mem-clock { text-align: center; }
+.mem-app .mem-clock__time { font-size: 3rem; font-weight: 800; color: var(--dolly-navy); font-variant-numeric: tabular-nums; line-height: 1; }
+.mem-app .mem-clock__date { color: var(--mem-muted); margin: 6px 0 var(--mem-s3); text-transform: capitalize; }
+.mem-app .mem-clock__btn {
+	width: 100%; max-width: 420px; min-height: 96px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 12px;
+	border-radius: 20px; border: 0; cursor: pointer; font: 800 1.5rem/1.1 var(--mem-font);
+	box-shadow: 0 8px 20px rgba(0, 47, 77, .25);
+}
+.mem-app .mem-clock__btn svg.lucide { width: 32px; height: 32px; }
+.mem-app .mem-clock__btn--entrata { background: var(--mem-green); color: #fff; }
+.mem-app .mem-clock__btn--inizio_pausa { background: var(--dolly-gold); color: var(--dolly-navy); }
+.mem-app .mem-clock__btn--fine_pausa { background: var(--mem-blue); color: #fff; }
+.mem-app .mem-clock__btn--uscita { background: var(--dolly-navy); color: #fff; }
+.mem-app .mem-clock__btn[disabled] { background: #C7CED6; color: #3E4955; box-shadow: none; cursor: not-allowed; }
+.mem-app .mem-clock__btn.is-loading { opacity: .8; }
+.mem-app .mem-clock__secondary { margin-top: 12px; }
+.mem-app .mem-clock__last { margin-top: var(--mem-s2); display: inline-flex; align-items: center; gap: 8px; color: var(--mem-muted); flex-wrap: wrap; justify-content: center; }
+.mem-app .mem-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: var(--mem-s3); }
+.mem-app .mem-steps--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mem-app .mem-step { border: 1px solid var(--mem-border); border-radius: 10px; padding: 10px 6px; text-align: center; background: #fff; }
+.mem-app .mem-step__label { font-size: .75rem; color: var(--mem-muted); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.mem-app .mem-step__label svg.lucide { width: 14px; height: 14px; }
+.mem-app .mem-step__time { font-size: 1.125rem; font-weight: 800; color: var(--dolly-navy); font-variant-numeric: tabular-nums; }
+.mem-app .mem-step.is-done { border-color: #BFE3CD; background: var(--mem-green-bg); }
+.mem-app .mem-step.is-next { border-color: var(--dolly-gold); box-shadow: inset 0 -3px 0 var(--dolly-gold); }
+@media (max-width: 400px) { .mem-app .mem-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* QR scanner */
+.mem-app .mem-scanner { position: relative; width: 100%; aspect-ratio: 1 / 1; max-width: 360px; margin: 0 auto; background: #000; border-radius: 12px; overflow: hidden; }
+.mem-app .mem-scanner video { width: 100%; height: 100%; object-fit: cover; }
+.mem-app .mem-scanner__frame { position: absolute; inset: 15%; border: 3px solid var(--dolly-gold); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
+
+/* ---------- Workplace display ---------- */
+.mem-app.mem-workplace { min-height: 100vh; min-height: 100dvh; background: var(--dolly-navy); color: #fff; display: flex; flex-direction: column; }
+.mem-app .mem-wp__bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px var(--mem-s3); flex-wrap: wrap; }
+.mem-app .mem-wp__bar .mem-brand__wordmark { color: #fff; }
+.mem-app .mem-wp__bar .mem-brand__sub { color: #D5DEE5; }
+.mem-app .mem-wp__bar .mem-btn { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+.mem-app .mem-wp__bar .mem-btn:hover { background: rgba(255,255,255,.12); }
+.mem-app .mem-wp__main { flex: 1; display: grid; place-items: center; padding: var(--mem-s2); }
+.mem-app .mem-wp__panel { background: #fff; color: var(--mem-text); border-radius: 24px; padding: var(--mem-s4); width: 100%; max-width: 1040px; display: grid; gap: var(--mem-s4); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; border-top: 8px solid var(--dolly-gold); }
+@media (max-width: 800px) { .mem-app .mem-wp__panel { grid-template-columns: minmax(0, 1fr); padding: var(--mem-s3); gap: var(--mem-s3); } }
+.mem-app .mem-wp__name { font-size: clamp(1.5rem, 3vw, 2.25rem); color: var(--dolly-navy); margin: 0; }
+.mem-app .mem-wp__qr { width: 100%; max-width: 440px; aspect-ratio: 1 / 1; margin: 0 auto; display: grid; place-items: center; }
+.mem-app .mem-wp__qr img, .mem-app .mem-wp__qr svg { width: 100%; height: auto; display: block; image-rendering: pixelated; }
+.mem-app .mem-wp__pin-label { font-weight: 700; color: var(--mem-muted); text-transform: uppercase; letter-spacing: .08em; font-size: .875rem; margin-top: var(--mem-s3); }
+.mem-app .mem-wp__pin { font-size: clamp(3rem, 9vw, 6rem); font-weight: 800; letter-spacing: .12em; color: var(--dolly-navy); font-variant-numeric: tabular-nums; line-height: 1.05; }
+.mem-app .mem-wp__countdown { margin-top: var(--mem-s2); }
+.mem-app .mem-wp__bar-track { height: 12px; border-radius: 6px; background: var(--mem-navy-050); overflow: hidden; }
+.mem-app .mem-wp__bar-fill { height: 100%; background: var(--dolly-gold); transition: width .25s linear; }
+.mem-app .mem-wp__secs { margin-top: 6px; font-weight: 700; color: var(--dolly-navy); font-variant-numeric: tabular-nums; }
+.mem-app .mem-wp__status { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.12); color: #fff; }
+.mem-app .mem-wp__status.is-online svg { color: #7EE2A8; }
+.mem-app .mem-wp__status.is-offline { background: var(--mem-red); }
+.mem-app .mem-wp__unavailable { text-align: center; padding: var(--mem-s4); }
+.mem-app .mem-wp__unavailable svg.lucide { width: 56px; height: 56px; color: var(--mem-red); }
+.mem-app .mem-wp__help { color: var(--mem-muted); margin-top: var(--mem-s2); }
+
+/* ---------- Install the app before signing in (phones) ---------- */
+.mem-app .mem-auth__card.is-gated > :not(.mem-brand):not(.mem-install) { display: none !important; }
+.mem-app .mem-install .mem-tabs { margin: var(--mem-s2) 0; }
+.mem-app .mem-install__quick { margin-bottom: var(--mem-s2); }
+.mem-app .mem-install__steps { list-style: none; margin: var(--mem-s2) 0 0; padding: 0; display: grid; gap: 12px; }
+.mem-app .mem-install__steps li { display: grid; grid-template-columns: 28px 36px minmax(0, 1fr); gap: 10px; align-items: center; }
+.mem-app .mem-install__num {
+	width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+	background: var(--dolly-navy); color: #fff; font-weight: 700; font-size: .875rem;
+}
+.mem-app .mem-install__icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--mem-gold-100); color: var(--dolly-navy); }
+.mem-app .mem-install__text { line-height: 1.4; }
+.mem-app .mem-install__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.mem-app .mem-install__protect { margin-top: var(--mem-s2); }
+.mem-app .mem-install__protect p { margin: 4px 0 0; }
+.mem-app .mem-install__protect ol { margin: 6px 0 0; padding-left: 20px; list-style: decimal; }
+.mem-app .mem-install__protect li { margin: 2px 0; }
+.mem-app .mem-phone {
+	width: 180px; height: 150px; margin: 0 auto; border: 3px solid var(--dolly-navy); border-radius: 22px;
+	display: flex; flex-direction: column; overflow: hidden; background: #fff; box-shadow: var(--mem-shadow);
+}
+.mem-app .mem-phone__screen { flex: 1; display: grid; place-items: center; background: var(--mem-bg); }
+.mem-app .mem-phone__screen .mem-brand__wordmark { font-size: 1rem; }
+.mem-app .mem-phone__bar { display: flex; align-items: center; justify-content: space-around; gap: 6px; padding: 6px 8px; background: #F0F2F5; color: var(--mem-muted); }
+.mem-app .mem-phone__bar svg.lucide { width: 16px; height: 16px; }
+.mem-app .mem-phone__url { flex: 1; font-size: .6875rem; background: #fff; border-radius: 8px; padding: 3px 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mem-app .mem-phone__hot {
+	display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: var(--dolly-navy);
+	background: var(--dolly-gold); animation: mem-pulse 1.6s ease-in-out infinite;
+}
+@keyframes mem-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(204, 177, 102, .7); } 50% { box-shadow: 0 0 0 8px rgba(204, 177, 102, 0); } }
+
+/* ---------- Guided tour: spotlight, bubble, finger ---------- */
+.mem-coach { position: fixed; inset: 0; z-index: 200000; pointer-events: none; }
+.mem-coach[hidden] { display: none; }
+.mem-coach.is-center { background: rgba(0, 20, 35, .72); }
+.mem-coach__block { position: fixed; pointer-events: auto; background: transparent; }
+.mem-coach__hole {
+	position: fixed; border-radius: 12px; pointer-events: none;
+	box-shadow: 0 0 0 9999px rgba(0, 20, 35, .72), 0 0 0 3px var(--dolly-gold) inset;
+	transition: left .25s ease, top .25s ease, width .25s ease, height .25s ease;
+}
+.mem-coach__hole.is-locked { pointer-events: auto; }
+.mem-coach__bubble {
+	position: fixed; pointer-events: auto; background: #fff; color: var(--mem-text); border-radius: 14px;
+	border-top: 4px solid var(--dolly-gold); padding: 16px; box-shadow: 0 12px 40px rgba(0, 20, 35, .35);
+	max-height: calc(100vh - 24px); overflow: auto;
+}
+.mem-coach__bubble:focus { outline: none; }
+.mem-coach__progress { font-size: .75rem; font-weight: 700; color: var(--mem-muted); text-transform: uppercase; letter-spacing: .04em; }
+.mem-coach__title { margin: 4px 0 6px; color: var(--dolly-navy); font-size: 1.0625rem; }
+.mem-coach__text { font-size: .9375rem; line-height: 1.5; }
+.mem-coach__text p { margin: 0 0 8px; }
+.mem-coach__text ul { margin: 0 0 8px; padding-left: 18px; }
+.mem-coach__hint { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-weight: 600; color: var(--dolly-navy); font-size: .875rem; }
+.mem-coach__hint svg.lucide { width: 16px; height: 16px; }
+.mem-coach__actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.mem-coach__spacer { flex: 1; }
+.mem-coach__finger { position: fixed; width: 44px; height: 44px; color: #fff; pointer-events: none; animation: mem-tap 1.4s ease-in-out infinite; }
+.mem-coach__finger svg.lucide { width: 44px; height: 44px; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .6)); fill: var(--dolly-navy); stroke: #fff; stroke-width: 1.5; }
+.mem-coach__ripple {
+	position: absolute; left: 4px; top: -6px; width: 22px; height: 22px; border-radius: 50%;
+	border: 3px solid var(--dolly-gold); opacity: 0; animation: mem-ripple 1.4s ease-out infinite;
+}
+@keyframes mem-tap { 0%, 100% { transform: translate(10px, 14px); } 45% { transform: translate(0, 0) scale(.92); } 60% { transform: translate(0, 0) scale(.92); } }
+@keyframes mem-ripple { 0%, 40% { transform: scale(.4); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+	.mem-coach__finger, .mem-coach__ripple, .mem-app .mem-phone__hot { animation: none; }
+	.mem-coach__ripple { opacity: 1; }
+	.mem-coach__hole { transition: none; }
+}
+.mem-app .mem-tour-demo { border: 2px dashed var(--dolly-gold); }
+
+/* ---------- Date / time pickers (v1.5) ---------- */
+.mem-app .mem-picker-input { position: relative; }
+.mem-app .mem-picker-input .mem-input { padding-right: 48px; cursor: pointer; }
+.mem-app .mem-picker-input__btn {
+	position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+	width: 40px; height: 40px; border: 0; border-radius: var(--mem-radius-sm); background: none;
+	color: var(--dolly-navy); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.mem-app .mem-picker-input__btn:hover { background: #F0F3F6; }
+.mem-app .mem-picker-input__btn:focus-visible { outline: 2px solid var(--dolly-navy); outline-offset: -2px; }
+.mem-app .mem-picker-input__btn[disabled] { opacity: .4; cursor: default; }
+.mem-app .mem-picker-input__btn svg.lucide { width: 20px; height: 20px; }
+
+.mem-app .mem-picker {
+	position: fixed; z-index: 100002; background: #fff; color: var(--mem-text);
+	border: 1px solid var(--mem-border); border-radius: var(--mem-radius); box-shadow: 0 12px 40px rgba(0, 31, 51, .25);
+	padding: 12px; width: 320px; max-width: calc(100vw - 16px); font-family: var(--mem-font);
+}
+.mem-app .mem-picker__head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.mem-app .mem-picker__select {
+	flex: 1; min-width: 0; min-height: 40px; padding: 0 8px; border: 1px solid var(--mem-border-strong); border-radius: var(--mem-radius-sm);
+	font: 600 .9375rem var(--mem-font); color: var(--dolly-navy); background: #fff;
+}
+.mem-app .mem-picker__select:last-of-type { flex: 0 0 84px; }
+.mem-app .mem-picker__nav {
+	flex: 0 0 40px; width: 40px; height: 40px; border: 0; border-radius: var(--mem-radius-sm); background: #F0F3F6;
+	color: var(--dolly-navy); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.mem-app .mem-picker__nav:hover { background: #E3E8EE; }
+.mem-app .mem-picker__nav svg.lucide { width: 20px; height: 20px; }
+.mem-app .mem-cal__week, .mem-app .mem-cal__row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.mem-app .mem-cal__week span { text-align: center; font-size: .75rem; font-weight: 700; color: var(--mem-muted); padding: 4px 0; text-transform: uppercase; }
+.mem-app .mem-cal__grid { display: grid; gap: 2px; }
+.mem-app .mem-cal__day {
+	height: 40px; border: 0; border-radius: 50%; background: none; cursor: pointer;
+	font: 500 .9375rem var(--mem-font); color: var(--mem-text); aspect-ratio: auto;
+}
+.mem-app .mem-cal__day:hover { background: #F0F3F6; }
+.mem-app .mem-cal__day.is-other { color: #9AA4AF; }
+.mem-app .mem-cal__day.is-today { box-shadow: inset 0 0 0 2px var(--dolly-gold); font-weight: 700; }
+.mem-app .mem-cal__day.is-selected { background: var(--dolly-navy); color: #fff; font-weight: 700; }
+.mem-app .mem-cal__day:focus-visible { outline: 2px solid var(--dolly-navy); outline-offset: 1px; }
+.mem-app .mem-picker__foot { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--mem-border); }
+.mem-app .mem-picker__foot .mem-btn:first-child { margin-right: auto; }
+
+.mem-app .mem-picker--clock { width: 308px; }
+.mem-app .mem-clock-pick__head { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.mem-app .mem-clock-pick__seg {
+	min-width: 72px; height: 56px; border: 0; border-radius: var(--mem-radius-sm); background: #F0F3F6; cursor: pointer;
+	font: 700 2rem/1 var(--mem-font); color: var(--dolly-navy); font-variant-numeric: tabular-nums;
+}
+.mem-app .mem-clock-pick__seg.is-active { background: var(--dolly-navy); color: #fff; }
+.mem-app .mem-clock-pick__seg:focus-visible { outline: 3px solid var(--dolly-gold); outline-offset: 2px; }
+.mem-app .mem-clock-pick__colon { font: 700 2rem/1 var(--mem-font); color: var(--dolly-navy); }
+.mem-app .mem-clock-pick__hint { text-align: center; font-size: .75rem; color: var(--mem-muted); margin: 6px 0 8px; }
+.mem-app .mem-clock-pick__face {
+	position: relative; margin: 0 auto; border-radius: 50%; background: #F0F3F6; touch-action: none; cursor: pointer; user-select: none;
+}
+.mem-app .mem-clock-pick__center { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: var(--dolly-navy); }
+.mem-app .mem-clock-pick__hand {
+	position: absolute; left: calc(50% - 1px); bottom: 50%; width: 2px; background: var(--dolly-navy);
+	transform-origin: 50% 100%; transition: transform .12s, height .12s; pointer-events: none;
+}
+.mem-app .mem-clock-pick__hand::after {
+	content: ""; position: absolute; left: 50%; top: 0; width: 32px; height: 32px; margin: -16px 0 0 -16px;
+	border-radius: 50%; background: rgba(0, 47, 77, .18);
+}
+.mem-app .mem-clock-pick__hand.is-between::after { width: 10px; height: 10px; margin: -5px 0 0 -5px; background: var(--dolly-navy); }
+.mem-app .mem-clock-pick__num {
+	position: absolute; width: 32px; height: 32px; transform: translate(-50%, -50%); border-radius: 50%;
+	display: flex; align-items: center; justify-content: center; font: 600 .9375rem var(--mem-font); color: var(--mem-text); pointer-events: none;
+}
+.mem-app .mem-clock-pick__num.is-inner { font-size: .8125rem; color: var(--mem-muted); }
+.mem-app .mem-clock-pick__num.is-selected { background: var(--dolly-navy); color: #fff; }
+.mem-app .mem-switch.is-muted { opacity: .45; }
+@media (prefers-reduced-motion: reduce) { .mem-app .mem-clock-pick__hand { transition: none; } }
+
+/* ---------- v1.6 ---------- */
+/* Containers that receive focus from the code (page content, dialogs) never show the focus ring:
+   it looked like a dark border around the whole app. */
+.mem-app [tabindex="-1"]:focus, .mem-app [tabindex="-1"]:focus-visible,
+.mem-app .mem-main:focus, .mem-app .mem-main:focus-visible,
+.mem-app .mem-admin__main:focus, .mem-app .mem-admin__main:focus-visible,
+.mem-app .mem-dialog:focus, .mem-app .mem-dialog:focus-visible { outline: none; box-shadow: none; }
+.mem-app .mem-dialog:focus, .mem-app .mem-dialog:focus-visible { box-shadow: 0 20px 60px rgba(0, 0, 0, .3); }
+
+/* Password field: full width, show/hide button inside */
+.mem-app .mem-password { position: relative; width: 100%; }
+.mem-app .mem-password .mem-input { width: 100%; padding-right: 48px; }
+.mem-app .mem-password__toggle {
+	position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+	width: 40px; height: 40px; border: 0; border-radius: var(--mem-radius-sm); background: none;
+	color: var(--dolly-navy); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.mem-app .mem-password__toggle:hover { background: #F0F3F6; }
+.mem-app .mem-password__toggle:focus-visible { outline: 2px solid var(--dolly-navy); outline-offset: -2px; box-shadow: none; }
+.mem-app .mem-password__toggle[aria-pressed="true"] { color: var(--mem-red); }
+
+/* Employer notice in red (requests, tutorial) */
+.mem-app .mem-legal { color: var(--mem-red); font-weight: 600; font-size: .9375rem; line-height: 1.45; margin: 0; padding: 10px 12px; background: var(--mem-red-bg); border-left: 4px solid var(--mem-red); border-radius: 0 var(--mem-radius-sm) var(--mem-radius-sm) 0; }
+.mem-coach__text .mem-legal { color: #B42318; font-weight: 600; background: #FDECEA; border-left: 4px solid #B42318; border-radius: 0 8px 8px 0; padding: 8px 10px; margin: 8px 0 0; }
+
+/* Label with help button */
+.mem-app .mem-label-row { display: flex; align-items: center; gap: 6px; }
+.mem-app .mem-help-btn {
+	width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--dolly-navy); cursor: pointer;
+	display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.mem-app .mem-help-btn:hover { background: #F0F3F6; }
+.mem-app .mem-help-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.mem-app .mem-help-list strong { display: block; color: var(--dolly-navy); }
+
+/* Hours by justification code */
+.mem-app .mem-hours-codes { display: flex; flex-wrap: wrap; gap: 4px; }
+.mem-app .mem-hours-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.mem-app .mem-hours-summary li { border: 1px solid var(--mem-border); border-radius: var(--mem-radius-sm); padding: 8px 10px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.mem-app .mem-hours-summary b { color: var(--dolly-navy); }
+.mem-app .mem-hours-summary span { font-size: .8125rem; color: var(--mem-muted); }
+.mem-app .mem-hours-summary em { font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Reminder offsets (minutes) */
+.mem-app .mem-minutes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mem-app .mem-minutes__chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border-radius: 999px; background: var(--mem-gold-100, #F6F0DE); color: var(--dolly-navy); font-weight: 600; }
+.mem-app .mem-minutes__chip button { width: 28px; height: 28px; border: 0; border-radius: 50%; background: none; color: var(--dolly-navy); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.mem-app .mem-minutes__chip button:hover { background: rgba(0, 47, 77, .12); }
+.mem-app .mem-minutes__chip svg.lucide { width: 16px; height: 16px; }
+.mem-app .mem-minutes__add { display: flex; gap: 6px; align-items: center; }
+.mem-app .mem-minutes__add .mem-input { width: 96px; }
+
+/* Device management */
+.mem-app .mem-device { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 0; }
+.mem-app .mem-device + .mem-device { border-top: 1px solid var(--mem-border); }
+.mem-app .mem-device__name { font-weight: 600; }
+.mem-app .mem-device__meta { font-size: .8125rem; color: var(--mem-muted); flex: 1 1 160px; }
+.mem-app .mem-limit { display: flex; align-items: center; gap: 6px; }
+.mem-app .mem-limit .mem-input { width: 76px; }
+
+.mem-app .fc-event.mem-ev--donazione { background: #E0F2F1; color: #0B5D57; border-left: 3px solid #0B8F86; }
+
+/* ---------- v1.7 ---------- */
+/* The page never grows wider than the screen: a long button or word used to stretch the whole
+   portal by a few pixels, so the content lost its right margin and looked shifted to the right. */
+.mem-app .mem-shell { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 960px) { .mem-app .mem-shell { grid-template-columns: 240px minmax(0, 1fr); } }
+.mem-app .mem-main { min-width: 0; max-width: 100%; }
+.mem-app .mem-card, .mem-app .mem-alert, .mem-app .mem-alert__body { min-width: 0; max-width: 100%; }
+.mem-app .mem-alert__body, .mem-app .mem-card { overflow-wrap: anywhere; }
+.mem-app .mem-btn { max-width: 100%; }
+@media (max-width: 599px) {
+	/* Long labels wrap inside the button instead of pushing the layout. */
+	.mem-app .mem-main .mem-btn, .mem-layer .mem-btn { white-space: normal; text-align: left; line-height: 1.25; padding-top: 8px; padding-bottom: 8px; }
+	.mem-app .mem-main .mem-btn--block, .mem-app .mem-clock__btn { text-align: center; }
+}
+html:has(.mem-app.mem-portal), body:has(.mem-app.mem-portal) { overflow-x: hidden; overflow-x: clip; }
