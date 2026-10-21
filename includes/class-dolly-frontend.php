@@ -265,13 +265,22 @@ class Dolly_Frontend {
 				'nonce'      => wp_create_nonce( 'wp_rest' ),
 				'logoutUrl'  => add_query_arg( '_wpnonce', wp_create_nonce( 'dolly_logout' ), self::url( 'esci' ) ),
 				'portalUrl'  => self::url( 'portale' ),
-				'logo'       => Dolly_Settings::logo_url(),
 				'userName'   => $user->exists() ? Dolly_Employees::display_name( $user->ID ) : '',
 				'timezone'   => Dolly_Time::TZ,
 				'serverTime' => time(),
+				'displaySub' => Dolly_Appearance::get( 'display_subtitle' ),
 			),
+			Dolly_Appearance::js_config(),
 			$extra
 		);
+	}
+
+	/** Stylesheet of the custom font chosen in Appearance, if any. */
+	public static function enqueue_font() {
+		$url = Dolly_Appearance::font_url();
+		if ( $url ) {
+			wp_enqueue_style( 'dolly-font', $url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+		}
 	}
 
 	public static function assets() {
@@ -281,6 +290,8 @@ class Dolly_Frontend {
 		}
 		self::register_shared_assets();
 		wp_enqueue_style( 'dolly-ui' );
+		wp_add_inline_style( 'dolly-ui', Dolly_Appearance::css( null, 'front' ) . Dolly_Appearance::custom_css() );
+		self::enqueue_font();
 		wp_enqueue_script( 'dolly-core' );
 		if ( 'portale' === $view ) {
 			wp_enqueue_script( 'dolly-employee', DOLLY_URL . 'assets/js/dolly-employee.js', array( 'dolly-core', 'dolly-fullcalendar-it', 'dolly-jsqr' ), DOLLY_VERSION, true );
@@ -314,14 +325,20 @@ class Dolly_Frontend {
 
 	/* ---------- Rendering (used by theme templates and plugin fallbacks) ---------- */
 
-	/** Brand mark: configured logo or the text wordmark. */
-	public static function brand( $subtitle = '' ) {
-		$logo = Dolly_Settings::logo_url();
+	/**
+	 * Brand mark: configured logo or the text wordmark.
+	 *
+	 * @param string $subtitle  Text next to the brand.
+	 * @param bool   $on_header True on the colored header, which may use its own logo.
+	 */
+	public static function brand( $subtitle = '', $on_header = false ) {
+		$logo = $on_header ? Dolly_Appearance::header_logo_url() : Dolly_Appearance::logo_url();
+		$name = Dolly_Appearance::brand();
 		echo '<div class="dolly-brand">';
 		if ( $logo ) {
-			echo '<img class="dolly-brand__logo" src="' . esc_url( $logo ) . '" alt="Dolly">';
+			echo '<img class="dolly-brand__logo" src="' . esc_url( $logo ) . '" alt="' . esc_attr( $name ) . '">';
 		} else {
-			echo '<span class="dolly-brand__wordmark">Dolly</span>';
+			echo '<span class="dolly-brand__wordmark">' . esc_html( $name ) . '</span>';
 		}
 		if ( $subtitle ) {
 			echo '<span class="dolly-brand__sub">' . esc_html( $subtitle ) . '</span>';
@@ -370,9 +387,12 @@ class Dolly_Frontend {
 		?>
 		<div class="dolly-app dolly-auth">
 			<div class="dolly-card dolly-auth__card">
-				<?php self::brand( $is_wp ? 'Schermo sede' : 'Portale dipendenti' ); ?>
-				<h1 class="dolly-auth__title"><?php echo $is_wp ? 'Accesso sede' : 'Accedi'; ?></h1>
-				<p class="dolly-muted"><?php echo $is_wp ? 'Accedi con l\'account dedicato della sede per mostrare QR e PIN.' : 'Accedi con le credenziali fornite dall\'amministratore.'; ?></p>
+				<?php self::brand( $is_wp ? 'Schermo sede' : Dolly_Appearance::get( 'portal_subtitle' ) ); ?>
+				<h1 class="dolly-auth__title"><?php echo esc_html( $is_wp ? 'Accesso sede' : Dolly_Appearance::get( 'login_title' ) ); ?></h1>
+				<?php $intro = $is_wp ? 'Accedi con l\'account dedicato della sede per mostrare QR e PIN.' : Dolly_Appearance::get( 'login_text' ); ?>
+				<?php if ( '' !== $intro ) : ?>
+					<p class="dolly-muted"><?php echo nl2br( esc_html( $intro ) ); ?></p>
+				<?php endif; ?>
 				<?php self::render_messages(); ?>
 				<form method="post" class="dolly-form" novalidate>
 					<?php wp_nonce_field( 'dolly_login_' . $type, 'dolly_login_nonce' ); ?>
@@ -413,7 +433,7 @@ class Dolly_Frontend {
 		?>
 		<div class="dolly-app dolly-auth">
 			<div class="dolly-card dolly-auth__card">
-				<?php self::brand( 'Portale dipendenti' ); ?>
+				<?php self::brand( Dolly_Appearance::get( 'portal_subtitle' ) ); ?>
 				<h1 class="dolly-auth__title">Recupero password</h1>
 				<p class="dolly-muted">Inserisci il tuo nome utente o l'email: riceverai un link per impostare una nuova password.</p>
 				<?php self::render_messages(); ?>

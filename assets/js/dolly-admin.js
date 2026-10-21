@@ -6,6 +6,13 @@
 	'use strict';
 
 	var DOLLY = window.DOLLY, h = DOLLY.h, CFG = DOLLY.config;
+
+	// Chart colours from the theme (Aspetto): the same meaning always has the same colour.
+	var C = {
+		primary: DOLLY.token('primary', '#2563EB'), amber: DOLLY.token('amber-solid', '#B45309'), grey: DOLLY.token('track', '#94A3B8'),
+		green: DOLLY.token('green-solid', '#15803D'), red: DOLLY.token('red-solid', '#B91C1C'), blue: DOLLY.token('blue-solid', '#0369A1'),
+		surface: DOLLY.token('surface', '#FFFFFF'), text: DOLLY.token('text', '#0F172A'), muted: DOLLY.token('muted', '#475569'), border: DOLLY.token('border', '#E2E8F0')
+	};
 	var app = document.getElementById('dolly-admin-app');
 	if (!app) { return; }
 	var main = document.getElementById('dolly-admin-main');
@@ -215,10 +222,10 @@
 		function loadChart() {
 			DOLLY.api('admin/chart', { query: { range: st.range, workplace: st.workplace } }).then(function (d) {
 				var ds = [
-					{ label: 'Presenti', data: d.present, backgroundColor: '#17693A' },
-					{ label: 'Assenti non giustificati', data: d.absent, backgroundColor: '#B42318' },
-					{ label: 'Ferie', data: d.leave, backgroundColor: '#1F5FAD' },
-					{ label: 'Malattia', data: d.sick, backgroundColor: '#CCB166' }
+					{ label: 'Presenti', data: d.present, backgroundColor: C.green },
+					{ label: 'Assenti non giustificati', data: d.absent, backgroundColor: C.red },
+					{ label: 'Ferie', data: d.leave, backgroundColor: C.blue },
+					{ label: 'Malattia', data: d.sick, backgroundColor: C.amber }
 				];
 				if (!window.Chart) { return; }
 				if (chart) {
@@ -376,9 +383,9 @@
 	}
 
 	function legend() {
-		var items = [['#E8F1FC', 'Ferie'], ['#EDE9FE', 'Permesso'], ['#F6F0DE', 'Straordinario'], ['#FDECEA', 'Malattia / infortunio'], ['#F1E4F7', 'Festività'], ['#E3EEF3', 'Chiusura collettiva'], ['#FBE9D6', 'Chiusura per festività']];
+		var items = [['var(--dolly-blue-bg)', 'Ferie'], ['var(--dolly-cat-permesso-bg)', 'Permesso'], ['var(--dolly-accent-soft)', 'Straordinario'], ['var(--dolly-red-bg)', 'Malattia / infortunio'], ['var(--dolly-cat-festivo-bg)', 'Festività'], ['var(--dolly-surface-3)', 'Chiusura collettiva'], ['var(--dolly-cat-chiusura-festiva-bg)', 'Chiusura per festività']];
 		return h('div', { class: 'dolly-legend', 'aria-label': 'Legenda' }, items.map(function (i) {
-			return h('span', {}, [h('i', { style: 'background:' + i[0] + ';border:1px solid #C7CED6', 'aria-hidden': 'true' }), i[1]]);
+			return h('span', {}, [h('i', { style: 'background:' + i[0] + ';border:1px solid var(--dolly-border-strong)', 'aria-hidden': 'true' }), i[1]]);
 		}));
 	}
 
@@ -1963,18 +1970,6 @@
 		var pinLock = DOLLY.field({ label: 'Durata del blocco PIN (minuti)', name: 'pin_lock_minutes', type: 'number', value: s.pin_lock_minutes, attrs: { min: 1, max: 1440 } });
 		var grace = DOLLY.field({ label: 'Tolleranza di rete per QR/PIN (secondi)', name: 'challenge_grace', type: 'number', value: s.challenge_grace, attrs: { min: 0, max: 10 }, help: 'Accetta il codice precedente per pochi secondi dopo la rotazione (0–10).' });
 
-		var logoId = s.logo_id;
-		var logoPreview = h('div', { class: 'dolly-logo-preview' });
-		function showLogo(url) { DOLLY.render(logoPreview, url ? h('img', { src: url, alt: 'Logo attuale', style: 'max-height:56px' }) : h('span', { class: 'dolly-brand__wordmark', text: 'Dolly' })); }
-		showLogo(d.logo_url);
-		var pick = DOLLY.button('Scegli logo', { icon: 'image', onClick: function () {
-			if (!window.wp || !window.wp.media) { return; }
-			var frame = window.wp.media({ title: 'Logo Dolly', library: { type: 'image' }, multiple: false, button: { text: 'Usa questo logo' } });
-			frame.on('select', function () { var a = frame.state().get('selection').first().toJSON(); logoId = a.id; showLogo((a.sizes && a.sizes.medium ? a.sizes.medium.url : a.url)); });
-			frame.open();
-		} });
-		var rmLogo = DOLLY.button('Usa il marchio testuale', { icon: 'type', onClick: function () { logoId = 0; showLogo(''); } });
-
 		var saveBtn = DOLLY.button('Salva impostazioni', { type: 'submit', variant: 'primary', icon: 'save' });
 		var form = h('form', { class: 'dolly-stack', novalidate: true }, [
 			alertBox,
@@ -2012,7 +2007,6 @@
 				admN.table,
 				recipients
 			]), { level: 'h2' }),
-			DOLLY.card('Logo', 'image', [h('p', { class: 'dolly-muted', text: 'I colori del marchio (blu #002F4D e oro #CCB166) sono fissi. Senza logo viene mostrato il marchio testuale.' }), logoPreview, h('div', { class: 'dolly-btn-row', style: 'margin-top:8px' }, [pick, rmLogo])], { level: 'h2' }),
 			h('div', { class: 'dolly-btn-row dolly-settings__save' }, saveBtn)
 		]);
 		form.addEventListener('submit', function (ev) {
@@ -2026,7 +2020,7 @@
 				admin_notify_portal: admN.portal.control.isOn(), admin_notify_email: admN.email.control.isOn(), admin_events: admN.values(),
 				reminder_entry: remEntry.control.isOn(), reminder_entry_minutes: remEntryMin.values(), reminder_exit: remExit.control.isOn(), reminder_exit_minutes: remExitMin.values(),
 				donation_certificate_mode: dcm.value(), donation_certificate_days: dcdays.input.value, device_sessions: deviceSessions.control.isOn(),
-				admin_recipients: recipients.values().map(Number), logo_id: logoId, pin_max_attempts: pinMax.input.value, pin_lock_minutes: pinLock.input.value, challenge_grace: grace.input.value
+				admin_recipients: recipients.values().map(Number), pin_max_attempts: pinMax.input.value, pin_lock_minutes: pinLock.input.value, challenge_grace: grace.input.value
 			};
 			var go = function () {
 				DOLLY.busy(saveBtn, DOLLY.api('admin/settings', { method: 'POST', body: body })).then(function (nd) {
@@ -2085,8 +2079,6 @@
 	/* Analytics                                                            */
 	/* ------------------------------------------------------------------ */
 
-	// Brand colours; the presence chart keeps the dashboard colours (same meaning, same colour).
-	var C = { navy: '#002F4D', gold: '#B8963E', grey: '#8A94A0', green: '#17693A', red: '#B42318', blue: '#1F5FAD', sand: '#CCB166' };
 
 	var AN_PRESETS = [
 		{ id: '7', label: 'Ultimi 7 giorni' },
@@ -2269,30 +2261,30 @@
 
 			var s = d.series;
 			lineBar(cards.hours, s.labels, [
-				{ label: 'Ore ordinarie', data: s.ordinary.map(hours), backgroundColor: C.navy, stack: 'h' },
-				{ label: 'Straordinario', data: s.extra.map(hours), backgroundColor: C.gold, stack: 'h' },
+				{ label: 'Ore ordinarie', data: s.ordinary.map(hours), backgroundColor: C.primary, stack: 'h' },
+				{ label: 'Straordinario', data: s.extra.map(hours), backgroundColor: C.amber, stack: 'h' },
 				{ type: 'line', label: 'Ore previste', data: s.planned.map(function (v) { return v ? hours(v) : null; }), borderColor: C.grey, backgroundColor: C.grey, borderDash: [6, 4], borderWidth: 2, pointRadius: s.labels.length > 40 ? 0 : 3, tension: 0 }
 			], { stacked: true, axis: 'Ore', fmt: function (v) { return hm(v * 60); } });
 			lineBar(cards.presence, s.labels, [
 				{ label: 'Presenti', data: s.present, backgroundColor: C.green },
 				{ label: 'Ferie e donazione', data: s.leave, backgroundColor: C.blue },
-				{ label: 'Malattia e infortunio', data: s.sick, backgroundColor: C.sand },
+				{ label: 'Malattia e infortunio', data: s.sick, backgroundColor: C.amber },
 				{ label: 'Assenti non giustificati', data: s.absent, backgroundColor: C.red }
 			], { stacked: true, axis: 'Giornate-persona', integer: true });
 			if (abs.length) {
-				lineBar(cards.absences, abs.map(function (a) { return a.label; }), [{ label: 'Ore di assenza', data: abs.map(function (a) { return hours(a.min); }), backgroundColor: C.navy }], { horizontal: true, axis: 'Ore', fmt: function (v) { return hm(v * 60); }, legend: false });
+				lineBar(cards.absences, abs.map(function (a) { return a.label; }), [{ label: 'Ore di assenza', data: abs.map(function (a) { return hours(a.min); }), backgroundColor: C.primary }], { horizontal: true, axis: 'Ore', fmt: function (v) { return hm(v * 60); }, legend: false });
 			}
 			if (k.late) {
-				lineBar(cards.weekday, d.weekday.map(function (w) { return w.short; }), [{ label: 'Ritardi', data: d.weekday.map(function (w) { return w.late; }), backgroundColor: C.navy }], {
+				lineBar(cards.weekday, d.weekday.map(function (w) { return w.short; }), [{ label: 'Ritardi', data: d.weekday.map(function (w) { return w.late; }), backgroundColor: C.primary }], {
 					integer: true, legend: false, axis: 'Ritardi',
 					extra: function (i) { var w = d.weekday[i]; return w.entries ? pct(w.late_pct) + ' delle entrate · media ' + w.late_avg + ' min' : ''; }
 				});
-				lineBar(cards.lateDist, d.late_dist.labels, [{ label: 'Entrate in ritardo', data: d.late_dist.values, backgroundColor: C.navy }], { integer: true, legend: false, axis: 'Entrate' });
+				lineBar(cards.lateDist, d.late_dist.labels, [{ label: 'Entrate in ritardo', data: d.late_dist.values, backgroundColor: C.primary }], { integer: true, legend: false, axis: 'Entrate' });
 			}
 			if (top.length) {
 				lineBar(cards.overtime, top.map(function (e) { return e.name; }), [
-					{ label: 'Approvato', data: top.map(function (e) { return hours(e.extra_min); }), backgroundColor: C.navy },
-					{ label: 'Da approvare', data: top.map(function (e) { return hours(e.extra_pending_min); }), backgroundColor: C.gold }
+					{ label: 'Approvato', data: top.map(function (e) { return hours(e.extra_min); }), backgroundColor: C.primary },
+					{ label: 'Da approvare', data: top.map(function (e) { return hours(e.extra_pending_min); }), backgroundColor: C.amber }
 				], { horizontal: true, stacked: true, axis: 'Ore', fmt: function (v) { return hm(v * 60); } });
 			}
 			if (d.anomalies.length) {
@@ -2304,7 +2296,7 @@
 			if (d.requests.length) {
 				lineBar(cards.requests, d.requests.map(function (r) { return r.label; }), [
 					{ label: 'Approvate', data: d.requests.map(function (r) { return r.approved; }), backgroundColor: C.green },
-					{ label: 'In attesa', data: d.requests.map(function (r) { return r.pending; }), backgroundColor: C.sand },
+					{ label: 'In attesa', data: d.requests.map(function (r) { return r.pending; }), backgroundColor: C.amber },
 					{ label: 'Respinte', data: d.requests.map(function (r) { return r.rejected; }), backgroundColor: C.red },
 					{ label: 'Annullate', data: d.requests.map(function (r) { return r.cancelled; }), backgroundColor: C.grey }
 				], { horizontal: true, stacked: true, integer: true, axis: 'Richieste' });
@@ -2369,14 +2361,14 @@
 			var fmt = o.fmt || function (v) { return String(v).replace('.', ','); };
 			var valueAxis = o.horizontal ? 'x' : 'y', catAxis = o.horizontal ? 'y' : 'x';
 			datasets.forEach(function (ds) {
-				if (ds.type !== 'line') { Object.assign(ds, { borderRadius: o.stacked ? 2 : 4, borderSkipped: 'start', maxBarThickness: 36, borderColor: '#fff', borderWidth: o.stacked ? (o.horizontal ? { right: 2 } : { top: 2 }) : 0 }); }
+				if (ds.type !== 'line') { Object.assign(ds, { borderRadius: o.stacked ? 2 : 4, borderSkipped: 'start', maxBarThickness: 36, borderColor: C.surface, borderWidth: o.stacked ? (o.horizontal ? { right: 2 } : { top: 2 }) : 0 }); }
 			});
 			var scales = {};
-			scales[catAxis] = { stacked: !!o.stacked, grid: { display: false }, ticks: { autoSkip: true, maxRotation: 0, color: '#56616E' } };
+			scales[catAxis] = { stacked: !!o.stacked, grid: { display: false }, ticks: { autoSkip: true, maxRotation: 0, color: C.muted } };
 			scales[valueAxis] = {
-				stacked: !!o.stacked, beginAtZero: true, grid: { color: '#E8ECF0' }, border: { display: false },
-				title: { display: !!o.axis, text: o.axis, color: '#56616E' },
-				ticks: { precision: o.integer ? 0 : undefined, color: '#56616E', callback: function (v) { return o.fmt ? fmt(v) : String(v).replace('.', ','); } }
+				stacked: !!o.stacked, beginAtZero: true, grid: { color: C.border }, border: { display: false },
+				title: { display: !!o.axis, text: o.axis, color: C.muted },
+				ticks: { precision: o.integer ? 0 : undefined, color: C.muted, callback: function (v) { return o.fmt ? fmt(v) : String(v).replace('.', ','); } }
 			};
 			charts[card.title] = new window.Chart(card.canvas, {
 				type: 'bar',
@@ -2387,7 +2379,7 @@
 					interaction: { mode: 'index', intersect: false },
 					scales: scales,
 					plugins: {
-						legend: { display: o.legend !== false && datasets.length > 1, position: 'bottom', labels: { boxWidth: 12, color: '#1B2530' } },
+						legend: { display: o.legend !== false && datasets.length > 1, position: 'bottom', labels: { boxWidth: 12, color: C.text } },
 						tooltip: { callbacks: {
 							label: function (c) { return ' ' + c.dataset.label + ': ' + fmt(o.horizontal ? c.parsed.x : c.parsed.y); },
 							afterBody: o.extra ? function (items) { var t = o.extra(items[0].dataIndex); return t ? [t] : []; } : undefined
@@ -2417,12 +2409,318 @@
 	}
 
 	/* ------------------------------------------------------------------ */
+	/* Appearance (white label)                                            */
+	/* ------------------------------------------------------------------ */
+
+	var COLOR_LABELS = {
+		primary: ['Colore principale', 'Pulsanti, link ed elementi selezionati.'],
+		accent: ['Colore di evidenza', 'Giorno corrente, barra del tempo sullo schermo sede, dettagli.'],
+		header_bg: ['Intestazione', 'Barra superiore del portale e del pannello, sfondo dello schermo sede.'],
+		background: ['Sfondo pagina', 'Dietro a schede e riquadri.'],
+		surface: ['Riquadri', 'Schede, finestre e campi.'],
+		text: ['Testo', 'Testo e titoli.'],
+		muted: ['Testo secondario', 'Descrizioni e note.'],
+		border: ['Bordi', 'Contorni di schede e tabelle.'],
+		success: ['Successo', 'Presenze, conferme, entrata.'],
+		warning: ['Attenzione', 'Richieste in attesa, pausa, avvisi.'],
+		danger: ['Errore', 'Assenze, errori, eliminazioni.'],
+		info: ['Informazione', 'Ferie e messaggi informativi.']
+	};
+	var DARK_LABELS = { dark_background: 'Sfondo pagina', dark_surface: 'Riquadri', dark_text: 'Testo', dark_muted: 'Testo secondario', dark_border: 'Bordi' };
+	var COLOR_PRESETS = [
+		{ label: 'Blu', color: '#2563EB' }, { label: 'Indaco', color: '#4F46E5' }, { label: 'Viola', color: '#7C3AED' }, { label: 'Smeraldo', color: '#059669' },
+		{ label: 'Verde acqua', color: '#0D9488' }, { label: 'Rosa', color: '#DB2777' }, { label: 'Arancio', color: '#EA580C' }, { label: 'Ardesia', color: '#334155' }
+	];
+
+	/** "#abc" / "AABBCC" → "#AABBCC", or '' when not a color. */
+	function hexColor(v) {
+		v = String(v || '').trim().replace(/^#/, '');
+		if (/^[0-9a-f]{3}$/i.test(v)) { v = v.replace(/(.)/g, '$1$1'); }
+		return /^[0-9a-f]{6}$/i.test(v) ? '#' + v.toUpperCase() : '';
+	}
+
+	/** Color picker paired with a hex text field. */
+	function colorField(name, label, help, value, onChange) {
+		var id = DOLLY.uid('c');
+		var swatch = h('input', { type: 'color', class: 'dolly-color__swatch', value: value.toLowerCase(), 'aria-label': label + ': selettore colore', tabindex: '-1' });
+		var text = h('input', { type: 'text', class: 'dolly-input dolly-color__hex', id: id, value: value, maxlength: 7, spellcheck: 'false', autocomplete: 'off', 'aria-describedby': help ? id + '-h' : null });
+		swatch.addEventListener('input', function () { text.value = swatch.value.toUpperCase(); onChange(); });
+		text.addEventListener('input', function () { var v = hexColor(text.value); if (v) { swatch.value = v.toLowerCase(); onChange(); } });
+		text.addEventListener('blur', function () { var v = hexColor(text.value); if (v) { text.value = v; } });
+		var wrap = h('div', { class: 'dolly-field', dataset: { name: name } }, [
+			h('label', { class: 'dolly-label', for: id, text: label }),
+			h('div', { class: 'dolly-color' }, [swatch, text]),
+			help ? h('span', { class: 'dolly-help', id: id + '-h', text: help }) : null,
+			h('span', { class: 'dolly-error', hidden: true })
+		]);
+		wrap.value = function () { return hexColor(text.value) || text.value.trim(); };
+		wrap.set = function (v) { text.value = v; swatch.value = v.toLowerCase(); };
+		return wrap;
+	}
+
+	/** Image from the media library: preview, "choose" and "remove". */
+	function imageField(name, label, help, id, url, onChange, o) {
+		o = o || {};
+		var cur = id, curUrl = url;
+		var preview = h('div', { class: 'dolly-image-pick' + (o.square ? ' dolly-image-pick--square' : '') });
+		var rm = DOLLY.button('Rimuovi', { icon: 'x', size: 'sm', variant: 'ghost', onClick: function () { cur = 0; curUrl = ''; show(); onChange(); } });
+		var choose = DOLLY.button('Scegli immagine', { icon: 'image', size: 'sm', onClick: function () {
+			if (!window.wp || !window.wp.media) { DOLLY.toast('La libreria media non è disponibile.', 'error'); return; }
+			var frame = window.wp.media({ title: label, library: { type: 'image' }, multiple: false, button: { text: 'Usa questa immagine' } });
+			frame.on('select', function () {
+				var a = frame.state().get('selection').first().toJSON();
+				cur = a.id; curUrl = a.sizes && a.sizes.medium ? a.sizes.medium.url : a.url;
+				show(); onChange();
+			});
+			frame.open();
+		} });
+		function show() {
+			DOLLY.render(preview, curUrl ? h('img', { src: curUrl, alt: '' }) : h('span', { class: 'dolly-small dolly-muted', text: o.empty || 'Nessuna immagine' }));
+			rm.hidden = !cur;
+		}
+		show();
+		var wrap = h('div', { class: 'dolly-field', dataset: { name: name } }, [
+			h('span', { class: 'dolly-label', text: label }), preview, h('div', { class: 'dolly-btn-row' }, [choose, rm]),
+			help ? h('span', { class: 'dolly-help', text: help }) : null,
+			h('span', { class: 'dolly-error', hidden: true })
+		]);
+		wrap.value = function () { return cur; };
+		wrap.url = function () { return curUrl; };
+		return wrap;
+	}
+
+	function choiceOptions(map) {
+		return Object.keys(map).map(function (k) { return { value: k, label: map[k] }; });
+	}
+
+	/** Applies saved settings to the whole admin page without reloading it. */
+	var liveStyle = null;
+	function applyAdminCss(css) {
+		if (!css) { return; }
+		if (!liveStyle) { liveStyle = h('style', { id: 'dolly-appearance-live' }); document.head.appendChild(liveStyle); }
+		liveStyle.textContent = css;
+	}
+
+	var fontLinks = {};
+	function loadFont(url) {
+		if (!url || fontLinks[url] || !/^https:\/\//.test(url)) { return; }
+		fontLinks[url] = true;
+		document.head.appendChild(h('link', { rel: 'stylesheet', href: url }));
+	}
+
+	function pageAppearance() {
+		DOLLY.render(main, DOLLY.loading());
+		DOLLY.api('admin/appearance').then(renderAppearance, function (err) { DOLLY.render(main, DOLLY.errorState(err, pageAppearance)); });
+	}
+
+	function renderAppearance(d) {
+		var a = d.appearance, ch = d.choices, auto = d.auto;
+		var alertBox = h('div', { hidden: true });
+		var previewTimer = null;
+		function changed() { clearTimeout(previewTimer); previewTimer = setTimeout(updatePreview, 250); }
+
+		function text(name, label, o) {
+			o = o || {};
+			return DOLLY.field({ label: label, name: name, type: o.type || 'text', value: a[name], help: o.help, optional: o.optional, rows: o.rows, full: o.full, attrs: Object.assign({ maxlength: o.max || 60 }, o.attrs || {}) });
+		}
+		function select(name, label, options, help) {
+			return DOLLY.field({ label: label, name: name, type: 'select', value: a[name], options: options, help: help });
+		}
+
+		// Brand.
+		var brandName = text('brand_name', 'Nome del marchio', { max: 40, help: 'Mostrato quando non c\'è un logo, come nome dell\'app sul telefono, nelle notifiche e nelle email.' });
+		var appName = text('app_name', 'Nome completo dell\'app', { optional: true, help: 'Nome dell\'app installata e titolo nel browser. Vuoto = "' + auto.app_name + '".', attrs: { placeholder: auto.app_name } });
+		var portalSub = text('portal_subtitle', 'Sottotitolo del portale', { optional: true, help: 'Accanto al marchio nelle pagine di accesso.' });
+		var adminTitle = text('admin_title', 'Nome del pannello di amministrazione', { max: 40, help: 'Voce del menu di WordPress e intestazione di queste pagine.' });
+		var displaySub = text('display_subtitle', 'Sottotitolo dello schermo sede', { optional: true });
+		var mark = DOLLY.switchControl({ label: 'Quadratino colorato dopo il nome', name: 'wordmark_mark', checked: !!a.wordmark_mark, description: 'Piccolo dettaglio nel colore di evidenza, solo quando non c\'è un logo.', onChange: changed });
+
+		// Logos and icons.
+		var logo = imageField('logo_id', 'Logo', 'Pagine di accesso e, se non imposti il logo per l\'intestazione, anche barra superiore e schermo sede. Formato orizzontale con sfondo trasparente.', a.logo_id, d.images.logo_id, changed, { empty: 'Nessun logo: viene mostrato il nome del marchio.' });
+		var logoHeader = imageField('logo_header_id', 'Logo per l\'intestazione colorata', 'Facoltativo: versione chiara del logo, leggibile sul colore dell\'intestazione.', a.logo_header_id, d.images.logo_header_id, changed, { empty: 'Uguale al logo principale.' });
+		var logoHeight = DOLLY.field({ label: 'Altezza massima del logo (px)', name: 'logo_height', type: 'number', value: a.logo_height, attrs: { min: 24, max: 96 } });
+		var appIcon = imageField('app_icon_id', 'Icona dell\'app', 'Immagine quadrata di almeno 512 × 512 px: icona sulla schermata Home e nelle notifiche. Vuoto = icona del sito (Impostazioni › Generali) oppure l\'icona predefinita.', a.app_icon_id, d.images.app_icon_id, changed, { square: true, empty: 'Icona predefinita' });
+
+		// Colors.
+		var colors = {};
+		Object.keys(COLOR_LABELS).forEach(function (k) { colors[k] = colorField(k, COLOR_LABELS[k][0], COLOR_LABELS[k][1], a[k], changed); });
+		var darkColors = {};
+		Object.keys(DARK_LABELS).forEach(function (k) { darkColors[k] = colorField(k, DARK_LABELS[k], null, a[k], changed); });
+		var presets = h('div', { class: 'dolly-swatches', role: 'group', 'aria-label': 'Combinazioni di colori pronte' }, COLOR_PRESETS.map(function (p) {
+			var b = h('button', { type: 'button', class: 'dolly-swatch', title: p.label }, [h('span', { class: 'dolly-swatch__dot', style: 'background:' + p.color, 'aria-hidden': 'true' }), h('span', { text: p.label })]);
+			b.addEventListener('click', function () { ['primary', 'accent', 'header_bg'].forEach(function (k) { colors[k].set(p.color); }); changed(); });
+			return b;
+		}));
+		var contrastBox = h('ul', { class: 'dolly-contrast', 'aria-live': 'polite' });
+		function showContrast(c) {
+			var row = function (ratio, label, min) {
+				var ok = ratio >= min;
+				return h('li', {}, [ok ? DOLLY.badge(String(ratio).replace('.', ',') + ':1', 'green', 'circle-check') : DOLLY.badge(String(ratio).replace('.', ',') + ':1', 'amber', 'triangle-alert'), ' ', label, ok ? null : h('span', { class: 'dolly-help', text: ' Contrasto basso: il testo può essere difficile da leggere.' })]);
+			};
+			DOLLY.render(contrastBox, [
+				row(c.on_primary, 'Testo sui pulsanti principali', 4.5),
+				row(c.primary, 'Link e colore principale sui riquadri', 3),
+				row(c.header, 'Testo sull\'intestazione', 4.5),
+				row(c.text, 'Testo sullo sfondo', 4.5),
+				row(c.muted, 'Testo secondario sui riquadri', 4.5)
+			]);
+		}
+		showContrast(d.contrast);
+
+		// Dark mode.
+		var scheme = DOLLY.radios({ label: 'Tema', name: 'color_scheme', value: a.color_scheme, options: choiceOptions(ch.schemes).map(function (o) {
+			o.description = { light: 'Sempre chiaro (predefinito).', dark: 'Sempre scuro.', auto: 'Chiaro o scuro secondo l\'impostazione del telefono o del computer.' }[o.value];
+			return o;
+		}), onChange: changed });
+
+		// Typography.
+		var font = select('font_family', 'Carattere', choiceOptions(ch.fonts), 'I caratteri di sistema non scaricano nulla e sono i più veloci.');
+		var fontCustom = text('font_custom', 'Nome del carattere', { max: 200, help: 'Come in CSS, es. "Inter", sans-serif. Deve essere installato sul dispositivo o caricato con l\'indirizzo qui sotto.' });
+		var fontUrl = text('font_url', 'Indirizzo del foglio di stile del carattere', { optional: true, max: 500, type: 'url', help: 'Es. un file .css ospitato sul tuo sito. Con servizi esterni (es. Google Fonts) l\'indirizzo IP dei visitatori viene inviato a terzi: valuta il GDPR.', attrs: { placeholder: 'https://' } });
+		var customBox = h('div', { class: 'dolly-form-grid', hidden: a.font_family !== 'custom' }, [fontCustom, fontUrl]);
+		font.input.addEventListener('change', function () { customBox.hidden = font.input.value !== 'custom'; });
+		var textSize = select('text_size', 'Dimensione del testo', choiceOptions(ch.text_sizes), 'Portale, pagine di accesso e schermo sede.');
+		var headingWeight = select('heading_weight', 'Spessore dei titoli', ch.heading_weights.map(function (w) { return { value: w, label: { 600: 'Semi-grassetto', 700: 'Grassetto (predefinito)', 800: 'Extra grassetto' }[w] }; }));
+
+		// Shapes.
+		var radius = DOLLY.field({ label: 'Arrotondamento degli angoli (px)', name: 'radius', type: 'number', value: a.radius, attrs: { min: 0, max: 24 }, help: '0 = angoli vivi, 12 = predefinito, 24 = molto arrotondati.' });
+		var btnShape = DOLLY.radios({ label: 'Forma dei pulsanti', name: 'button_shape', value: a.button_shape, options: choiceOptions(ch.button_shapes), onChange: changed });
+		var shadow = select('shadow', 'Ombra dei riquadri', choiceOptions(ch.shadows));
+		var density = select('density', 'Spaziatura', choiceOptions(ch.densities), 'Compatta mostra più contenuto sullo schermo.');
+
+		// Login page.
+		var loginTitle = text('login_title', 'Titolo della pagina di accesso');
+		var loginText = DOLLY.field({ label: 'Testo sotto il titolo', name: 'login_text', type: 'textarea', value: a.login_text, optional: true, rows: 3, attrs: { maxlength: 300 } });
+		var loginBg = imageField('login_bg_id', 'Immagine di sfondo', 'Facoltativa: coperta dal riquadro di accesso al centro. Usa un\'immagine poco contrastata.', a.login_bg_id, d.images.login_bg_id, changed, { empty: 'Nessuna immagine: colore di sfondo.' });
+
+		// Emails.
+		var fromName = text('email_from_name', 'Nome del mittente', { optional: true, help: 'Vuoto = nome predefinito di WordPress o del plugin SMTP.' });
+		var fromEmail = text('email_from_email', 'Indirizzo del mittente', { optional: true, type: 'email', max: 100, help: 'Usa un indirizzo del tuo dominio, altrimenti le email possono finire nello spam.' });
+		var subjectPrefix = text('email_subject_prefix', 'Prefisso dell\'oggetto', { optional: true, max: 40, help: 'Vuoto = "' + auto.email_subject_prefix + '".', attrs: { placeholder: auto.email_subject_prefix } });
+		var signature = DOLLY.field({ label: 'Firma in fondo alle email', name: 'email_signature', type: 'textarea', value: a.email_signature, optional: true, rows: 2, help: 'Vuoto = "' + auto.email_signature + '".', attrs: { maxlength: 300, placeholder: auto.email_signature } });
+
+		// Custom CSS.
+		var customCss = DOLLY.field({ label: 'CSS aggiuntivo', name: 'custom_css', type: 'textarea', value: a.custom_css, optional: true, rows: 8, help: 'Applicato al portale, alle pagine di accesso e allo schermo sede. Puoi usare le variabili --dolly-* (es. var(--dolly-primary)).', attrs: { spellcheck: 'false', class: 'dolly-textarea dolly-textarea--code' } });
+
+		// Preview.
+		var previewStyle = h('style');
+		var previewBrand = h('div', { class: 'dolly-brand' });
+		var previewSub = h('span', { class: 'dolly-brand__sub' });
+		var preview = h('div', { class: 'dolly-preview' + (a.color_scheme === 'dark' ? ' is-dark' : '') }, [
+			h('div', { class: 'dolly-topbar dolly-preview__bar' }, [previewBrand, h('span', { class: 'dolly-btn dolly-btn--ghost dolly-btn--icon', 'aria-hidden': 'true' }, DOLLY.icon('bell'))]),
+			h('div', { class: 'dolly-preview__body' }, [
+				h('div', { class: 'dolly-card' }, [
+					h('h3', { text: 'Buongiorno, Giulia' }),
+					h('p', { class: 'dolly-muted', text: 'Turno di oggi: 09:00 – 18:00, sede centrale.' }),
+					h('div', { class: 'dolly-btn-row' }, [
+						h('span', { class: 'dolly-btn dolly-btn--primary' }, [DOLLY.icon('log-in'), 'Timbra entrata']),
+						h('span', { class: 'dolly-btn' }, 'Richieste')
+					])
+				]),
+				h('div', { class: 'dolly-card' }, [
+					h('div', { class: 'dolly-tabs', 'aria-hidden': 'true' }, [h('span', { class: 'dolly-tab', 'aria-selected': 'true' }, 'In corso'), h('span', { class: 'dolly-tab' }, 'Archivio')]),
+					h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: 'Motivo' }), h('span', { class: 'dolly-input' }, 'Visita medica')]),
+					h('div', { class: 'dolly-preview__badges' }, [DOLLY.badge('Approvata', 'green', 'circle-check'), DOLLY.badge('In attesa', 'amber', 'clock'), DOLLY.badge('Respinta', 'red', 'circle-x'), DOLLY.badge('Ferie', 'blue')]),
+					h('span', { class: 'dolly-switch', role: 'presentation', 'aria-checked': 'true' }, [h('span', { class: 'dolly-switch__track' }, h('span', { class: 'dolly-switch__thumb' })), h('span', { text: 'Notifiche attive' })]),
+					DOLLY.alert('Le richieste vengono confermate via email.', 'info')
+				])
+			])
+		]);
+		var modeTabs = h('div');
+		var previewDark = a.color_scheme === 'dark';
+		function renderModeTabs() {
+			DOLLY.render(modeTabs, DOLLY.tabs([{ id: 'light', label: 'Chiaro', icon: 'sun' }, { id: 'dark', label: 'Scuro', icon: 'moon' }], previewDark ? 'dark' : 'light', function (id) {
+				previewDark = id === 'dark'; preview.classList.toggle('is-dark', previewDark); renderModeTabs();
+			}));
+		}
+		renderModeTabs();
+		function drawPreviewBrand(v) {
+			var src = logoHeader.url() || logo.url();
+			DOLLY.render(previewBrand, [
+				src ? h('img', { class: 'dolly-brand__logo', src: src, alt: '' }) : h('span', { class: 'dolly-brand__wordmark', text: v.brand_name || '…' }),
+				previewSub
+			]);
+			previewSub.textContent = v.portal_subtitle;
+		}
+
+		function collect() {
+			var v = {};
+			[brandName, appName, portalSub, adminTitle, displaySub, logoHeight, font, fontCustom, fontUrl, textSize, headingWeight, radius, shadow, density,
+				loginTitle, loginText, fromName, fromEmail, subjectPrefix, signature, customCss].forEach(function (f) { v[f.dataset.name] = f.input.value; });
+			[logo, logoHeader, appIcon, loginBg].forEach(function (f) { v[f.dataset.name] = f.value(); });
+			Object.keys(colors).forEach(function (k) { v[k] = colors[k].value(); });
+			Object.keys(darkColors).forEach(function (k) { v[k] = darkColors[k].value(); });
+			v.wordmark_mark = mark.control.isOn();
+			v.color_scheme = scheme.value();
+			v.button_shape = btnShape.value();
+			return v;
+		}
+		function updatePreview() {
+			var v = collect();
+			drawPreviewBrand(v);
+			if (v.font_family === 'custom') { loadFont(v.font_url); }
+			DOLLY.api('admin/appearance/preview', { method: 'POST', body: v }).then(function (r) {
+				previewStyle.textContent = r.css;
+				showContrast(r.contrast);
+			}, function () { /* The preview keeps the last valid colours while a value is being typed. */ });
+		}
+
+		var saveBtn = DOLLY.button('Salva aspetto', { type: 'submit', variant: 'primary', icon: 'save' });
+		var resetBtn = DOLLY.button('Ripristina predefiniti', { icon: 'rotate-ccw', variant: 'ghost', onClick: function () {
+			DOLLY.confirm('Ripristinare l\'aspetto predefinito?', 'Marchio, logo, colori, caratteri, testi e CSS aggiuntivo tornano ai valori iniziali. Le immagini restano nella libreria media.', 'Ripristina', 'danger').then(function (ok) {
+				if (!ok) { return; }
+				DOLLY.busy(resetBtn, DOLLY.api('admin/appearance/reset', { method: 'POST' })).then(function (nd) {
+					applyAdminCss(nd.css); DOLLY.toast('Aspetto predefinito ripristinato.', 'success'); renderAppearance(nd);
+				}, function (err) { DOLLY.toast(err.message, 'error'); });
+			});
+		} });
+
+		var card = function (title, icon, children, intro) {
+			return DOLLY.card(title, icon, h('div', { class: 'dolly-form' }, [intro ? h('p', { class: 'dolly-muted', style: 'margin:0', text: intro }) : null].concat(children)), { level: 'h2' });
+		};
+		var form = h('form', { class: 'dolly-stack', novalidate: true }, [
+			alertBox,
+			card('Marchio', 'tag', [h('div', { class: 'dolly-form-grid' }, [brandName, appName, portalSub, adminTitle, displaySub]), mark]),
+			card('Logo e icona', 'image', [h('div', { class: 'dolly-form-grid' }, [logo, logoHeader]), h('div', { class: 'dolly-form-grid' }, [logoHeight]), appIcon]),
+			card('Colori', 'palette', [
+				h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: 'Combinazioni pronte' }), presets, h('span', { class: 'dolly-help', text: 'Imposta insieme colore principale, evidenza e intestazione.' })]),
+				h('div', { class: 'dolly-form-grid dolly-form-grid--3' }, Object.keys(colors).map(function (k) { return colors[k]; })),
+				h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: 'Leggibilità (contrasto WCAG)' }), contrastBox])
+			], 'Il resto della palette (sfumature, sfondi degli avvisi, testo sui pulsanti) viene calcolato in automatico da questi colori.'),
+			card('Modalità scura', 'moon', [scheme, h('div', { class: 'dolly-form-grid dolly-form-grid--3' }, Object.keys(darkColors).map(function (k) { return darkColors[k]; }))],
+				'Riguarda portale dipendenti, pagine di accesso e schermo sede: il pannello di amministrazione resta chiaro. In modalità scura colore principale, evidenza e intestazione vengono adattati in automatico.'),
+			card('Caratteri', 'type', [font, customBox, h('div', { class: 'dolly-form-grid' }, [textSize, headingWeight])]),
+			card('Forme e spaziature', 'square-dashed', [h('div', { class: 'dolly-form-grid' }, [radius, shadow, density]), btnShape]),
+			card('Pagina di accesso', 'log-in', [loginTitle, loginText, loginBg]),
+			card('Email', 'mail', [h('div', { class: 'dolly-form-grid' }, [fromName, fromEmail, subjectPrefix]), signature], 'Mittente, oggetto e firma delle notifiche via email.'),
+			card('CSS aggiuntivo', 'code', [customCss]),
+			h('div', { class: 'dolly-btn-row dolly-settings__save' }, [saveBtn, resetBtn])
+		]);
+		form.addEventListener('input', changed);
+		form.addEventListener('change', changed);
+		form.addEventListener('submit', function (ev) {
+			ev.preventDefault(); DOLLY.clearErrors(form); alertBox.hidden = true;
+			DOLLY.busy(saveBtn, DOLLY.api('admin/appearance', { method: 'POST', body: collect() })).then(function (nd) {
+				applyAdminCss(nd.css);
+				DOLLY.toast('Aspetto salvato. Nome e logo del pannello si aggiornano al prossimo caricamento.', 'success');
+				renderAppearance(nd);
+			}, function (err) { DOLLY.formError(form, err, alertBox); });
+		});
+
+		var aside = h('aside', { class: 'dolly-appearance__preview', 'aria-label': 'Anteprima' }, [
+			DOLLY.card('Anteprima', 'eye', [modeTabs, preview, h('p', { class: 'dolly-help', style: 'margin:12px 0 0', text: 'L\'anteprima si aggiorna mentre modifichi; le modifiche si applicano solo dopo il salvataggio.' })], { level: 'h2' })
+		]);
+		DOLLY.render(main, h('div', { class: 'dolly-appearance' }, [previewStyle, form, aside]));
+		updatePreview();
+	}
+
+	/* ------------------------------------------------------------------ */
 	/* Boot                                                               */
 	/* ------------------------------------------------------------------ */
 
 	var pages = {
 		dashboard: pageDashboard, employees: pageEmployees, 'employee-new': pageEmployeeNew, workplaces: pageWorkplaces,
-		requests: pageRequests, attendance: pageAttendance, analytics: pageAnalytics, anomalies: pageAnomalies, broadcast: pageBroadcast, exports: pageExports, settings: pageSettings
+		requests: pageRequests, attendance: pageAttendance, analytics: pageAnalytics, anomalies: pageAnomalies, broadcast: pageBroadcast, exports: pageExports, appearance: pageAppearance, settings: pageSettings
 	};
 	menuToggle();
 	headerBell();

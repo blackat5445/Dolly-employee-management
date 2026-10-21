@@ -59,7 +59,7 @@
 
 	function brand() {
 		return h('div', { class: 'dolly-brand' }, [
-			CFG.logo ? h('img', { class: 'dolly-brand__logo', src: CFG.logo, alt: 'Dolly' }) : h('span', { class: 'dolly-brand__wordmark', text: 'Dolly' }),
+			DOLLY.brandMark(true),
 			h('span', { class: 'dolly-brand__sub', text: state.me ? state.me.first_name || CFG.userName : CFG.userName })
 		]);
 	}
@@ -508,9 +508,9 @@
 	}
 
 	function legend() {
-		var items = [['#E8F1FC', 'Ferie'], ['#EDE9FE', 'Permesso'], ['#E0F2F1', 'Donazione sangue'], ['#F6F0DE', 'Straordinario'], ['#FDECEA', 'Malattia / infortunio'], ['#F1E4F7', 'Festività'], ['#E3EEF3', 'Chiusura collettiva'], ['#FBE9D6', 'Chiusura per festività'], ['#E6F4EC', 'Giornata lavorata'], ['#FFF3D6', 'Giornata incompleta'], ['#fff', 'Richiesta in attesa']];
+		var items = [['var(--dolly-blue-bg)', 'Ferie'], ['var(--dolly-cat-permesso-bg)', 'Permesso'], ['var(--dolly-cat-donazione-bg)', 'Donazione sangue'], ['var(--dolly-accent-soft)', 'Straordinario'], ['var(--dolly-red-bg)', 'Malattia / infortunio'], ['var(--dolly-cat-festivo-bg)', 'Festività'], ['var(--dolly-surface-3)', 'Chiusura collettiva'], ['var(--dolly-cat-chiusura-festiva-bg)', 'Chiusura per festività'], ['var(--dolly-green-bg)', 'Giornata lavorata'], ['var(--dolly-amber-bg)', 'Giornata incompleta'], ['var(--dolly-surface)', 'Richiesta in attesa']];
 		return h('div', { class: 'dolly-legend', 'aria-label': 'Legenda' }, items.map(function (i) {
-			return h('span', {}, [h('i', { style: 'background:' + i[0] + ';border:1px solid #C7CED6', 'aria-hidden': 'true' }), i[1]]);
+			return h('span', {}, [h('i', { style: 'background:' + i[0] + ';border:1px solid var(--dolly-border-strong)', 'aria-hidden': 'true' }), i[1]]);
 		}));
 	}
 
@@ -1121,7 +1121,7 @@
 			return { before: setRequestType(type), target: q('request-form'), title: 'Tipi di richiesta · ' + title, text: para(text), padding: 4 };
 		};
 		return [
-			{ title: 'Benvenuto nel portale Dolly!', text: para(['In un paio di minuti ti mostriamo come timbrare, inviare richieste e segnalare una malattia.', 'Durante il tutorial non viene registrato nulla: è solo una prova.']), next: 'Inizia', nextIcon: 'play' },
+			{ title: 'Benvenuto nel portale ' + DOLLY.brandName + '!', text: para(['In un paio di minuti ti mostriamo come timbrare, inviare richieste e segnalare una malattia.', 'Durante il tutorial non viene registrato nulla: è solo una prova.']), next: 'Inizia', nextIcon: 'play' },
 			{ before: goTo('dashboard'), target: q('clock-btn'), mode: 'click', tap: true, scroll: true, title: 'Registra entrata', text: para(['Quando arrivi al lavoro tocca questo pulsante. Cambia testo e colore a ogni fase: entrata, pausa, uscita.', 'Provalo ora.']), hint: 'Tocca «Registra entrata»' },
 			{ target: q('methods'), title: 'Come verificare la presenza', text: bullets([
 				[strong('Usa la mia posizione'), ': il telefono verifica con il GPS che sei in sede.'],
@@ -1246,7 +1246,7 @@
 	function enablePush() {
 		return Promise.resolve(window.Notification.requestPermission()).then(function (p) {
 			if (p !== 'granted') {
-				throw new Error(p === 'denied' ? 'Le notifiche sono bloccate: riattivale dalle impostazioni del telefono (Notifiche › Dolly).' : 'Permesso per le notifiche non concesso.');
+				throw new Error(p === 'denied' ? 'Le notifiche sono bloccate: riattivale dalle impostazioni del telefono (Notifiche › ' + DOLLY.brandName + ').' : 'Permesso per le notifiche non concesso.');
 			}
 			return subscribePush();
 		});
@@ -1283,7 +1283,7 @@
 		function render() {
 			if (!PUSH) { DOLLY.render(box, h('p', { class: 'dolly-muted', text: 'Le notifiche sul telefono non sono disponibili. Trovi tutto nella sezione Notifiche.' })); return; }
 			if (isIos() && !isStandalone()) {
-				DOLLY.render(box, DOLLY.alert('Su iPhone le notifiche funzionano con il portale installato: tocca Condividi › "Aggiungi alla schermata Home", poi apri Dolly dall\'icona e attiva le notifiche.', 'info'));
+				DOLLY.render(box, DOLLY.alert('Su iPhone le notifiche funzionano con il portale installato: tocca Condividi › "Aggiungi alla schermata Home", poi apri ' + DOLLY.brandName + ' dall\'icona e attiva le notifiche.', 'info'));
 				return;
 			}
 			if (!pushSupported()) { DOLLY.render(box, h('p', { class: 'dolly-muted', text: 'Questo browser non supporta le notifiche push.' })); return; }

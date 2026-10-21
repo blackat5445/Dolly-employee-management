@@ -63,7 +63,7 @@ class Dolly_Verification {
 			$raw = $q['mc'] ?? '';
 		}
 		if ( ! preg_match( '/^(\d+)\.(\d+)\.([a-f0-9]{24})$/', $raw, $m ) ) {
-			return new WP_Error( 'dolly_qr_invalid', 'Il codice QR non è un codice presenze Dolly valido.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_qr_invalid', 'Il codice QR non è un codice presenze ' . Dolly_Appearance::brand() . ' valido.', array( 'status' => 400 ) );
 		}
 		$wid    = (int) $m[1];
 		$window = (int) $m[2];

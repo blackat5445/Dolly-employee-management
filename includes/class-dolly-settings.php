@@ -279,13 +279,8 @@ class Dolly_Settings {
 		return $all['cron_key'];
 	}
 
-	/** Returns the logo URL or empty string (text wordmark is used when empty). */
+	/** Returns the logo URL or empty string (text wordmark is used when empty). The logo is set in Appearance. */
 	public static function logo_url() {
-		$id = (int) self::get( 'logo_id' );
-		if ( ! $id ) {
-			return '';
-		}
-		$url = wp_get_attachment_image_url( $id, 'medium' );
-		return $url ? $url : '';
+		return Dolly_Appearance::logo_url();
 	}
 }

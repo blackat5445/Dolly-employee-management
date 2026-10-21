@@ -3,7 +3,7 @@
  * Plugin Name:       Dolly Employee Management
  * Plugin URI:        https://github.com/blackat5445/Dolly-employee-management
  * Description:       Gestione dipendenti: account, permessi, presenze, richieste, certificati, notifiche, amministrazione ed esportazioni.
- * Version:           1.8.0
+ * Version:           1.9.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Kasra Falahati
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'DOLLY_VERSION', '1.8.0' );
+define( 'DOLLY_VERSION', '1.9.0' );
 define( 'DOLLY_DB_VERSION', '6' );
 define( 'DOLLY_FILE', __FILE__ );
 define( 'DOLLY_DIR', plugin_dir_path( __FILE__ ) );
@@ -27,6 +27,7 @@ define( 'DOLLY_REST_NS', 'dolly/v1' );
 require_once DOLLY_DIR . 'includes/class-dolly-time.php';
 require_once DOLLY_DIR . 'includes/class-dolly-holidays.php';
 require_once DOLLY_DIR . 'includes/class-dolly-settings.php';
+require_once DOLLY_DIR . 'includes/class-dolly-appearance.php';
 require_once DOLLY_DIR . 'includes/class-dolly-install.php';
 require_once DOLLY_DIR . 'includes/class-dolly-audit.php';
 require_once DOLLY_DIR . 'includes/class-dolly-workplaces.php';

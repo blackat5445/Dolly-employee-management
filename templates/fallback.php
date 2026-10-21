@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 	<meta name="robots" content="noindex, nofollow">
-	<meta name="theme-color" content="#002F4D">
+	<meta name="theme-color" content="<?php echo esc_attr( Dolly_Appearance::get( 'header_bg' ) ); ?>">
 	<?php wp_head(); ?>
 </head>
 <body <?php body_class( 'dolly-body dolly-view-' . sanitize_html_class( Dolly_Frontend::current_view() ) ); ?>>

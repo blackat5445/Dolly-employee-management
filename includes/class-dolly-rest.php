@@ -137,6 +137,10 @@ class Dolly_REST {
 			array( '/admin/settings', 'GET', 'admin_settings_get', $adm ),
 			array( '/admin/settings', 'POST', 'admin_settings_update', $adm ),
 			array( '/admin/cron/run', 'POST', 'admin_cron_run', $adm ),
+			array( '/admin/appearance', 'GET', 'admin_appearance_get', $adm ),
+			array( '/admin/appearance', 'POST', 'admin_appearance_update', $adm ),
+			array( '/admin/appearance/preview', 'POST', 'admin_appearance_preview', $adm ),
+			array( '/admin/appearance/reset', 'POST', 'admin_appearance_reset', $adm ),
 		);
 
 		foreach ( $routes as $r ) {
@@ -678,7 +682,7 @@ class Dolly_REST {
 	}
 
 	public static function admin_export_employees() {
-		Dolly_Reports::send_download( Dolly_Reports::employees_csv(), 'Dipendenti_Dolly_' . Dolly_Time::now_local()->format( 'd-m-Y' ) . '.csv', 'text/csv; charset=UTF-8' );
+		Dolly_Reports::send_download( Dolly_Reports::employees_csv(), 'Dipendenti_' . sanitize_file_name( Dolly_Appearance::brand() ) . '_' . Dolly_Time::now_local()->format( 'd-m-Y' ) . '.csv', 'text/csv; charset=UTF-8' );
 	}
 
 	public static function admin_export_attendance( WP_REST_Request $req ) {
@@ -737,7 +741,6 @@ class Dolly_REST {
 			'admins'           => array_map( function ( $u ) {
 				return array( 'id' => (int) $u->ID, 'name' => Dolly_Employees::display_name( $u->ID ), 'email' => $u->user_email );
 			}, $admins ),
-			'logo_url'          => Dolly_Settings::logo_url(),
 			'cron'              => Dolly_Cron::status(),
 			'push'              => Dolly_Push::status(),
 			'storage'           => array(
@@ -751,6 +754,46 @@ class Dolly_REST {
 	public static function admin_settings_update( WP_REST_Request $req ) {
 		Dolly_Settings::update( self::body( $req ) );
 		return self::admin_settings_get();
+	}
+
+	public static function admin_appearance_get() {
+		$a      = Dolly_Appearance::all();
+		$images = array();
+		foreach ( array( 'logo_id', 'logo_header_id', 'app_icon_id', 'login_bg_id' ) as $k ) {
+			$images[ $k ] = $a[ $k ] ? (string) wp_get_attachment_image_url( $a[ $k ], 'medium' ) : '';
+		}
+		return array(
+			'appearance' => $a,
+			'defaults'   => Dolly_Appearance::defaults(),
+			'choices'    => Dolly_Appearance::choices(),
+			'images'     => $images,
+			'contrast'   => Dolly_Appearance::contrast_report( $a ),
+			'css'        => Dolly_Appearance::css( $a, 'admin' ),
+			'auto'       => array(
+				'app_name'             => Dolly_Appearance::brand() . ' · ' . $a['portal_subtitle'],
+				'email_subject_prefix' => '[' . Dolly_Appearance::brand() . ']',
+				'email_signature'      => '— ' . Dolly_Appearance::app_name(),
+			),
+		);
+	}
+
+	public static function admin_appearance_update( WP_REST_Request $req ) {
+		$r = Dolly_Appearance::update( self::body( $req ) );
+		return is_wp_error( $r ) ? $r : self::admin_appearance_get();
+	}
+
+	/** CSS of unsaved settings for the live preview, scoped to the preview box. */
+	public static function admin_appearance_preview( WP_REST_Request $req ) {
+		list( $a ) = Dolly_Appearance::sanitize( self::body( $req ), Dolly_Appearance::all() );
+		return array(
+			'css'      => Dolly_Appearance::css( $a, 'preview', '.dolly-preview' ),
+			'contrast' => Dolly_Appearance::contrast_report( $a ),
+		);
+	}
+
+	public static function admin_appearance_reset() {
+		Dolly_Appearance::reset();
+		return self::admin_appearance_get();
 	}
 
 	public static function admin_cron_run() {

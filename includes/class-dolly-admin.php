@@ -21,6 +21,7 @@ class Dolly_Admin {
 		'dolly-anomalies'    => array( 'Anomalie', 'anomalies' ),
 		'dolly-broadcast'    => array( 'Broadcast', 'broadcast' ),
 		'dolly-exports'      => array( 'Esportazioni', 'exports' ),
+		'dolly-appearance'   => array( 'Aspetto', 'appearance' ),
 		'dolly-settings'     => array( 'Impostazioni', 'settings' ),
 	);
 
@@ -47,9 +48,10 @@ class Dolly_Admin {
 	public static function menu() {
 		$pending = Dolly_Requests::count_pending() + Dolly_Anomalies::count_open();
 		$badge   = $pending ? ' <span class="awaiting-mod count-' . (int) $pending . '"><span class="pending-count">' . (int) $pending . '</span></span>' : '';
-		self::$hooks[] = add_menu_page( 'Gestione Dipendenti', 'Gestione Dipendenti' . $badge, 'dolly_manage', 'dolly-dashboard', array( __CLASS__, 'render' ), 'dashicons-groups', 3 );
+		$title         = Dolly_Appearance::get( 'admin_title' );
+		self::$hooks[] = add_menu_page( $title, esc_html( $title ) . $badge, 'dolly_manage', 'dolly-dashboard', array( __CLASS__, 'render' ), 'dashicons-groups', 3 );
 		foreach ( self::PAGES as $slug => $p ) {
-			self::$hooks[] = add_submenu_page( 'dolly-dashboard', $p[0] . ' · Gestione Dipendenti', $p[0], 'dolly_manage', $slug, array( __CLASS__, 'render' ) );
+			self::$hooks[] = add_submenu_page( 'dolly-dashboard', $p[0] . ' · ' . $title, $p[0], 'dolly_manage', $slug, array( __CLASS__, 'render' ) );
 		}
 	}
 
@@ -70,6 +72,9 @@ class Dolly_Admin {
 		Dolly_Frontend::register_shared_assets();
 		wp_enqueue_style( 'dolly-ui' );
 		wp_enqueue_style( 'dolly-admin', DOLLY_URL . 'assets/css/dolly-admin.css', array( 'dolly-ui' ), DOLLY_VERSION );
+		// Administration screens always use the light palette; dark mode is for the portal.
+		wp_add_inline_style( 'dolly-admin', Dolly_Appearance::css( null, 'admin' ) );
+		Dolly_Frontend::enqueue_font();
 		$deps = array( 'dolly-core' );
 		if ( 'dolly-dashboard' === $page ) {
 			$deps[] = 'dolly-fullcalendar-it';
@@ -78,7 +83,7 @@ class Dolly_Admin {
 		if ( 'dolly-analytics' === $page ) {
 			$deps[] = 'dolly-chartjs';
 		}
-		if ( 'dolly-settings' === $page ) {
+		if ( 'dolly-appearance' === $page ) {
 			wp_enqueue_media();
 		}
 		wp_enqueue_script( 'dolly-admin', DOLLY_URL . 'assets/js/dolly-admin.js', $deps, DOLLY_VERSION, true );
@@ -117,10 +122,10 @@ class Dolly_Admin {
 			<div class="dolly-app dolly-admin" id="dolly-admin-app" data-page="<?php echo esc_attr( self::PAGES[ $page ][1] ); ?>">
 				<header class="dolly-admin__header">
 					<button type="button" class="dolly-btn dolly-btn--ghost dolly-btn--icon dolly-admin__menu-toggle" id="dolly-menu-toggle" aria-controls="adminmenumain" aria-pressed="false" aria-label="Nascondi il menu laterale" title="Nascondi il menu laterale"><i data-lucide="panel-left-close" aria-hidden="true"></i></button>
-					<div class="dolly-admin__brand"><?php Dolly_Frontend::brand( 'Gestione Dipendenti' ); ?></div>
+					<div class="dolly-admin__brand"><?php Dolly_Frontend::brand( Dolly_Appearance::get( 'admin_title' ), true ); ?></div>
 					<h1 class="dolly-admin__title"><?php echo esc_html( $title ); ?></h1>
 				</header>
-				<nav class="dolly-admin__nav" aria-label="Sezioni Gestione Dipendenti">
+				<nav class="dolly-admin__nav" aria-label="<?php echo esc_attr( 'Sezioni ' . Dolly_Appearance::get( 'admin_title' ) ); ?>">
 					<?php
 					$icons = array(
 						'dolly-dashboard'    => 'layout-dashboard',
@@ -133,6 +138,7 @@ class Dolly_Admin {
 						'dolly-anomalies'    => 'triangle-alert',
 						'dolly-broadcast'    => 'megaphone',
 						'dolly-exports'      => 'download',
+						'dolly-appearance'   => 'palette',
 						'dolly-settings'     => 'settings',
 					);
 					foreach ( self::PAGES as $slug => $p ) {
@@ -150,7 +156,7 @@ class Dolly_Admin {
 				<main class="dolly-admin__main" id="dolly-admin-main" tabindex="-1">
 					<div class="dolly-loading"><span class="dolly-spinner" aria-hidden="true"></span><span>Caricamento…</span></div>
 				</main>
-				<noscript><div class="dolly-alert dolly-alert--error">Per usare la Gestione Dipendenti è necessario JavaScript.</div></noscript>
+				<noscript><div class="dolly-alert dolly-alert--error">Per usare il pannello è necessario JavaScript.</div></noscript>
 			</div>
 		</div>
 		<?php

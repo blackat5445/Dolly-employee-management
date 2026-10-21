@@ -421,6 +421,10 @@ class Dolly_Push {
 	}
 
 	public static function icon_url( $size ) {
+		$custom = Dolly_Appearance::app_icon_url( $size );
+		if ( $custom ) {
+			return $custom;
+		}
 		$site = function_exists( 'get_site_icon_url' ) ? get_site_icon_url( $size ) : '';
 		if ( $site ) {
 			return $site;
@@ -435,19 +439,19 @@ class Dolly_Push {
 		echo wp_json_encode(
 			array(
 				'id'               => Dolly_Frontend::url( 'portale' ),
-				'name'             => 'Dolly · Portale dipendenti',
-				'short_name'       => 'Dolly',
+				'name'             => Dolly_Appearance::app_name(),
+				'short_name'       => Dolly_Appearance::brand(),
 				'lang'             => 'it',
 				'start_url'        => Dolly_Frontend::url( 'portale' ),
 				'scope'            => $scope ? $scope : '/',
 				'display'          => 'standalone',
 				'orientation'      => 'portrait',
-				'background_color' => '#F5F6F8',
-				'theme_color'      => '#002F4D',
+				'background_color' => Dolly_Appearance::get( 'background' ),
+				'theme_color'      => Dolly_Appearance::get( 'header_bg' ),
 				'icons'            => array(
 					array( 'src' => self::icon_url( 192 ), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any' ),
 					array( 'src' => self::icon_url( 512 ), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any' ),
-					array( 'src' => DOLLY_URL . 'assets/img/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable' ),
+					array( 'src' => Dolly_Appearance::app_icon_url( 512 ) ? Dolly_Appearance::app_icon_url( 512 ) : DOLLY_URL . 'assets/img/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable' ),
 				),
 			),
 			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -461,14 +465,15 @@ class Dolly_Push {
 		$feed   = wp_json_encode( self::url( 'feed' ), JSON_UNESCAPED_SLASHES );
 		$portal = wp_json_encode( Dolly_Frontend::url( 'portale' ), JSON_UNESCAPED_SLASHES );
 		$icon   = wp_json_encode( self::icon_url( 192 ), JSON_UNESCAPED_SLASHES );
+		$brand  = wp_json_encode( Dolly_Appearance::brand(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG );
 		echo <<<JS
 'use strict';
-/* Dolly portal service worker (v2): shows push notifications and opens the portal when one is tapped. */
-var FEED = {$feed}, PORTAL = {$portal}, ICON = {$icon};
+/* Portal service worker (v2): shows push notifications and opens the portal when one is tapped. */
+var FEED = {$feed}, PORTAL = {$portal}, ICON = {$icon}, BRAND = {$brand};
 self.addEventListener('install', function () { self.skipWaiting(); });
 self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
 function show(n) {
-	return self.registration.showNotification(n.title || 'Dolly', { body: n.body || '', tag: 'dolly-' + (n.id || 0), icon: ICON, badge: ICON, data: { url: n.url || PORTAL } });
+	return self.registration.showNotification(n.title || BRAND, { body: n.body || '', tag: 'dolly-' + (n.id || 0), icon: ICON, badge: ICON, data: { url: n.url || PORTAL } });
 }
 self.addEventListener('push', function (e) {
 	var data = null;
@@ -479,7 +484,7 @@ self.addEventListener('push', function (e) {
 		.then(function (r) { return r.ok ? r.json() : { items: [] }; })
 		.catch(function () { return { items: [] }; })
 		.then(function (d) {
-			var items = d && d.items && d.items.length ? d.items : [{ id: 0, title: 'Dolly', body: 'Hai una nuova notifica nel portale.', url: PORTAL + '#notifiche' }];
+			var items = d && d.items && d.items.length ? d.items : [{ id: 0, title: BRAND, body: 'Hai una nuova notifica nel portale.', url: PORTAL + '#notifiche' }];
 			return Promise.all(items.map(show));
 		}));
 });
@@ -536,7 +541,7 @@ JS;
 		printf( '<link rel="apple-touch-icon" href="%s">' . "\n", esc_url( self::icon_url( 180 ) ) );
 		echo '<meta name="mobile-web-app-capable" content="yes">' . "\n";
 		echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
-		echo '<meta name="apple-mobile-web-app-title" content="Dolly">' . "\n";
+		echo '<meta name="apple-mobile-web-app-title" content="' . esc_attr( Dolly_Appearance::brand() ) . '">' . "\n";
 		echo '<meta name="apple-mobile-web-app-status-bar-style" content="default">' . "\n";
 	}
 

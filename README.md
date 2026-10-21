@@ -34,7 +34,8 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 - **Closures:** collective or holiday closures for chosen workplaces.
 - **Broadcasts:** messages sent by email and/or push, either now or at a scheduled time.
 - **Exports:** a monthly Excel attendance sheet, an employees CSV, a monthly attendance ZIP and an hours summary CSV.
-- **Settings:** clock-in rules, notifications, certificates, reminders, logo, a system-status panel and an audit log.
+- **Appearance (white label):** brand name, logos, app icon, colours, dark mode, fonts, shapes, login page, email sender and custom CSS, with a live preview.
+- **Settings:** clock-in rules, notifications, certificates, reminders, a system-status panel and an audit log.
 
 ## Requirements
 
@@ -50,9 +51,10 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 
 1. Download or clone this repository into `wp-content/plugins/dolly-employee-management`.
 2. Activate **Dolly Employee Management** under *Plugins*.
-3. Go to *Gestione Dipendenti › Impostazioni* and review the settings, including the logo.
-4. Create your workplaces (*Sedi*), then your employees (*Dipendenti*).
-5. Set up the scheduler as described below.
+3. Go to *Gestione Dipendenti › Impostazioni* and review the settings.
+4. Go to *Gestione Dipendenti › Aspetto* to apply your brand.
+5. Create your workplaces (*Sedi*), then your employees (*Dipendenti*).
+6. Set up the scheduler as described below.
 
 ## Scheduler
 
@@ -100,6 +102,26 @@ define( 'DOLLY_PRIVATE_DIR', '/absolute/path/outside/webroot' );
 | `dipendenti` | Employees | `dolly_employee` |
 | `dolly_sede` | Workplace display accounts, one per workplace (created automatically) | `dolly_workplace` |
 | `administrator` | Plugin administrators | `dolly_manage` (added on activation) |
+
+## Appearance and white labelling
+
+*Gestione Dipendenti › Aspetto* rebrands the whole plugin without touching code. A live preview, in light and dark, shows changes before you save.
+
+| Section | Options |
+|---|---|
+| Brand | Brand name, app name, portal and display subtitles, admin panel title |
+| Logo and icon | Logo, a separate logo for the coloured header, logo height, home-screen/notification icon |
+| Colours | Primary, accent, header, background, surfaces, text, borders, success/warning/error/info, eight ready-made palettes, WCAG contrast check |
+| Dark mode | Light, dark or automatic (follows the device), with its own background, surface, text and border colours |
+| Fonts | System font stacks or a custom font (with an optional stylesheet URL), text size, heading weight |
+| Shapes | Corner radius, button shape, shadows, spacing density |
+| Login page | Title, intro text, background image |
+| Email | Sender name and address, subject prefix, signature |
+| Custom CSS | Extra CSS for the portal, login pages and workplace display |
+
+The default theme uses `#2563EB` as its primary colour. All the other shades (hover states, tinted backgrounds, text on coloured buttons, dark-mode variants) are derived automatically from the colours you choose.
+
+Every visual value is a CSS custom property (`--dolly-primary`, `--dolly-surface`, `--dolly-radius`…) defined in `assets/css/dolly-ui.css` and overridden by the Appearance settings, so you can also use them in custom CSS or a theme. Dark mode applies to the employee-facing pages; the admin screens always stay light.
 
 ## Theme integration
 

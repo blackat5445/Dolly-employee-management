@@ -42,8 +42,8 @@
 		DOLLY.render(root, [
 			h('header', { class: 'dolly-wp__bar' }, [
 				h('div', { class: 'dolly-brand' }, [
-					CFG.logo ? h('img', { class: 'dolly-brand__logo', src: CFG.logo, alt: 'Dolly' }) : h('span', { class: 'dolly-brand__wordmark', text: 'Dolly' }),
-					h('span', { class: 'dolly-brand__sub', text: 'Codice presenze' })
+					DOLLY.brandMark(true),
+					CFG.displaySub ? h('span', { class: 'dolly-brand__sub', text: CFG.displaySub }) : null
 				]),
 				h('div', { class: 'dolly-btn-row' }, [el.status, DOLLY.button('Esci', { href: CFG.logoutUrl, icon: 'log-out' })])
 			]),

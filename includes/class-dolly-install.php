@@ -71,7 +71,7 @@ class Dolly_Install {
 		get_role( self::ROLE_EMPLOYEE )->add_cap( 'dolly_employee' );
 
 		if ( ! get_role( self::ROLE_WORKPLACE ) ) {
-			add_role( self::ROLE_WORKPLACE, 'Sede Dolly', array( 'read' => true ) );
+			add_role( self::ROLE_WORKPLACE, 'Account sede', array( 'read' => true ) );
 		}
 		get_role( self::ROLE_WORKPLACE )->add_cap( 'dolly_workplace' );
 

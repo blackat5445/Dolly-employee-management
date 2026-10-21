@@ -113,7 +113,9 @@ class Dolly_Notifications {
 		}
 		self::$last_mail_error = '';
 		add_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
-		$ok = wp_mail( $u->user_email, '[Dolly] Email di prova', "Se ricevi questo messaggio, l'invio delle email del portale funziona.\n\n— Dolly · Portale dipendenti", array( 'Content-Type: text/plain; charset=UTF-8' ) );
+		add_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
+		$ok = wp_mail( $u->user_email, Dolly_Appearance::email_subject( 'Email di prova' ), "Se ricevi questo messaggio, l'invio delle email del portale funziona.\n\n" . Dolly_Appearance::email_signature(), self::mail_headers() );
+		remove_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
 		remove_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
 		return array(
 			'ok'      => (bool) $ok,
@@ -146,14 +148,14 @@ class Dolly_Notifications {
 
 	private static function queue_email( $user_id, $event, $to, $title, $body, $link, $dedupe ) {
 		global $wpdb;
-		$text  = $body . "\n\n" . 'Apri: ' . $link . "\n\n" . '— Dolly · Portale dipendenti';
+		$text  = $body . "\n\n" . 'Apri: ' . $link . "\n\n" . Dolly_Appearance::email_signature();
 		$now   = Dolly_Time::now_utc();
 		$sql   = $wpdb->prepare(
 			'INSERT IGNORE INTO ' . Dolly_Install::t( 'email_queue' ) . ' (user_id, event, dedupe_key, to_email, subject, body, status, attempts, next_attempt_at, created_at) VALUES (%d, %s, ' . ( $dedupe ? '%s' : 'NULL' ) . ", %s, %s, %s, 'pending', 0, %s, %s)", // phpcs:ignore
 			array_merge(
 				array( $user_id, $event ),
 				$dedupe ? array( $dedupe ) : array(),
-				array( $to, '[Dolly] ' . mb_substr( $title, 0, 200 ), $text, $now, $now )
+				array( $to, Dolly_Appearance::email_subject( mb_substr( $title, 0, 200 ) ), $text, $now, $now )
 			)
 		);
 		$wpdb->query( $sql ); // phpcs:ignore
@@ -169,6 +171,7 @@ class Dolly_Notifications {
 		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id FROM $t WHERE status = 'pending' AND next_attempt_at <= %s AND (locked_until IS NULL OR locked_until < %s) ORDER BY id ASC LIMIT %d", $now, $now, $limit ) ); // phpcs:ignore
 		$sent = 0;
 		add_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
+		add_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
 		foreach ( $rows as $r ) {
 			$claimed = $wpdb->query( $wpdb->prepare( "UPDATE $t SET locked_until = %s WHERE id = %d AND status = 'pending' AND (locked_until IS NULL OR locked_until < %s)", gmdate( 'Y-m-d H:i:s', time() + 300 ), $r->id, $now ) ); // phpcs:ignore
 			if ( ! $claimed ) {
@@ -176,7 +179,7 @@ class Dolly_Notifications {
 			}
 			$m                     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $r->id ) ); // phpcs:ignore
 			self::$last_mail_error = '';
-			$ok                    = wp_mail( $m->to_email, $m->subject, $m->body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+			$ok                    = wp_mail( $m->to_email, $m->subject, $m->body, self::mail_headers() );
 			if ( $ok ) {
 				$wpdb->update( $t, array( 'status' => 'sent', 'sent_at' => Dolly_Time::now_utc(), 'locked_until' => null, 'attempts' => (int) $m->attempts + 1 ), array( 'id' => $m->id ) );
 				$sent++;
@@ -196,8 +199,14 @@ class Dolly_Notifications {
 				);
 			}
 		}
+		remove_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
 		remove_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
 		return $sent;
+	}
+
+	/** Plain-text UTF-8 email, with the sender set in Appearance › Email (if any). */
+	private static function mail_headers() {
+		return array_merge( array( 'Content-Type: text/plain; charset=UTF-8' ), Dolly_Appearance::email_headers() );
 	}
 
 	public static function capture_error( $error ) {

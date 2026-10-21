@@ -9,6 +9,9 @@
 	var CFG = window.DOLLY_CONFIG || {};
 	var DOLLY = window.DOLLY = window.DOLLY || {};
 	DOLLY.config = CFG;
+	/** Brand name set in Gestione Dipendenti › Aspetto. */
+	var BRAND = CFG.brand || 'Dolly';
+	DOLLY.brandName = BRAND;
 
 	/* ------------------------------------------------------------------ */
 	/* Icons                                                               */
@@ -347,6 +350,18 @@
 			]) : null,
 			children
 		]);
+	};
+
+	/** Logo, or the text wordmark when no logo is set. onHeader: on the colored header, which may have its own logo. */
+	DOLLY.brandMark = function (onHeader) {
+		var src = onHeader ? (CFG.logoHeader || CFG.logo) : CFG.logo;
+		return src ? h('img', { class: 'dolly-brand__logo', src: src, alt: BRAND }) : h('span', { class: 'dolly-brand__wordmark', text: BRAND });
+	};
+
+	/** Current value of a --dolly-* theme token (for drawings that cannot use CSS, such as charts). */
+	DOLLY.token = function (name, fallback) {
+		var v = window.getComputedStyle(document.documentElement).getPropertyValue('--dolly-' + name).trim();
+		return v || fallback || '';
 	};
 
 	DOLLY.badge = function (label, tone, icon) {
@@ -1071,7 +1086,7 @@
 			: h('div', { class: 'dolly-phone__bar dolly-phone__bar--top' }, [h('span', { class: 'dolly-phone__url', text: window.location.host }), h('span', { class: 'dolly-phone__hot' }, DOLLY.icon('ellipsis-vertical'))]);
 		return h('div', { class: 'dolly-phone', 'aria-hidden': 'true' }, [
 			kind === 'ios' ? null : bar,
-			h('div', { class: 'dolly-phone__screen' }, [h('span', { class: 'dolly-brand__wordmark', text: 'Dolly' })]),
+			h('div', { class: 'dolly-phone__screen' }, [DOLLY.brandMark(false)]),
 			kind === 'ios' ? bar : null
 		]);
 	}
@@ -1087,7 +1102,7 @@
 	function playProtectHelp() {
 		return h('div', { class: 'dolly-install__protect' }, DOLLY.alert(null, 'warning', [
 			h('strong', { text: 'Compare «App non sicura bloccata»?' }),
-			h('p', { text: 'È un avviso di Google Play Protect che può comparire con alcuni browser, ad esempio Samsung Internet. Il portale Dolly è sicuro: per completare l\'installazione' }),
+			h('p', { text: 'È un avviso di Google Play Protect che può comparire con alcuni browser, ad esempio Samsung Internet. Il portale ' + BRAND + ' è sicuro: per completare l\'installazione' }),
 			h('ol', {}, [
 				h('li', {}, ['tocca ', b('Altri dettagli'), ';']),
 				h('li', {}, ['tocca ', b('Installa comunque'), '.'])
@@ -1127,7 +1142,7 @@
 						['share', [dev.iosOtherBrowser ? 'Tocca il pulsante ' : 'In Safari tocca il pulsante ', b('Condividi'), dev.iosOtherBrowser ? ' (in alto a destra, accanto all\'indirizzo).' : ' nella barra in basso (su iPad in alto).']],
 						['square-plus', ['Scorri il menu e tocca ', b('Aggiungi alla schermata Home'), '.']],
 						['circle-check', ['Tocca ', b('Aggiungi'), ' in alto a destra.']],
-						['smartphone', ['Chiudi il browser e apri ', b('Dolly'), ' dall\'icona sulla schermata Home: lì potrai accedere.']]
+						['smartphone', ['Chiudi il browser e apri ', b(BRAND), ' dall\'icona sulla schermata Home: lì potrai accedere.']]
 					])
 				];
 			} else {
@@ -1138,7 +1153,7 @@
 						['ellipsis-vertical', ['In Chrome tocca il menu ', b('⋮'), ' in alto a destra.']],
 						['square-plus', ['Tocca ', b('Installa app'), ' oppure ', b('Aggiungi a schermata Home'), '.']],
 						['circle-check', ['Conferma con ', b('Installa'), '.']],
-						['smartphone', ['Apri ', b('Dolly'), ' dall\'icona sulla schermata Home: lì potrai accedere.']]
+						['smartphone', ['Apri ', b(BRAND), ' dall\'icona sulla schermata Home: lì potrai accedere.']]
 					]),
 					playProtectHelp()
 				];
@@ -1152,16 +1167,16 @@
 		var copyBtn = DOLLY.button('Copia l\'indirizzo', { size: 'sm', icon: 'copy', onClick: function () {
 			(navigator.clipboard ? navigator.clipboard.writeText(window.location.href) : Promise.reject()).then(function () { DOLLY.toast('Indirizzo copiato: incollalo in ' + (dev.ios ? 'Safari' : 'Chrome') + '.', 'success'); }, function () { DOLLY.toast(window.location.href, 'info'); });
 		} });
-		var done = h('div', { hidden: true }, DOLLY.alert('App installata! Chiudi il browser e apri Dolly dall\'icona sulla schermata Home per accedere.', 'success'));
+		var done = h('div', { hidden: true }, DOLLY.alert('App installata! Chiudi il browser e apri ' + BRAND + ' dall\'icona sulla schermata Home per accedere.', 'success'));
 		var gate = h('div', { class: 'dolly-install' }, [
-			h('h1', { class: 'dolly-auth__title', text: 'Installa l\'app Dolly' }),
+			h('h1', { class: 'dolly-auth__title', text: 'Installa l\'app ' + BRAND }),
 			h('p', { class: 'dolly-muted', text: 'Prima di accedere aggiungi il portale alla schermata Home del telefono: lo aprirai come un\'app e riceverai le notifiche.' }),
 			dev.inApp ? DOLLY.alert('Stai usando il browser di un\'altra app: apri questa pagina in ' + (dev.ios ? 'Safari' : 'Chrome') + ' per installarla.', 'warning', h('div', { style: 'margin-top:8px' }, copyBtn)) : null,
 			dev.samsung && !dev.inApp ? DOLLY.alert('Stai usando Samsung Internet: con questo browser il telefono può bloccare l\'installazione. Apri questa pagina in Chrome e installa l\'app da lì.', 'warning', h('div', { class: 'dolly-install__actions' }, [
 				DOLLY.button('Apri in Chrome', { variant: 'primary', size: 'sm', icon: 'external-link', href: chromeIntent() }), copyBtn
 			])) : null,
 			done, tabs, panel,
-			h('p', { class: 'dolly-help', style: 'margin-top:16px', text: 'Hai già installato l\'app? Aprila dall\'icona Dolly sulla schermata Home.' })
+			h('p', { class: 'dolly-help', style: 'margin-top:16px', text: 'Hai già installato l\'app? Aprila dall\'icona ' + BRAND + ' sulla schermata Home.' })
 		]);
 		document.addEventListener('dolly:installable', renderPanel);
 		document.addEventListener('dolly:installed', function () { done.hidden = false; renderPanel(); });

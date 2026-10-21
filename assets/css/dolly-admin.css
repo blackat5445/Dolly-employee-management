@@ -3,7 +3,7 @@
  * native WordPress screens and icons elsewhere remain unchanged.
  */
 
-.dolly-admin-screen #wpcontent { background: #F5F6F8; }
+.dolly-admin-screen #wpcontent { background: var(--dolly-bg); }
 /* Full width: the content uses all the space next to the WordPress menu, with the same gutter on both sides. */
 .dolly-admin-screen .wrap.dolly-wrap { margin: 16px 20px 0 0; max-width: none; }
 @media (max-width: 782px) { .dolly-admin-screen .wrap.dolly-wrap { margin: 8px 10px 0 0; } }
@@ -14,8 +14,8 @@
 	.dolly-wpmenu-hidden .dolly-admin-screen #wpcontent,
 	.dolly-wpmenu-hidden .dolly-admin-screen #wpfooter { margin-left: 0; }
 }
-.dolly-app .dolly-admin__menu-toggle { color: #fff; margin-left: -8px; flex: none; }
-.dolly-app .dolly-admin__menu-toggle:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.dolly-app .dolly-admin__menu-toggle { color: var(--dolly-header-text); margin-left: -8px; flex: none; }
+.dolly-app .dolly-admin__menu-toggle:hover { background: var(--dolly-header-hover); color: var(--dolly-header-text); }
 @media (max-width: 782px) { .dolly-app .dolly-admin__menu-toggle { display: none; } }
 /* Notices from other plugins stay visible but do not break the layout. */
 .dolly-admin-screen .wrap.dolly-wrap > .notice { margin: 0 0 16px; }
@@ -23,18 +23,18 @@
 .dolly-app.dolly-admin { color: var(--dolly-text); }
 .dolly-app .dolly-admin__header {
 	display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-	background: var(--dolly-navy); color: #fff; border-radius: var(--dolly-radius) var(--dolly-radius) 0 0;
+	background: var(--dolly-header-bg); color: var(--dolly-header-text); border-radius: var(--dolly-radius) var(--dolly-radius) 0 0;
 	padding: 16px 24px;
 }
-.dolly-app .dolly-admin__header .dolly-brand__wordmark { color: #fff; }
-.dolly-app .dolly-admin__header .dolly-brand__sub { color: #D5DEE5; }
-.dolly-app .dolly-admin__title { color: #fff; margin: 0; font-size: 1.25rem; flex: 1; padding: 0; }
-.dolly-app .dolly-admin__bell { position: relative; color: #fff; }
-.dolly-app .dolly-admin__bell:hover { background: rgba(255, 255, 255, .12); color: #fff; }
-.dolly-app .dolly-admin__bell .dolly-count { position: absolute; top: 2px; right: 0; background: var(--dolly-gold); color: var(--dolly-navy); }
+.dolly-app .dolly-admin__header .dolly-brand__wordmark { color: var(--dolly-header-text); }
+.dolly-app .dolly-admin__header .dolly-brand__sub { color: var(--dolly-header-muted); }
+.dolly-app .dolly-admin__title { color: var(--dolly-header-text); margin: 0; font-size: 1.25rem; flex: 1; padding: 0; }
+.dolly-app .dolly-admin__bell { position: relative; color: var(--dolly-header-text); }
+.dolly-app .dolly-admin__bell:hover { background: var(--dolly-header-hover); color: var(--dolly-header-text); }
+.dolly-app .dolly-admin__bell .dolly-count { position: absolute; top: 2px; right: 0; }
 
 .dolly-app .dolly-admin__nav {
-	display: flex; gap: 4px; overflow-x: auto; background: #fff; border: 1px solid var(--dolly-border); border-top: 0;
+	display: flex; gap: 4px; overflow-x: auto; background: var(--dolly-surface); border: 1px solid var(--dolly-border); border-top: 0;
 	border-radius: 0 0 var(--dolly-radius) var(--dolly-radius); padding: 0 8px; margin-bottom: 24px;
 }
 .dolly-app .dolly-admin__navlink {
@@ -42,25 +42,25 @@
 	color: var(--dolly-muted); font-weight: 600; text-decoration: none; white-space: nowrap;
 	border-bottom: 3px solid transparent;
 }
-.dolly-app .dolly-admin__navlink:hover { color: var(--dolly-navy); }
-.dolly-app .dolly-admin__navlink.is-active { color: var(--dolly-navy); border-bottom-color: var(--dolly-gold); }
+.dolly-app .dolly-admin__navlink:hover { color: var(--dolly-primary); }
+.dolly-app .dolly-admin__navlink.is-active { color: var(--dolly-primary); border-bottom-color: var(--dolly-primary); }
 .dolly-app .dolly-admin__navlink:focus { box-shadow: none; }
 .dolly-app .dolly-admin__main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
 .dolly-app .dolly-admin__main:focus { outline: none; }
 
 /* WordPress core styles override inputs inside wp-admin; restore the component look. */
 .dolly-app input.dolly-input, .dolly-app select.dolly-select, .dolly-app textarea.dolly-textarea {
-	min-height: 44px; line-height: 1.4; border-radius: 8px; border-color: var(--dolly-border-strong); box-shadow: none; max-width: none;
+	min-height: var(--dolly-touch); line-height: 1.4; border-radius: var(--dolly-radius-sm); border-color: var(--dolly-border-strong); background-color: var(--dolly-surface); color: var(--dolly-text); box-shadow: none; max-width: none;
 }
 .dolly-app select.dolly-select { padding-right: 32px; }
 .dolly-app .dolly-btn { box-sizing: border-box; }
 .dolly-app a.dolly-btn { text-decoration: none; }
-.dolly-app a.dolly-btn--primary, .dolly-app a.dolly-btn--primary:hover, .dolly-app a.dolly-btn--primary:focus { color: #fff; }
+.dolly-app a.dolly-btn--primary, .dolly-app a.dolly-btn--primary:hover, .dolly-app a.dolly-btn--primary:focus { color: var(--dolly-on-primary); }
 .dolly-app .dolly-table th, .dolly-app .dolly-table td { font-size: .875rem; }
 
 /* Dashboard */
 .dolly-app .dolly-dash__toolbar { align-items: center; }
-.dolly-app .dolly-dash__date { font-size: 1.125rem; font-weight: 700; color: var(--dolly-navy); text-transform: capitalize; }
+.dolly-app .dolly-dash__date { font-size: 1.125rem; font-weight: 700; color: var(--dolly-heading); text-transform: capitalize; }
 .dolly-app .dolly-dash__updated { display: inline-flex; align-items: center; gap: 6px; align-self: center; }
 .dolly-app .dolly-dash__updated svg.lucide { width: 16px; height: 16px; color: var(--dolly-muted); }
 .dolly-app .dolly-kpi__icon--green { background: var(--dolly-green-bg); color: var(--dolly-green); }
@@ -71,16 +71,16 @@
 .dolly-app .dolly-chart { position: relative; height: 360px; }
 /* Dashboard calendar: every day opens the collective closure pop-up. */
 .dolly-app .dolly-dash__bottom .fc .fc-daygrid-day-frame { cursor: pointer; }
-.dolly-app .dolly-dash__bottom .fc .fc-daygrid-day:hover { background: var(--dolly-navy-050); }
+.dolly-app .dolly-dash__bottom .fc .fc-daygrid-day:hover { background: var(--dolly-primary-soft); }
 @media (max-width: 640px) { .dolly-app .dolly-chart { height: 280px; } }
 
 .dolly-app .dolly-code {
 	background: #0F1B26; color: #E6EDF2; padding: 12px 16px; border-radius: 8px; overflow-x: auto;
 	font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre;
 }
-.dolly-app details summary { cursor: pointer; color: var(--dolly-navy); font-weight: 600; min-height: 32px; }
+.dolly-app details summary { cursor: pointer; color: var(--dolly-primary); font-weight: 600; min-height: 32px; }
 .dolly-app .dolly-settings__save {
-	position: sticky; bottom: 0; z-index: 5; background: rgba(245, 246, 248, .95); padding: 12px 0;
+	position: sticky; bottom: 0; z-index: 5; background: var(--dolly-bg); padding: 12px 0;
 }
 .dolly-app .dolly-dialog .dolly-card { box-shadow: none; }
 .dolly-app .dolly-dialog h3 { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
@@ -118,3 +118,50 @@
 	.dolly-app .dolly-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 	.dolly-app .dolly-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Aspetto: settings on the left, live preview on the right */
+.dolly-app .dolly-appearance { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; align-items: start; }
+.dolly-app .dolly-appearance__preview { position: sticky; top: 48px; }
+@media (max-width: 1280px) {
+	.dolly-app .dolly-appearance { grid-template-columns: minmax(0, 1fr); }
+	.dolly-app .dolly-appearance__preview { position: static; grid-row: 1; }
+}
+.dolly-app .dolly-color { display: flex; align-items: center; gap: 8px; }
+.dolly-app .dolly-color__swatch {
+	flex: none; width: var(--dolly-touch); height: var(--dolly-touch); padding: 2px; cursor: pointer;
+	border: 1px solid var(--dolly-border-strong); border-radius: var(--dolly-radius-sm); background: var(--dolly-surface);
+}
+.dolly-app .dolly-color__swatch::-webkit-color-swatch-wrapper { padding: 0; }
+.dolly-app .dolly-color__swatch::-webkit-color-swatch { border: 0; border-radius: calc(var(--dolly-radius-sm) - 3px); }
+.dolly-app .dolly-color__swatch::-moz-color-swatch { border: 0; border-radius: calc(var(--dolly-radius-sm) - 3px); }
+.dolly-app input.dolly-color__hex { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-transform: uppercase; }
+.dolly-app .dolly-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.dolly-app .dolly-swatch {
+	display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; cursor: pointer;
+	border: 1px solid var(--dolly-border-strong); border-radius: 999px; background: var(--dolly-surface); color: var(--dolly-text); font: 600 .875rem/1 var(--dolly-font);
+}
+.dolly-app .dolly-swatch:hover { background: var(--dolly-surface-2); }
+.dolly-app .dolly-swatch__dot { width: 20px; height: 20px; border-radius: 50%; }
+.dolly-app .dolly-contrast { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.dolly-app .dolly-image-pick {
+	display: grid; place-items: center; min-height: 96px; padding: 12px; margin-bottom: 4px;
+	border: 1px dashed var(--dolly-border-strong); border-radius: var(--dolly-radius-sm); background: var(--dolly-surface-2);
+}
+.dolly-app .dolly-image-pick img { max-width: 100%; max-height: 96px; display: block; }
+.dolly-app .dolly-image-pick--square { width: 128px; min-height: 128px; }
+.dolly-app .dolly-image-pick--square img { width: 96px; height: 96px; object-fit: cover; border-radius: 20%; }
+.dolly-app textarea.dolly-textarea--code { font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+/* The preview box receives the unsaved tokens (scoped CSS from the server), so it must repaint itself. */
+.dolly-app .dolly-preview {
+	font-family: var(--dolly-font); color: var(--dolly-text); background: var(--dolly-bg);
+	border: 1px solid var(--dolly-border); border-radius: var(--dolly-radius); overflow: hidden; margin-top: 12px;
+}
+.dolly-app .dolly-preview .dolly-topbar { position: static; padding: 8px var(--dolly-s2); }
+.dolly-app .dolly-preview__body { display: grid; gap: var(--dolly-s2); padding: var(--dolly-s2); }
+.dolly-app .dolly-preview .dolly-card { padding: var(--dolly-s2); }
+.dolly-app .dolly-preview .dolly-card > * + * { margin-top: 12px; }
+.dolly-app .dolly-preview .dolly-input { display: flex; align-items: center; }
+.dolly-app .dolly-preview__badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.dolly-app .dolly-preview .dolly-alert { margin-bottom: 0; }
+.dolly-app .dolly-preview .dolly-tabs { margin-bottom: 0; }
