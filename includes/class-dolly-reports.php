@@ -135,6 +135,7 @@ class Dolly_Reports {
 		$increase = (int) Dolly_Settings::get( 'holiday_increase' );
 		$prov_any = false;
 		$oncall_rows = Dolly_Requests::oncall_range( $user_id, $from, $to );
+		$smart_rows  = Dolly_Requests::smart_range( $user_id, $from, $to );
 		$since       = Dolly_Hours::absence_since( $user_id );
 		$tot_codes   = array();
 		$tot_planned = 0;
@@ -167,9 +168,12 @@ class Dolly_Reports {
 			$day_anoms   = $anoms[ $d ] ?? array();
 			// On-call contract: the hours of a shift count once approved (automatically or by the administrator).
 			$oncall      = ( $plan['on_call'] && isset( $p['uscita'] ) ) ? ( isset( $oncall_rows[ $d ] ) ? $oncall_rows[ $d ]->status : 'pending' ) : '';
-			$provisional = ( isset( $p['entrata'] ) && ! isset( $p['uscita'] ) ) || ! empty( $day_anoms ) || 'pending' === $oncall;
-			$tot_w      += ( '' === $oncall || 'approved' === $oncall ) ? $calc['worked'] : 0;
-			$tot_p      += 'pending' === $oncall ? $calc['worked'] : 0;
+			// Smart working: the smart-working minutes count once approved.
+			$smart       = ( $calc['smart'] && isset( $p['uscita'] ) ) ? ( isset( $smart_rows[ $d ] ) ? $smart_rows[ $d ]->status : 'pending' ) : '';
+			$smart_out   = in_array( $smart, array( 'pending', 'rejected' ), true ) ? $calc['smart'] : 0;
+			$provisional = ( isset( $p['entrata'] ) && ! isset( $p['uscita'] ) ) || ! empty( $day_anoms ) || 'pending' === $oncall || 'pending' === $smart;
+			$tot_w      += ( '' === $oncall || 'approved' === $oncall ) ? $calc['worked'] - $smart_out : 0;
+			$tot_p      += 'pending' === $oncall ? $calc['worked'] : ( 'pending' === $smart ? $calc['smart'] : 0 );
 			$tot_x      += $calc['extra'];
 			$tot_o      += $calc['extra_over'];
 			$tot_f      += ( '' === $oncall || 'approved' === $oncall ) ? $calc['festive'] : 0;
@@ -186,6 +190,7 @@ class Dolly_Reports {
 					'sickness'    => $sickness,
 					'has_punches' => ! empty( $p ),
 					'oncall'      => $oncall,
+					'smart'       => $smart,
 					'since'       => $since,
 				)
 			);
@@ -223,6 +228,11 @@ class Dolly_Reports {
 				$sched_label = $plan['start'] . '–' . $plan['end'];
 				if ( $plan['has_lunch'] ) {
 					$sched_label .= __( ' (pausa ', 'dolly-employee-management' ) . $plan['lunch_start'] . '–' . $plan['lunch_end'] . ( $plan['lunch_auto'] ? __( ', automatica', 'dolly-employee-management' ) : '' ) . ')';
+				}
+				if ( 'smart' === $plan['work_mode'] ) {
+					$sched_label .= __( ' · smart working', 'dolly-employee-management' );
+				} elseif ( 'mixed' === $plan['work_mode'] ) {
+					$sched_label .= ' · ' . sprintf( __( 'presenza %1$s, smart working %2$s', 'dolly-employee-management' ), $plan['office_start'] . '–' . $plan['office_end'], $plan['smart_start'] . '–' . $plan['smart_end'] );
 				}
 			}
 			$pending_labels = array();
@@ -262,6 +272,10 @@ class Dolly_Reports {
 				'holiday_increase' => $increase,
 				'hours_note'  => $calc['worked'] ? ( $calc['festive'] ? __( 'Ore festive, maggiorazione ', 'dolly-employee-management' ) . $increase . '%' : ( 'collective' === $plan['closure_type'] ? __( 'Ore ordinarie (chiusura collettiva)', 'dolly-employee-management' ) : '' ) ) : '',
 				'oncall_status' => $oncall,
+				'smart_status'  => $smart,
+				'smart_min'     => $calc['smart'],
+				'smart'         => $calc['smart'] ? Dolly_Time::min_to_hm( $calc['smart'] ) : '',
+				'work_mode'     => $plan['work_mode'],
 				'schedule'    => $sched_label,
 				'entrata'     => $in_counted,
 				'entrata_real'=> $real( 'entrata' ) !== $in_counted ? $real( 'entrata' ) : '',

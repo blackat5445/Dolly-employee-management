@@ -83,6 +83,9 @@ class Dolly_REST {
 			array( '/sickness/(?P<id>\d+)/certificate', 'POST', 'certificate_upload', $emp ),
 			array( '/requests/(?P<id>\d+)/certificate', 'POST', 'donation_certificate_upload', $emp ),
 			array( '/certificates/(?P<id>\d+)/download', 'GET', 'certificate_download', array( $c, 'can_download_certificate' ) ),
+			// Employee: documents (administrators can also open them).
+			array( '/documents', 'GET', 'documents_list', $emp ),
+			array( '/documents/(?P<id>\d+)/download', 'GET', 'document_download', array( $c, 'can_download_certificate' ) ),
 			// Employee: anomalies and notifications.
 			array( '/anomalies', 'GET', 'anomalies_list', $emp ),
 			array( '/anomalies/(?P<id>\d+)/note', 'POST', 'anomaly_note', $emp ),
@@ -141,6 +144,12 @@ class Dolly_REST {
 			array( '/admin/settings', 'POST', 'admin_settings_update', $adm ),
 			array( '/admin/cron/run', 'POST', 'admin_cron_run', $adm ),
 			array( '/admin/onboarding', 'POST', 'admin_onboarding', $adm ),
+			array( '/admin/documents/people', 'GET', 'admin_documents_people', $adm ),
+			array( '/admin/documents/categories', 'GET', 'admin_document_categories', $adm ),
+			array( '/admin/documents/categories', 'POST', 'admin_document_categories_save', $adm ),
+			array( '/admin/documents', 'GET', 'admin_documents', $adm ),
+			array( '/admin/documents', 'POST', 'admin_document_send', $adm ),
+			array( '/admin/documents/(?P<id>\d+)', 'DELETE', 'admin_document_delete', $adm ),
 			array( '/admin/tour', 'POST', 'admin_tour', $adm ),
 			array( '/admin/appearance', 'GET', 'admin_appearance_get', $adm ),
 			array( '/admin/appearance', 'POST', 'admin_appearance_update', $adm ),
@@ -185,6 +194,7 @@ class Dolly_REST {
 		$e['state'] = Dolly_Attendance::state( $uid );
 		$e['unread']= Dolly_Notifications::unread_count( $uid );
 		$e['open_anomalies'] = Dolly_Anomalies::count_open( array( $uid ) );
+		$e['documents_unread'] = Dolly_Documents::unread_count( $uid );
 		$e['popups']         = Dolly_Notifications::popups( $uid );
 		$e['tour_done']      = (bool) get_user_meta( $uid, 'dolly_tour_done', true );
 		$e['language']       = array(
@@ -198,6 +208,7 @@ class Dolly_REST {
 			'bluetooth'          => Dolly_Bluetooth::client_config(),
 			'certificate_mode'   => Dolly_Settings::get( 'certificate_mode' ),
 			'certificate_days'   => (int) Dolly_Settings::get( 'certificate_days' ),
+			'certificate_needs'  => Dolly_Sickness::requirements(),
 			'lunch_punch'        => (bool) Dolly_Settings::get( 'lunch_punch' ),
 			'overtime_auto'      => (int) Dolly_Settings::get( 'overtime_auto' ),
 			'donation_certificate_mode' => Dolly_Settings::get( 'donation_certificate_mode' ),
@@ -370,7 +381,7 @@ class Dolly_REST {
 
 	public static function certificate_upload( WP_REST_Request $req ) {
 		$files = $req->get_file_params();
-		return Dolly_Sickness::upload_certificate( (int) $req['id'], $files['file'] ?? null, false );
+		return Dolly_Sickness::upload_certificate( (int) $req['id'], $files['file'] ?? null, false, (string) $req->get_param( 'protocol' ) );
 	}
 
 	public static function donation_certificate_upload( WP_REST_Request $req ) {
@@ -614,7 +625,7 @@ class Dolly_REST {
 
 	public static function admin_certificate_upload( WP_REST_Request $req ) {
 		$files = $req->get_file_params();
-		return Dolly_Sickness::upload_certificate( (int) $req['id'], $files['file'] ?? null, true );
+		return Dolly_Sickness::upload_certificate( (int) $req['id'], $files['file'] ?? null, true, (string) $req->get_param( 'protocol' ) );
 	}
 
 	public static function admin_attendance( WP_REST_Request $req ) {
@@ -809,6 +820,62 @@ class Dolly_REST {
 			Dolly_Bluetooth::enable( $id, (bool) $b['enabled'] );
 		}
 		return Dolly_Bluetooth::admin_info( $id );
+	}
+
+	/* ---------- Documents ---------- */
+
+	public static function documents_list() {
+		return Dolly_Documents::grouped( get_current_user_id() );
+	}
+
+	public static function document_download( WP_REST_Request $req ) {
+		return Dolly_Documents::download( (int) $req['id'], (bool) $req->get_param( 'inline' ) );
+	}
+
+	public static function admin_documents_people( WP_REST_Request $req ) {
+		return Dolly_Documents::people(
+			array(
+				'search' => $req->get_param( 'search' ),
+				'status' => $req->get_param( 'status' ),
+				'page'   => $req->get_param( 'page' ),
+			)
+		);
+	}
+
+	public static function admin_document_categories() {
+		return Dolly_Documents::categories_list();
+	}
+
+	public static function admin_document_categories_save( WP_REST_Request $req ) {
+		$b = self::body( $req );
+		return Dolly_Documents::save_categories( $b['categories'] ?? array() );
+	}
+
+	/** Documents of one employee, grouped by category. */
+	public static function admin_documents( WP_REST_Request $req ) {
+		$uid = (int) $req->get_param( 'user_id' );
+		if ( ! Dolly_Employees::is_employee( $uid ) ) {
+			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
+		}
+		return array_merge( array( 'employee' => Dolly_Employees::sort_name( $uid ) ), Dolly_Documents::grouped( $uid ) );
+	}
+
+	/** Multipart: user_id, category, title, description, file. */
+	public static function admin_document_send( WP_REST_Request $req ) {
+		$files = $req->get_file_params();
+		return Dolly_Documents::send(
+			array(
+				'user_id'     => $req->get_param( 'user_id' ),
+				'category'    => $req->get_param( 'category' ),
+				'title'       => $req->get_param( 'title' ),
+				'description' => $req->get_param( 'description' ),
+			),
+			$files['file'] ?? null
+		);
+	}
+
+	public static function admin_document_delete( WP_REST_Request $req ) {
+		return Dolly_Documents::delete( (int) $req['id'] );
 	}
 
 	/** Guided setup: { step } saves progress, { complete: true } ends it. */

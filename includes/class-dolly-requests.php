@@ -19,7 +19,11 @@ class Dolly_Requests {
 		'correzione'    => 'Correzione timbratura',
 		'turno'         => 'Turno a chiamata',
 		'donazione'     => 'Donazione sangue',
+		'smart'         => 'Smart working',
 	);
+
+	/** Types created from the punches (on-call shifts, smart-working days), never by hand. */
+	const AUTO_TYPES = array( 'turno', 'smart' );
 
 	/** Full-day absences that need approval (the day counts as justified). */
 	const FULL_DAY_TYPES = array( 'ferie', 'donazione' );
@@ -153,6 +157,9 @@ class Dolly_Requests {
 			case 'turno':
 				$s = __( 'Turno a chiamata ', 'dolly-employee-management' ) . $d1 . ', ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time );
 				break;
+			case 'smart':
+				$s = __( 'Smart working ', 'dolly-employee-management' ) . $d1 . ', ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time );
+				break;
 			default:
 				$s = $range;
 		}
@@ -176,8 +183,8 @@ class Dolly_Requests {
 	private static function clean( $user_id, $data, $by_admin = false ) {
 		$type   = $data['type'] ?? '';
 		$errors = array();
-		if ( ! isset( self::TYPES[ $type ] ) || 'turno' === $type ) {
-			// On-call shifts are created from the punches (sync_oncall_shift), never by hand.
+		if ( ! isset( self::TYPES[ $type ] ) || in_array( $type, self::AUTO_TYPES, true ) ) {
+			// On-call shifts and smart-working days are created from the punches, never by hand.
 			return new WP_Error( 'dolly_invalid', __( 'Tipo di richiesta non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'type' => __( 'Seleziona il tipo.', 'dolly-employee-management' ) ) ) );
 		}
 		$out = array(
@@ -502,6 +509,9 @@ class Dolly_Requests {
 		if ( 'turno' === $r->type ) {
 			return new WP_Error( 'dolly_invalid_state', __( 'I turni a chiamata vengono approvati dall\'amministratore: per correggerli invia una richiesta di correzione timbratura.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
+		if ( 'smart' === $r->type ) {
+			return new WP_Error( 'dolly_invalid_state', __( 'Le giornate in smart working vengono approvate dall\'amministratore: per correggerle invia una richiesta di correzione timbratura.', 'dolly-employee-management' ), array( 'status' => 409 ) );
+		}
 		if ( 'pending' === $r->status ) {
 			$wpdb->update( $t, array( 'status' => 'cancelled', 'updated_at' => Dolly_Time::now_utc() ), array( 'id' => $id, 'status' => 'pending' ) );
 			return self::format( self::get( $id ) );
@@ -766,6 +776,87 @@ class Dolly_Requests {
 		} else {
 			Dolly_Notifications::notify_admins( 'oncall_pending', fn () => array( __( 'Turno a chiamata da approvare: ', 'dolly-employee-management' ) . Dolly_Employees::display_name( $user_id ), Dolly_Time::fmt_date( $date ) . ': ' . $notes ), null, 'dolly-requests', 'oncall-' . $id );
 		}
+	}
+
+	/** Smart-working approvals of a user over a range: [Y-m-d => row] (latest row per day). */
+	public static function smart_range( $user_id, $from, $to ) {
+		global $wpdb;
+		$t    = Dolly_Install::t( 'requests' );
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'smart' AND status IN ('pending','approved','rejected') AND start_date BETWEEN %s AND %s ORDER BY id ASC", $user_id, $from, $to ) ); // phpcs:ignore
+		$out  = array();
+		foreach ( $rows as $r ) {
+			$out[ $r->start_date ] = $r;
+		}
+		return $out;
+	}
+
+	/**
+	 * Smart working: every completed day with hours in smart working needs an approval, created here
+	 * from the punches. With the setting "smart_auto" the approval is automatic; otherwise it waits for
+	 * the administrator in Richieste. Until then the smart-working hours are not counted. Corrections
+	 * of the punches update the request; a pending one is withdrawn when the day has no smart hours.
+	 */
+	public static function sync_smart_day( $user_id, $date ) {
+		global $wpdb;
+		$plan = Dolly_Schedules::day_plan( $user_id, $date );
+		$t    = Dolly_Install::t( 'requests' );
+		$row  = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE user_id = %d AND type = 'smart' AND start_date = %s AND status IN ('pending','approved','rejected') ORDER BY id DESC LIMIT 1", $user_id, $date ) ); // phpcs:ignore
+		$p    = Dolly_Attendance::punches_for( $user_id, $date );
+		$now  = Dolly_Time::now_utc();
+		$calc = isset( $p['entrata'], $p['uscita'] ) ? Dolly_Attendance::compute( $date, $p, $plan ) : null;
+		if ( ! $calc || ! $calc['smart'] ) {
+			if ( $row && 'pending' === $row->status ) {
+				$wpdb->update( $t, array( 'status' => 'cancelled', 'decision_note' => __( 'Nessuna ora in smart working (timbrature modificate).', 'dolly-employee-management' ), 'updated_at' => $now ), array( 'id' => (int) $row->id ) );
+			}
+			return;
+		}
+		$in    = Dolly_Time::utc_to_local( $p['entrata']->punched_at, 'H:i' );
+		$out   = Dolly_Time::utc_to_local( $p['uscita']->punched_at, 'H:i' );
+		$auto  = (bool) Dolly_Settings::get( 'smart_auto' );
+		$notes = 'mixed' === $plan['work_mode']
+			? sprintf( __( 'Giornata mista %1$s–%2$s: %3$s ore in smart working (%4$s ore in totale).', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $calc['smart'] ), Dolly_Time::min_to_hm( $calc['worked'] ) )
+			: sprintf( __( 'Smart working %1$s–%2$s: %3$s ore lavorate.', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $calc['smart'] ) );
+		$auto_note = __( 'Approvato automaticamente (Impostazioni › Smart working).', 'dolly-employee-management' );
+
+		if ( $row ) {
+			if ( Dolly_Time::hm( $row->start_time ) === $in && Dolly_Time::hm( $row->end_time ) === $out && $row->notes === $notes ) {
+				return;
+			}
+			$upd = array( 'start_time' => $in . ':00', 'end_time' => $out . ':00', 'notes' => $notes, 'updated_at' => $now );
+			if ( 'pending' === $row->status && $auto ) {
+				$upd = array_merge( $upd, array( 'status' => 'approved', 'decided_by' => 0, 'decided_at' => $now, 'decision_note' => $auto_note ) );
+			}
+			$wpdb->update( $t, $upd, array( 'id' => (int) $row->id ) );
+			Dolly_Hours::touch( $user_id, $date );
+			return;
+		}
+		$data = array(
+			'user_id'    => $user_id,
+			'type'       => 'smart',
+			'status'     => $auto ? 'approved' : 'pending',
+			'start_date' => $date,
+			'end_date'   => $date,
+			'start_time' => $in . ':00',
+			'end_time'   => $out . ':00',
+			'source'     => 'auto',
+			'notes'      => $notes,
+			'created_by' => 0,
+			'created_at' => $now,
+			'updated_at' => $now,
+		);
+		if ( $auto ) {
+			$data['decided_by']    = 0;
+			$data['decided_at']    = $now;
+			$data['decision_note'] = $auto_note;
+		}
+		$wpdb->insert( $t, $data );
+		$id = (int) $wpdb->insert_id;
+		if ( $auto ) {
+			Dolly_Audit::log( 'smart_auto_approved', 'request', $id, $user_id, $auto_note, null, array( 'day' => $in . '–' . $out, 'smart' => Dolly_Time::min_to_hm( $calc['smart'] ) ), 0 );
+		} else {
+			Dolly_Notifications::notify_admins( 'smart_pending', fn () => array( __( 'Smart working da approvare: ', 'dolly-employee-management' ) . Dolly_Employees::display_name( $user_id ), Dolly_Time::fmt_date( $date ) . ': ' . $notes ), null, 'dolly-requests', 'smart-' . $id );
+		}
+		Dolly_Hours::touch( $user_id, $date );
 	}
 
 	/**

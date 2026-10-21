@@ -9,9 +9,10 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 ## Features
 
 ### Employee portal (`/portale/`)
-- **Clock in/out:** entry, break start, break end and exit. Each punch is verified in one of the ways you allow: GPS geofence, the workplace QR code or 6-digit PIN, or a [Bluetooth device](firmware/README.md) at the workplace. You can also require GPS on top of a workplace code.
+- **Clock in/out:** entry, break start, break end and exit. Each punch is verified in one of the ways you allow: GPS geofence, the workplace QR code or 6-digit PIN, or a [Bluetooth device](firmware/README.md) at the workplace. You can also require GPS on top of a workplace code. In smart working (remote work) the employee clocks in and out with one tap, without any presence verification.
 - **Requests:** holidays, hourly leave, overtime, punch corrections, on-call shifts and blood-donation leave. Approved requests can be edited or cancelled, and each change needs approval again.
-- **Sickness and injury reports,** with a private medical-certificate upload (PDF/JPG/PNG).
+- **Sickness and injury reports,** with a private medical-certificate upload (PDF/JPG/PNG) and/or the protocol number of the electronic certificate, typed by the employee.
+- **Documents:** contracts, CU, payslips and other documents sent by the company, by category, with a counter of new ones.
 - **Calendar and history:** a calendar, the monthly attendance history and in-app notifications.
 - **Profile,** including bank details (the IBAN is validated).
 - **Installable app (PWA)** with Web Push notifications and optional reminders to clock in and out.
@@ -25,9 +26,11 @@ Employees use a mobile-first portal that installs as an app (PWA). Each workplac
 ### Administration (wp-admin › *Gestione Dipendenti*)
 - **Dashboard:** today's attendance, latest requests, open anomalies, a calendar and an attendance chart.
 - **Employees:** create, edit and deactivate employees, reset passwords and set device limits.
-- **Schedules:** full-time, part-time and on-call contracts, with history. A schedule can be one fixed timetable or different times for each weekday.
+- **Schedules:** full-time, part-time and on-call contracts, with history. A schedule can be one fixed timetable (regular shifts) or different times for each weekday (different shifts).
+- **Smart working:** with regular shifts one switch puts the whole schedule in smart working; with different shifts each day is on site, smart working, or mixed (an on-site slot and a smart-working slot that must not overlap). Smart-working punches need no GPS, QR/PIN or Bluetooth; on mixed days the punches of the on-site slot are still verified. The smart-working hours of a day are approved automatically or by the administrator in *Richieste* (setting *Smart working*); until approved they are not counted.
+- **Documents:** send each employee documents by category (Contratto, CU, Busta paga, Altro, plus your own categories) with a title and an optional description. A list of employees with search and pagination, a modal to send a document and one to browse, open or delete the documents of an employee. The employee is notified (event *Nuovo documento*, in-app and/or email).
 - **Workplaces:** address and an interactive map (OpenStreetMap) to place the workplace: it shows your current position, you tap the map, drag the pin or search for an address, and a circle shows the GPS radius. Plus a per-site late tolerance and employee assignments.
-- **Requests:** approve and revoke requests. On-call shifts can be approved automatically below a threshold.
+- **Requests:** approve and revoke requests. On-call shifts can be approved automatically below a threshold; smart-working days automatically or one by one.
 - **Attendance:** daily and monthly views, with audited corrections.
 - **Analytics:** hours, overtime, presence, absences, lateness and anomalies.
 - **Anomalies:** unjustified absences, missing exits, missing certificates and sickness conflicts, each with a resolution workflow.
@@ -92,12 +95,16 @@ Phones need Chrome, Edge or Samsung Internet on Android. Safari on iPhone does n
 
 ## Configuration
 
-### Certificate storage
-Medical and donation certificates are stored outside the public web root when possible: by default in a `dolly-private` folder next to the WordPress directory. If that folder can't be created, the plugin falls back to a protected folder inside `uploads`. To choose the location yourself, add this to `wp-config.php`:
+### Certificate and document storage
+Medical and donation certificates and employee documents are stored outside the public web root when possible: by default in a `dolly-private` folder next to the WordPress directory. If that folder can't be created, the plugin falls back to a protected folder inside `uploads`. To choose the location yourself, add this to `wp-config.php`:
 
 ```php
 define( 'DOLLY_PRIVATE_DIR', '/absolute/path/outside/webroot' );
 ```
+
+Employee documents are isolated per employee in `documents/u{ID}-{random token}`: the token is random and stored only in the employee's user meta, every folder has deny rules (`.htaccess`, `web.config`) and an empty index, and the files have random names. They are served only through the REST API, to the employee they belong to (while the account is active) and to administrators; administrator openings are written to the audit log.
+
+Medical certificates: in *Impostazioni › Malattia, infortunio e certificati* choose whether the file and/or the protocol number are required. With both off, either one is enough.
 
 ### Front-end URLs
 

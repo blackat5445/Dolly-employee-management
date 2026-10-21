@@ -21,6 +21,7 @@
 		{ id: 'calendario', label: __('Calendario'), icon: 'calendar-days', nav: true },
 		{ id: 'richieste', label: __('Richieste'), icon: 'inbox', nav: true },
 		{ id: 'malattia', label: __('Malattia'), icon: 'stethoscope', nav: true },
+		{ id: 'documenti', label: __('Documenti'), icon: 'folder-open', nav: true },
 		{ id: 'notifiche', label: __('Notifiche'), icon: 'bell' },
 		{ id: 'profilo', label: __('Profilo'), icon: 'circle-user' }
 	];
@@ -70,6 +71,14 @@
 		bellCount.textContent = state.me.unread > 99 ? '99+' : state.me.unread;
 		var bell = topActions.querySelector('.dolly-bell');
 		bell.setAttribute('aria-label', __('Notifiche') + (state.me.unread ? ', ' + state.me.unread + __(' non lette') : ''));
+		// New documents: count on the "Documenti" menu item.
+		var docs = navEl.querySelector('[data-section="documenti"]');
+		if (docs) {
+			var c = docs.querySelector('.dolly-count') || docs.appendChild(h('span', { class: 'dolly-count' }));
+			c.hidden = !state.me.documents_unread;
+			c.textContent = state.me.documents_unread > 99 ? '99+' : (state.me.documents_unread || '');
+			docs.setAttribute('aria-label', __('Documenti') + (state.me.documents_unread ? ', ' + state.me.documents_unread + __(' nuovi') : ''));
+		}
 	}
 
 	function route() {
@@ -82,7 +91,7 @@
 		clearInterval(clockTimer);
 		clearInterval(refreshTimer);
 		if (calendar) { calendar.destroy(); calendar = null; }
-		({ dashboard: viewDashboard, calendario: viewCalendar, richieste: viewRequests, malattia: viewSickness, notifiche: viewNotifications, profilo: viewProfile })[id]();
+		({ dashboard: viewDashboard, calendario: viewCalendar, richieste: viewRequests, malattia: viewSickness, documenti: viewDocuments, notifiche: viewNotifications, profilo: viewProfile })[id]();
 		main.focus({ preventScroll: true });
 		window.scrollTo(0, 0);
 	}
@@ -154,6 +163,9 @@
 			var btn = h('button', { type: 'button', class: 'dolly-clock__btn dolly-clock__btn--' + st.primary, dataset: { tour: 'clock-btn' } }, [DOLLY.icon(a.icon), a.verb]);
 			btn.addEventListener('click', function () { startPunch(st.primary); });
 			clockChildren.push(btn);
+			if (st.smart && st.smart.primary) {
+				clockChildren.push(h('div', { class: 'dolly-clock__smart' }, [DOLLY.icon('house'), h('span', { text: __('Smart working: timbri con un tocco, senza verifica della presenza.') })]));
+			}
 			if (st.secondary === 'uscita') {
 				clockChildren.push(h('div', { class: 'dolly-clock__secondary' }, DOLLY.button(__('Uscita definitiva anticipata'), { icon: 'log-out', onClick: function () { startPunch('uscita', true); } })));
 			}
@@ -181,6 +193,8 @@
 		var sched = plan.eligible ? plan.start + '–' + plan.end + (plan.has_lunch ? __(' · pausa ') + plan.lunch_start + '–' + plan.lunch_end + (plan.lunch_auto ? __(' (conteggiata in automatico, non serve timbrarla)') : '') : __(' · senza pausa')) : __('Riposo');
 		if (plan.extension_end) { sched += __(' · straordinario fino alle ') + plan.extension_end; }
 		if (plan.rest_day_extra) { sched = __('Straordinario in giorno di riposo: ') + sched; }
+		if (plan.work_mode === 'smart') { sched += __(' · smart working'); }
+		if (plan.work_mode === 'mixed') { sched = plan.start + '–' + plan.end + ' · ' + DOLLY.sprintf(__('in presenza %1$s, smart working %2$s'), plan.office_start + '–' + plan.office_end, plan.smart_start + '–' + plan.smart_end); }
 		if (plan.on_call) { sched = __('Contratto a chiamata: inizi e termini il turno quando vieni chiamato. Le ore vengono approvate dall\'amministratore.'); }
 		if (plan.closure) {
 			sched = plan.closure + __(': la tua sede è chiusa e non devi timbrare. ') + (plan.closure_type === 'holiday'
@@ -191,7 +205,7 @@
 			plan.holiday ? h('dt', { text: __('Festività') }) : null, plan.holiday ? h('dd', { text: plan.holiday }) : null,
 			h('dt', { text: __('Orario') }), h('dd', { text: sched }),
 			h('dt', { text: __('Sedi') }), h('dd', { text: me.workplaces.map(function (w) { return w.name; }).join(', ') || __('Nessuna') }),
-			h('dt', { text: __('Verifica') }), h('dd', { text: verificationLabel(st.verification) })
+			h('dt', { text: __('Verifica') }), h('dd', { text: plan.work_mode === 'smart' && !plan.on_call ? __('Non richiesta (smart working)') : (plan.work_mode === 'mixed' ? DOLLY.sprintf(__('%s nelle ore in presenza; non richiesta in smart working'), verificationLabel(st.verification)) : verificationLabel(st.verification)) })
 		])));
 
 		// Open anomalies.
@@ -340,6 +354,8 @@
 		var demo = tour.active;
 		var v = demo ? { methods: ['gps', 'qrpin'], require_gps: false } : (st.verification || { methods: ['gps', 'qrpin'], require_gps: false });
 		var exceptionActive = !demo && st.exception && st.exception.active;
+		// Smart working: no presence verification, just the confirmation.
+		var smart = !demo && !!st.smart && ((action === st.primary && st.smart.primary) || (action === st.secondary && st.smart.secondary));
 		var allowGps = v.methods.indexOf('gps') !== -1, allowQr = v.methods.indexOf('qrpin') !== -1, allowBle = v.methods.indexOf('ble') !== -1;
 		// "GPS as well": position first, then a workplace code (QR/PIN or Bluetooth).
 		var requireGps = !exceptionActive && v.require_gps;
@@ -362,7 +378,7 @@
 		}
 
 		function stepStart() {
-			if (exceptionActive) { return stepConfirm(); }
+			if (exceptionActive || smart) { return stepConfirm(); }
 			if (presetQr) { var c = presetQr; presetQr = null; return verifyCode('qr', c, afterCode); }
 			if (requireGps) { return stepGps(stepCodeChoice); }
 			var count = (allowGps ? 1 : 0) + (allowQr ? 1 : 0) + (allowBle ? 1 : 0);
@@ -493,7 +509,8 @@
 		function stepConfirm() {
 			var lines = [];
 			if (demo) { lines.push(DOLLY.alert(__('Esempio del tutorial: nessuna timbratura verrà registrata.'), 'info')); }
-			if (exceptionActive) { lines.push(DOLLY.alert(__('Eccezione dell\'amministratore attiva: verifica non richiesta.'), 'info')); }
+			if (smart) { lines.push(DOLLY.alert(__('Smart working: la verifica della presenza non è richiesta.'), 'info')); }
+			else if (exceptionActive) { lines.push(DOLLY.alert(__('Eccezione dell\'amministratore attiva: verifica non richiesta.'), 'info')); }
 			if (ctx.workplace) { lines.push(DOLLY.alert(__('Sede verificata: ') + ctx.workplace.name, 'success')); }
 			if (ctx.gps) { lines.push(DOLLY.alert(__('Posizione acquisita (precisione ±') + Math.round(ctx.gps.accuracy) + ' m).', 'success')); }
 			if (isEarlyExit) { lines.push(DOLLY.alert(__('Stai registrando l\'uscita definitiva: la giornata verrà chiusa e non potrai registrare altre timbrature oggi.'), 'warning')); }
@@ -850,6 +867,65 @@
 	}
 
 	/* ------------------------------------------------------------------ */
+	/* Documents                                                           */
+	/* ------------------------------------------------------------------ */
+
+	var DOC_ICONS = { contratto: 'file-signature', cu: 'receipt-text', busta_paga: 'wallet', altro: 'file' };
+
+	/** Contracts, CU, payslips and other documents sent by the administrator, by category. */
+	function viewDocuments() {
+		var box = h('div', {}, DOLLY.loading());
+		var filter = state.docFilter || '';
+		DOLLY.render(main, [
+			pageTitle(__('Documenti')),
+			DOLLY.alert(__('Qui trovi i documenti che l\'azienda ti invia: contratto, CU, buste paga e altri. Sono visibili solo a te e agli amministratori.'), 'info'),
+			box
+		]);
+		function load() {
+			DOLLY.api('documents').then(function (d) {
+				var groups = d.groups.filter(function (g) { return g.items.length; });
+				if (!d.total) { DOLLY.render(box, DOLLY.card(null, null, DOLLY.empty(__('Nessun documento'), __('Quando l\'azienda ti invia un documento ricevi una notifica e lo trovi qui.'), 'folder-open'))); return; }
+				if (filter && !groups.some(function (g) { return g.key === filter; })) { filter = ''; }
+				var tabs = h('div', { class: 'dolly-doc-tabs', role: 'group', 'aria-label': __('Categorie') }, [{ key: '', label: __('Tutti'), n: d.total }].concat(groups.map(function (g) { return { key: g.key, label: g.label, n: g.items.length }; })).map(function (t) {
+					var b = h('button', { type: 'button', class: 'dolly-chip', 'aria-pressed': t.key === filter ? 'true' : 'false' }, [t.label + ' · ' + t.n]);
+					b.addEventListener('click', function () { filter = state.docFilter = t.key; load(); });
+					return b;
+				}));
+				DOLLY.render(box, [tabs, h('div', { class: 'dolly-doc-groups' }, groups.filter(function (g) { return !filter || g.key === filter; }).map(function (g) {
+					return DOLLY.card(null, null, [
+						h('h2', { class: 'dolly-doc-group__title' }, [DOLLY.icon(DOC_ICONS[g.key] || 'folder'), g.label, h('span', { class: 'dolly-doc-group__count', text: String(g.items.length) })]),
+						h('ul', { class: 'dolly-doc-list' }, g.items.map(docItem))
+					]);
+				}))]);
+				DOLLY.icons();
+			}, function (err) { DOLLY.render(box, DOLLY.errorState(err, load)); });
+		}
+		function docItem(doc) {
+			var open = h('a', { class: 'dolly-btn dolly-btn--sm' + (doc.viewed_at ? '' : ' dolly-btn--primary'), href: DOLLY.downloadUrl('documents/' + doc.id + '/download', doc.inline ? { inline: 1 } : {}), target: doc.inline ? '_blank' : null, rel: doc.inline ? 'noopener' : null }, [DOLLY.icon(doc.inline ? 'eye' : 'download'), h('span', { text: doc.inline ? __('Apri') : __('Scarica') })]);
+			var li = h('li', { class: 'dolly-doc' + (doc.viewed_at ? '' : ' is-new') }, [
+				h('span', { class: 'dolly-doc__icon', 'aria-hidden': 'true' }, DOLLY.icon(doc.mime === 'application/pdf' ? 'file-text' : (doc.inline ? 'image' : 'file'))),
+				h('div', { class: 'dolly-doc__text' }, [
+					h('strong', { text: doc.title }),
+					doc.viewed_at ? null : DOLLY.badge(__('Nuovo'), 'blue', 'sparkles'),
+					doc.description ? h('span', { class: 'dolly-small', text: doc.description }) : null,
+					h('span', { class: 'dolly-small dolly-muted', text: DOLLY.fmt.dateTime(doc.uploaded_at) + ' · ' + DOLLY.fmt.bytes(doc.size) + ' · ' + doc.original_name })
+				]),
+				h('div', { class: 'dolly-doc__actions' }, [
+					open,
+					doc.inline ? h('a', { class: 'dolly-btn dolly-btn--sm dolly-btn--ghost', href: DOLLY.downloadUrl('documents/' + doc.id + '/download'), 'aria-label': __('Scarica ') + doc.title, title: __('Scarica') }, DOLLY.icon('download')) : null
+				])
+			]);
+			open.addEventListener('click', function () {
+				if (doc.viewed_at) { return; }
+				// The server records the first opening: update the counter shortly after.
+				setTimeout(function () { loadMe().then(function () { if (state.section === 'documenti') { load(); } }, function () {}); }, 1500);
+			});
+			return li;
+		}
+		load();
+	}
+
+	/* ------------------------------------------------------------------ */
 	/* Sickness & certificates                                             */
 	/* ------------------------------------------------------------------ */
 
@@ -876,21 +952,7 @@
 
 	function sicknessItem(s) {
 		var needs = s.certificate_status === 'missing' || s.certificate_status === 'overdue';
-		var fileInput = h('input', { type: 'file', accept: '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png', class: 'dolly-sr-only', id: DOLLY.uid('file') });
-		var uploadBtn = DOLLY.button(needs ? __('Carica certificato') : __('Aggiungi file'), { icon: 'file-up', variant: needs ? 'primary' : null, size: 'sm', onClick: function () { fileInput.click(); } });
-		var status = h('div', { class: 'dolly-small', 'aria-live': 'polite' });
-		fileInput.addEventListener('change', function () {
-			var file = fileInput.files[0];
-			if (!file) { return; }
-			if (file.size > 10 * 1024 * 1024) { DOLLY.render(status, DOLLY.alert(__('Il file supera i 10 MB.'), 'error')); return; }
-			if (!/\.(pdf|jpe?g|png)$/i.test(file.name)) { DOLLY.render(status, DOLLY.alert(__('Formato non consentito: carica PDF, JPG o PNG.'), 'error')); return; }
-			var fd = new FormData(); fd.append('file', file);
-			DOLLY.render(status, DOLLY.loading(__('Caricamento di ') + file.name + '…'));
-			DOLLY.busy(uploadBtn, DOLLY.api('sickness/' + s.id + '/certificate', { method: 'POST', form: fd, timeout: 120000 })).then(function () {
-				DOLLY.toast(__('Certificato caricato.'), 'success');
-				viewSickness();
-			}, function (err) { DOLLY.render(status, DOLLY.alert(err.message, 'error')); fileInput.value = ''; });
-		});
+		var uploadBtn = DOLLY.button(needs ? __('Carica certificato') : __('Aggiungi file o protocollo'), { icon: 'file-up', variant: needs ? 'primary' : null, size: 'sm', onClick: function () { certificateDialog(s); } });
 		return h('article', { class: 'dolly-card', style: 'box-shadow:none' }, [
 			h('div', { class: 'dolly-card__head' }, [
 				h('h3', { text: (s.kind_label || __('Malattia')) + __(' dal ') + DOLLY.fmt.date(s.start_date) + __(' al ') + DOLLY.fmt.date(s.end_date) }),
@@ -899,13 +961,52 @@
 			s.reported_by_admin ? h('p', { class: 'dolly-small dolly-muted', text: __('Inserita dall\'amministratore.') }) : null,
 			s.certificate_due && needs ? h('p', { class: 'dolly-small', text: __('Scadenza certificato: ') + DOLLY.fmt.date(s.certificate_due) }) : null,
 			s.notes ? h('p', { class: 'dolly-small dolly-muted', text: __('Note: ') + s.notes }) : null,
+			s.protocol ? h('p', { class: 'dolly-small', text: __('Protocollo del certificato: ') + s.protocol }) : null,
 			s.certificates.length ? h('ul', { class: 'dolly-small' }, s.certificates.map(function (c) {
 				return h('li', {}, [h('a', { href: DOLLY.downloadUrl('certificates/' + c.id + '/download') }, [DOLLY.icon('download'), ' ' + c.original_name]), ' · ' + DOLLY.fmt.bytes(c.size) + ' · ' + DOLLY.fmt.dateTime(c.uploaded_at)]);
 			})) : null,
-			h('div', { class: 'dolly-btn-row' }, [uploadBtn, h('label', { for: fileInput.id, class: 'dolly-sr-only', text: __('Scegli il file del certificato') }), fileInput]),
-			h('p', { class: 'dolly-help', text: __('PDF, JPG o PNG, massimo 10 MB.') }),
-			status
+			h('div', { class: 'dolly-btn-row' }, [uploadBtn])
 		]);
+	}
+
+	/**
+	 * Medical certificate: the file and/or the protocol number of the telematic certificate, as required
+	 * by the settings (with neither required, one of the two is enough).
+	 */
+	function certificateDialog(s) {
+		var need = (state.me && state.me.settings && state.me.settings.certificate_needs) || { file: true, protocol: false };
+		var alertBox = h('div', { hidden: true });
+		var protocol = DOLLY.field({ label: __('Numero di protocollo del certificato'), name: 'protocol', value: s.protocol || '', required: need.protocol && !s.protocol, optional: !need.protocol, help: __('Lo trovi sul certificato telematico rilasciato dal medico (numero di protocollo / PUC).'), attrs: { maxlength: 40, autocapitalize: 'characters', spellcheck: 'false', autocomplete: 'off' } });
+		var fileInput = h('input', { type: 'file', class: 'dolly-input', id: DOLLY.uid('file'), accept: '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png' });
+		var fileField = h('div', { class: 'dolly-field', dataset: { name: 'file' } }, [
+			h('label', { class: 'dolly-label', for: fileInput.id }, [__('File del certificato'), need.file && !s.certificates.length ? null : h('span', { class: 'dolly-optional', text: __(' (facoltativo)') })]),
+			fileInput,
+			h('span', { class: 'dolly-help', text: __('PDF, JPG o PNG, massimo 10 MB.') }),
+			h('span', { class: 'dolly-error', hidden: true })
+		]);
+		var rule = need.file && need.protocol ? __('Sono obbligatori il file e il numero di protocollo.')
+			: (need.file ? __('Il file è obbligatorio; il numero di protocollo è facoltativo.')
+				: (need.protocol ? __('Il numero di protocollo è obbligatorio; il file è facoltativo.') : __('Basta il file oppure il numero di protocollo.')));
+		var form = h('form', { class: 'dolly-form', novalidate: true }, [alertBox, DOLLY.alert(rule, 'info'), protocol, fileField]);
+		DOLLY.dialog({
+			title: __('Certificato medico'), body: form,
+			actions: [{ label: __('Annulla') }, { label: __('Invia'), variant: 'primary', icon: 'send', onClick: function (close, btn) {
+				DOLLY.clearErrors(form); alertBox.hidden = true;
+				var file = fileInput.files[0], prot = protocol.input.value.trim(), errors = {};
+				if (file && file.size > 10 * 1024 * 1024) { errors.file = __('Il file supera i 10 MB.'); }
+				else if (file && !/\.(pdf|jpe?g|png)$/i.test(file.name)) { errors.file = __('Formato non consentito: carica PDF, JPG o PNG.'); }
+				if (need.file && !file && !s.certificates.length) { errors.file = __('Il file del certificato è obbligatorio.'); }
+				if (need.protocol && !prot && !s.protocol) { errors.protocol = __('Il numero di protocollo è obbligatorio.'); }
+				if (!file && !prot && !errors.file && !errors.protocol) { errors[need.protocol && !need.file ? 'protocol' : 'file'] = __('Inserisci il numero di protocollo oppure scegli il file.'); }
+				if (Object.keys(errors).length) { DOLLY.showErrors(form, errors); return; }
+				var fd = new FormData();
+				if (file) { fd.append('file', file); }
+				if (prot) { fd.append('protocol', prot); }
+				DOLLY.busy(btn, DOLLY.api('sickness/' + s.id + '/certificate', { method: 'POST', form: fd, timeout: 120000 })).then(function () {
+					close(); DOLLY.toast(__('Certificato inviato.'), 'success'); viewSickness();
+				}, function (err) { DOLLY.formError(form, err, alertBox); });
+			} }]
+		});
 	}
 
 	function sicknessDialog() {
@@ -1229,7 +1330,9 @@
 				h('p', {}, [__('Dopo la segnalazione devi '), strong(__('caricare il certificato medico')), __(' nella tabella «Le tue segnalazioni».')])
 			] },
 			{ target: dialogButton(__('Annulla')), mode: 'click', tap: true, title: __('Chiudi'), text: para([__('Tocca «Annulla»: ti mostriamo un esempio di segnalazione.')]), hint: __('Tocca «Annulla»') },
-			{ before: showDemoSickness, target: function () { return document.querySelector(q('demo-sickness') + ' .dolly-btn'); }, tap: true, scroll: true, title: __('Carica il certificato'), text: para([__('Ogni segnalazione compare in «Le tue segnalazioni» (questa è solo un esempio).'), __('Tocca «Carica certificato» e scegli il file: PDF, JPG o PNG fino a 10 MB. Finché il certificato manca, la segnalazione resta in rosso.')]), next: ok, nextIcon: 'check', after: removeDemo },
+			{ before: showDemoSickness, target: function () { return document.querySelector(q('demo-sickness') + ' .dolly-btn'); }, tap: true, scroll: true, title: __('Carica il certificato'), text: para([__('Ogni segnalazione compare in «Le tue segnalazioni» (questa è solo un esempio).'), __('Tocca «Carica certificato»: inserisci il numero di protocollo del certificato telematico e/o scegli il file (PDF, JPG o PNG fino a 10 MB), come richiesto dall\'azienda. Finché il certificato manca, la segnalazione resta in rosso.')]), next: ok, nextIcon: 'check', after: removeDemo },
+			{ target: '.dolly-nav__link[data-section="documenti"]', mode: 'click', tap: true, title: __('Documenti'), text: para([__('Tocca «Documenti».')]), hint: __('Tocca «Documenti»') },
+			{ target: '#dolly-main > .dolly-alert', scroll: true, title: __('I tuoi documenti'), text: para([__('Qui trovi contratto, CU, buste paga e gli altri documenti che l\'azienda ti invia, divisi per categoria.'), __('Quando ne arriva uno nuovo ricevi una notifica e il numero compare sul menu: tocca «Apri» per vederlo o l\'icona per scaricarlo.')]) },
 			{ target: '.dolly-topbar__actions [data-section="profilo"]', mode: 'click', tap: true, title: __('Il tuo profilo'), text: para([__('In alto trovi le notifiche (campanella) e il tuo profilo. Tocca il profilo.')]), hint: __('Tocca l\'icona del profilo') },
 			{ target: 'section[aria-label="Dati personali"]', scroll: true, title: __('Dati personali'), text: para([__('Aggiorna nome, cognome, telefono ed email e tocca «Salva profilo». Il nome utente non si può cambiare.')]) },
 			{ target: 'section[aria-label="Dati bancari"]', scroll: true, title: __('Dati bancari'), text: para([__('IBAN, intestatario, banca e BIC per l\'accredito dello stipendio: tocca «Salva dati bancari». Se cambi l\'IBAN l\'amministratore viene avvisato.')]) },

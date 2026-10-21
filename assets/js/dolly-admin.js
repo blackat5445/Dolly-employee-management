@@ -17,7 +17,7 @@
 	if (!app) { return; }
 	var main = document.getElementById('dolly-admin-main');
 	var ACTIONS = { entrata: __('Entrata'), inizio_pausa: __('Inizio pausa'), fine_pausa: __('Fine pausa'), uscita: __('Uscita') };
-	var TYPES = { ferie: __('Ferie'), permesso: __('Permesso orario'), straordinario: __('Straordinario'), correzione: __('Correzione timbratura'), turno: __('Turno a chiamata'), donazione: __('Donazione sangue') };
+	var TYPES = { ferie: __('Ferie'), permesso: __('Permesso orario'), straordinario: __('Straordinario'), correzione: __('Correzione timbratura'), turno: __('Turno a chiamata'), donazione: __('Donazione sangue'), smart: __('Smart working') };
 
 	function workplaceOptions(allLabel) {
 		var o = allLabel ? [{ value: '', label: allLabel }] : [];
@@ -570,8 +570,12 @@
 	/* ------------------------------------------------------------------ */
 
 	/**
-	 * Working hours: one fixed timetable for the selected days, or (switch) a different timetable for each
-	 * day, each day with its own on/off switch. On-call contracts have no working days or hours.
+	 * Working hours: one fixed timetable for the selected days ("turni normali"), or (switch) a different
+	 * timetable for each day ("turni diversi"), each day with its own on/off switch. On-call contracts
+	 * have no working days or hours.
+	 * Smart working: with the fixed timetable one switch makes every day smart working; with a timetable
+	 * per day each day is in presence, smart working, or mixed (a block in presence and a block in smart
+	 * working that do not overlap). In smart working the employee clocks without presence verification.
 	 * Returns an element with .collect(errors) -> schedule body for the API.
 	 */
 	function scheduleEditor(s) {
@@ -588,32 +592,55 @@
 		};
 		var uLunch = h('div', { class: 'dolly-form-grid dolly-field--full', hidden: !s.has_lunch }, [u.lunch_start, u.lunch_end]);
 		u.has_lunch = DOLLY.switchControl({ label: __('Pausa pranzo prevista'), name: 'has_lunch', checked: !!s.has_lunch, onChange: function (on) { uLunch.hidden = !on; } });
-		var uniformBox = h('div', { class: 'dolly-form-grid dolly-field--full' }, [u.weekdays, u.start_time, u.end_time, h('div', { class: 'dolly-field--full' }, u.has_lunch), uLunch]);
+		u.smart = DOLLY.switchControl({ label: __('Smart working'), name: 'smart', checked: !s.per_day && s.work_mode === 'smart', description: __('Attivo: il dipendente lavora da remoto in tutti i giorni selezionati e timbra entrata e uscita con un tocco, senza GPS, QR/PIN o Bluetooth. Le ore vengono approvate secondo le Impostazioni › Smart working.') });
+		u.smart.dataset.tour = 'smart';
+		var uniformBox = h('div', { class: 'dolly-form-grid dolly-field--full' }, [u.weekdays, u.start_time, u.end_time, h('div', { class: 'dolly-field--full' }, u.has_lunch), uLunch, h('div', { class: 'dolly-field--full' }, u.smart)]);
 
 		// A different timetable for each day.
 		var rows = {};
 		var perDayBox = h('div', { class: 'dolly-dayrows dolly-field--full' });
+		var modeOptions = [{ value: 'office', label: __('In presenza') }, { value: 'smart', label: __('Smart working') }, { value: 'mixed', label: __('Misto (presenza e smart working)') }];
 		DOLLY.WEEKDAYS.forEach(function (label, i) {
 			var wd = i + 1, d = days[wd] || null;
 			var working = s.per_day ? !!d : (s.weekdays || []).indexOf(wd) !== -1;
 			var base = d || { start: s.start_time || '09:00', end: s.end_time || '18:00', lunch_start: s.lunch_start, lunch_end: s.lunch_end };
 			var hasLunch = d ? !!d.lunch_start : !!s.has_lunch;
+			var mode = d && d.mode ? d.mode : (!s.per_day && s.work_mode === 'smart' ? 'smart' : 'office');
 			var p = 'day' + wd + '_';
 			var r = {
+				mode: DOLLY.field({ label: __('Modalità'), name: p + 'mode', type: 'select', value: mode, options: modeOptions }),
 				start: DOLLY.timeField({ label: __('Inizio'), name: p + 'start_time', value: base.start }),
 				end: DOLLY.timeField({ label: __('Fine'), name: p + 'end_time', value: base.end }),
 				ls: DOLLY.timeField({ label: __('Inizio pausa'), name: p + 'lunch_start', value: base.lunch_start || '13:00' }),
-				le: DOLLY.timeField({ label: __('Fine pausa'), name: p + 'lunch_end', value: base.lunch_end || '14:00' })
+				le: DOLLY.timeField({ label: __('Fine pausa'), name: p + 'lunch_end', value: base.lunch_end || '14:00' }),
+				os: DOLLY.timeField({ label: __('Dalle'), name: p + 'office_start', value: (d && d.office_start) || base.start || '09:00' }),
+				oe: DOLLY.timeField({ label: __('Alle'), name: p + 'office_end', value: (d && d.office_end) || base.lunch_start || '13:00' }),
+				ss: DOLLY.timeField({ label: __('Dalle'), name: p + 'smart_start', value: (d && d.smart_start) || base.lunch_end || '14:00' }),
+				se: DOLLY.timeField({ label: __('Alle'), name: p + 'smart_end', value: (d && d.smart_end) || base.end || '18:00' })
 			};
 			var lunchBox = h('div', { class: 'dolly-dayrow__lunch', hidden: !hasLunch }, [r.ls, r.le]);
 			r.lunch = DOLLY.switchControl({ label: __('Pausa'), name: p + 'has_lunch', checked: hasLunch, onChange: function (on) { lunchBox.hidden = !on; } });
-			var times = h('div', { class: 'dolly-dayrow__times', hidden: !working }, [r.start, r.end, r.lunch, lunchBox]);
+			var plain = h('div', { class: 'dolly-dayrow__plain' }, [r.start, r.end, r.lunch, lunchBox]);
+			var mixed = h('div', { class: 'dolly-dayrow__mixed' }, [
+				h('div', { class: 'dolly-dayrow__block' }, [h('span', { class: 'dolly-dayrow__tag' }, [DOLLY.icon('building-2'), __('In presenza')]), r.os, r.oe]),
+				h('div', { class: 'dolly-dayrow__block' }, [h('span', { class: 'dolly-dayrow__tag dolly-dayrow__tag--smart' }, [DOLLY.icon('house'), __('Smart working')]), r.ss, r.se]),
+				h('p', { class: 'dolly-help dolly-dayrow__note', text: __('Le due fasce non devono sovrapporsi; l\'intervallo tra le due, se c\'è, è la pausa.') })
+			]);
+			function syncMode() {
+				var m = r.mode.input.value;
+				plain.hidden = m === 'mixed';
+				mixed.hidden = m !== 'mixed';
+			}
+			r.mode.input.addEventListener('change', syncMode);
+			syncMode();
+			var times = h('div', { class: 'dolly-dayrow__times', hidden: !working }, [r.mode, plain, mixed]);
 			r.on = DOLLY.switchControl({ label: label, name: 'day' + wd, checked: working, onChange: function (on) { times.hidden = !on; } });
 			rows[wd] = r;
 			perDayBox.appendChild(h('div', { class: 'dolly-dayrow' }, [h('div', { class: 'dolly-dayrow__day' }, r.on), times]));
 		});
 
-		var perDay = DOLLY.switchControl({ label: __('Orario diverso per ogni giorno'), name: 'per_day', checked: !!s.per_day, description: __('Disattivato: un orario fisso per tutti i giorni selezionati. Attivato: ogni giorno ha il suo interruttore e il suo orario.'), onChange: sync });
+		var perDay = DOLLY.switchControl({ label: __('Turni diversi per ogni giorno'), name: 'per_day', checked: !!s.per_day, description: __('Disattivato (turni normali): un orario fisso per tutti i giorni selezionati. Attivato (turni diversi): ogni giorno ha il suo interruttore, il suo orario e la sua modalità (in presenza, smart working o mista).'), onChange: sync });
+		perDay.dataset.tour = 'per-day';
 		var onCallInfo = h('div', { class: 'dolly-field--full' }, DOLLY.alert(__('Contratto a chiamata: nessun giorno né orario fisso. Il dipendente inizia e termina il turno quando vuole; ogni turno viene approvato dall\'amministratore oppure automaticamente fino alla soglia indicata nelle Impostazioni.'), 'info'));
 		var hoursBox = h('div', { class: 'dolly-form-grid dolly-field--full' }, [h('div', { class: 'dolly-field--full' }, perDay), uniformBox, perDayBox]);
 		var wrap = h('div', { class: 'dolly-form-grid' }, [type, h('span'), onCallInfo, hoursBox]);
@@ -637,14 +664,29 @@
 					var r = rows[wd], p = 'day' + wd + '_';
 					if (!r.on.control.isOn()) { return; }
 					any = true;
+					var mode = r.mode.input.value;
 					var spec = {};
+					if (mode === 'mixed') {
+						['office_start', 'office_end', 'smart_start', 'smart_end'].forEach(function (k, i) { spec[p + k] = [[r.os, r.oe, r.ss, r.se][i], 'time', true]; });
+						var rm = DOLLY.readDateTimes(spec);
+						Object.assign(errors, rm.errors);
+						out.days[wd] = { mode: 'mixed', office_start: rm.values[p + 'office_start'], office_end: rm.values[p + 'office_end'], smart_start: rm.values[p + 'smart_start'], smart_end: rm.values[p + 'smart_end'] };
+						if (!Object.keys(rm.errors).length) {
+							var m = function (v) { return +v.slice(0, 2) * 60 + +v.slice(3, 5); };
+							var d = out.days[wd];
+							if (m(d.office_end) <= m(d.office_start)) { errors[p + 'office_end'] = __('La fine deve essere successiva all\'inizio.'); }
+							else if (m(d.smart_end) <= m(d.smart_start)) { errors[p + 'smart_end'] = __('La fine deve essere successiva all\'inizio.'); }
+							else if (m(d.office_start) < m(d.smart_end) && m(d.smart_start) < m(d.office_end)) { errors[p + 'smart_start'] = __('Le ore in presenza e in smart working non devono sovrapporsi.'); }
+						}
+						return;
+					}
 					spec[p + 'start_time'] = [r.start, 'time', true];
 					spec[p + 'end_time'] = [r.end, 'time', true];
 					var lunch = r.lunch.control.isOn();
 					if (lunch) { spec[p + 'lunch_start'] = [r.ls, 'time', true]; spec[p + 'lunch_end'] = [r.le, 'time', true]; }
 					var rd = DOLLY.readDateTimes(spec);
 					Object.assign(errors, rd.errors);
-					out.days[wd] = { start_time: rd.values[p + 'start_time'], end_time: rd.values[p + 'end_time'], has_lunch: lunch, lunch_start: rd.values[p + 'lunch_start'] || '', lunch_end: rd.values[p + 'lunch_end'] || '' };
+					out.days[wd] = { mode: mode, start_time: rd.values[p + 'start_time'], end_time: rd.values[p + 'end_time'], has_lunch: lunch, lunch_start: rd.values[p + 'lunch_start'] || '', lunch_end: rd.values[p + 'lunch_end'] || '' };
 				});
 				if (!any) { errors.per_day = __('Attiva almeno un giorno lavorativo.'); }
 				return out;
@@ -655,7 +697,7 @@
 			var rd2 = DOLLY.readDateTimes(spec2);
 			Object.assign(errors, rd2.errors);
 			if (!u.weekdays.values().length) { errors.weekdays = __('Seleziona almeno un giorno.'); }
-			return { employment_type: t, weekdays: u.weekdays.values().map(Number), start_time: rd2.values.start_time, end_time: rd2.values.end_time, has_lunch: lunch2, lunch_start: rd2.values.lunch_start || '', lunch_end: rd2.values.lunch_end || '' };
+			return { employment_type: t, weekdays: u.weekdays.values().map(Number), start_time: rd2.values.start_time, end_time: rd2.values.end_time, has_lunch: lunch2, lunch_start: rd2.values.lunch_start || '', lunch_end: rd2.values.lunch_end || '', smart: u.smart.control.isOn() };
 		};
 		return wrap;
 	}
@@ -1441,6 +1483,7 @@
 						{ label: __('Segnalata'), render: function (s) { return DOLLY.fmt.dateTime(s.reported_at); } },
 						{ label: __('Certificato'), render: function (s) {
 							return h('div', {}, [DOLLY.certBadge(s.certificate_status, s.certificate_label), s.certificate_due && (s.certificate_status === 'missing' || s.certificate_status === 'overdue') ? h('div', { class: 'dolly-small', text: __('Scadenza ') + DOLLY.fmt.date(s.certificate_due) }) : null,
+								s.protocol ? h('div', { class: 'dolly-small', text: __('Protocollo: ') + s.protocol }) : null,
 								s.certificates.map(function (c) { return h('div', { class: 'dolly-small' }, h('a', { href: DOLLY.downloadUrl('certificates/' + c.id + '/download') }, [DOLLY.icon('download'), ' ' + c.original_name])); })]);
 						} },
 						{ label: __('Note'), render: function (s) { return s.notes ? h('span', { class: 'dolly-small', text: s.notes }) : '—'; } },
@@ -2066,6 +2109,10 @@
 		var radius = DOLLY.field({ label: __('Raggio GPS predefinito per le nuove sedi (metri)'), name: 'default_radius', type: 'number', value: s.default_radius, attrs: { min: 10, max: 5000 } });
 		var cm = DOLLY.radios({ label: __('Certificato medico'), name: 'certificate_mode', value: s.certificate_mode, options: Object.keys(d.certificate_modes).map(function (k) { return { value: k, label: d.certificate_modes[k] + (k === 'required' ? __(' (predefinito)') : ''), description: k === 'disabled' ? __('Disattivando, i requisiti in sospeso vengono annullati con registrazione nel registro.') : null }; }) });
 		var cdays = DOLLY.field({ label: __('Giorni di calendario per il certificato'), name: 'certificate_days', type: 'number', value: s.certificate_days, attrs: { min: 1, max: 365 }, help: __('Usato solo con la scadenza attiva.') });
+		var certFile = DOLLY.switchControl({ label: __('File del certificato obbligatorio'), name: 'certificate_require_file', checked: s.certificate_require_file !== false, description: __('Il dipendente deve caricare il file (PDF, JPG o PNG).') });
+		var certProtocol = DOLLY.switchControl({ label: __('Numero di protocollo obbligatorio'), name: 'certificate_require_protocol', checked: !!s.certificate_require_protocol, description: __('Il dipendente deve inserire a mano il numero di protocollo del certificato telematico. Con entrambi disattivati basta uno dei due.') });
+		// Smart working.
+		var smartAuto = DOLLY.switchControl({ label: __('Approvazione automatica dello smart working'), name: 'smart_auto', checked: s.smart_auto !== false, description: __('Attiva: le ore in smart working vengono conteggiate appena il dipendente timbra l\'uscita. Disattivata: ogni giornata con ore in smart working va approvata in Richieste; fino ad allora quelle ore non vengono conteggiate.') });
 		// Attendance rules.
 		var lunchPunch = DOLLY.switchControl({ label: __('Timbratura della pausa pranzo'), name: 'lunch_punch', checked: s.lunch_punch, description: __('Attiva: i dipendenti timbrano inizio e fine pausa. Disattivata: non timbrano la pausa e la pausa prevista dall\'orario viene sottratta in automatico.') });
 		var lateTol = DOLLY.field({ label: __('Tolleranza ritardo in entrata (minuti)'), name: 'late_tolerance', type: 'number', value: s.late_tolerance, attrs: { min: 0, max: 120 }, help: __('Un\'entrata entro questi minuti dall\'inizio turno conta come entrata regolare (es. 3: turno alle 08:00, entrata alle 08:03 → 08:00). Valore predefinito per tutte le sedi: ogni sede può avere la sua tolleranza in Sedi › Modifica.') });
@@ -2172,7 +2219,11 @@
 				h('p', { class: 'dolly-muted', style: 'margin:0', text: __('I dipendenti con contratto a chiamata non hanno giorni né orari: iniziano e terminano il turno quando vogliono e ogni turno completato va approvato.') }),
 				ocAuto, ocBox
 			]), { level: 'h2' }),
-			DOLLY.card(__('Malattia, infortunio e certificati'), 'stethoscope', h('div', { class: 'dolly-form' }, [cm, cdays]), { level: 'h2' }),
+			DOLLY.card(__('Smart working'), 'house', h('div', { class: 'dolly-form', dataset: { tour: 'smart-settings' } }, [
+				h('p', { class: 'dolly-muted', style: 'margin:0', text: __('Lo smart working si imposta nell\'orario di ogni dipendente (Dipendenti › Gestisci): tutti i giorni, singoli giorni o giornate miste con una fascia in presenza e una in smart working. In smart working il dipendente timbra senza verifica della presenza.') }),
+				smartAuto
+			]), { level: 'h2' }),
+			DOLLY.card(__('Malattia, infortunio e certificati'), 'stethoscope', h('div', { class: 'dolly-form' }, [cm, cdays, certFile, certProtocol]), { level: 'h2' }),
 			DOLLY.card(__('Donazione sangue'), 'droplet', h('div', { class: 'dolly-form' }, [
 				h('p', { class: 'dolly-muted', style: 'margin:0', text: __('La donazione sangue si chiede da Richieste. Dopo l\'approvazione, dal giorno successivo alla donazione il dipendente trova nella richiesta «Carica certificato» (con notifica e anomalia "Certificato mancante"), come per il certificato medico.') }),
 				dcm, dcdays
@@ -2207,6 +2258,7 @@
 				admin_notify_portal: admN.portal.control.isOn(), admin_notify_email: admN.email.control.isOn(), admin_events: admN.values(),
 				reminder_entry: remEntry.control.isOn(), reminder_entry_minutes: remEntryMin.values(), reminder_exit: remExit.control.isOn(), reminder_exit_minutes: remExitMin.values(),
 				donation_certificate_mode: dcm.value(), donation_certificate_days: dcdays.input.value, device_sessions: deviceSessions.control.isOn(),
+				smart_auto: smartAuto.control.isOn(), certificate_require_file: certFile.control.isOn(), certificate_require_protocol: certProtocol.control.isOn(),
 				admin_recipients: recipients.values().map(Number), pin_max_attempts: pinMax.input.value, pin_lock_minutes: pinLock.input.value, challenge_grace: grace.input.value
 			};
 			var go = function () {
@@ -2921,6 +2973,195 @@
 	}
 
 	/* ------------------------------------------------------------------ */
+	/* Documents                                                            */
+	/* ------------------------------------------------------------------ */
+
+	var DOC_ICONS = { contratto: 'file-signature', cu: 'receipt-text', busta_paga: 'wallet', altro: 'file' };
+	function docIcon(key) { return DOC_ICONS[key] || 'folder'; }
+
+	/** Employees with search and pagination; each row: send a document, list of documents. */
+	function pageDocuments() {
+		var st = { page: 1, search: '', status: 'active' };
+		var box = h('div', {}, DOLLY.loading());
+		var search = DOLLY.field({ label: __('Cerca'), type: 'search', attrs: { placeholder: __('Nome, utente o email') } });
+		var status = DOLLY.field({ label: __('Stato'), type: 'select', value: 'active', options: [{ value: 'active', label: __('Attivi') }, { value: 'inactive', label: __('Disattivati') }, { value: 'all', label: __('Tutti') }] });
+		var timer = null;
+		search.input.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(function () { st.search = search.input.value.trim(); st.page = 1; load(); }, 300); });
+		status.input.addEventListener('change', function () { st.status = status.input.value; st.page = 1; load(); });
+		var catBtn = DOLLY.button(__('Categorie'), { icon: 'tags', onClick: function () { categoriesDialog(load); } });
+		catBtn.dataset.tour = 'doc-categories';
+		DOLLY.render(main, DOLLY.card(null, null, [
+			h('p', { class: 'dolly-muted', style: 'margin-top:0', text: __('Invia a ogni dipendente contratti, CU, buste paga e altri documenti. Il dipendente li trova nella sezione Documenti del portale e riceve una notifica; i file sono conservati in una cartella privata e separata per ogni dipendente.') }),
+			h('div', { class: 'dolly-toolbar', dataset: { tour: 'doc-toolbar' } }, [search, status, h('div', { class: 'dolly-toolbar__spacer' }), catBtn]),
+			box
+		]));
+		function load() {
+			DOLLY.api('admin/documents/people', { query: st }).then(function (res) {
+				DOLLY.render(box, [
+					DOLLY.table([
+						{ label: __('Dipendente'), render: function (e) { return h('div', {}, [h('strong', { text: e.name }), h('div', { class: 'dolly-small dolly-muted', text: e.username + (e.workplaces ? ' · ' + e.workplaces : '') }), e.active ? null : DOLLY.badge(__('Disattivato'), 'neutral', 'ban')]); } },
+						{ label: __('Documenti'), num: true, render: function (e) { return e.documents ? String(e.documents) : h('span', { class: 'dolly-muted', text: '0' }); } },
+						{ label: __('Ultimo invio'), render: function (e) { return e.last_at ? DOLLY.fmt.dateTime(e.last_at) : h('span', { class: 'dolly-muted', text: '—' }); } },
+						{ label: '', srLabel: __('Azioni'), render: function (e) {
+							return h('div', { class: 'dolly-actions dolly-doc-actions' }, [
+								DOLLY.button(DOLLY.sprintf(__('Invia un documento a %s'), e.name), { iconOnly: true, icon: 'file-up', variant: 'primary', size: 'sm', onClick: function () { sendDocumentDialog(e, load); } }),
+								DOLLY.button(DOLLY.sprintf(__('Documenti di %s'), e.name), { iconOnly: true, icon: 'folder-open', size: 'sm', onClick: function () { documentsDialog(e, load); } })
+							]);
+						} }
+					], res.items, { empty: [__('Nessun dipendente'), st.search ? __('Nessun risultato per la ricerca.') : __('Crea prima i dipendenti.'), 'users'], caption: __('Documenti dei dipendenti') }),
+					DOLLY.pagination(res, function (p) { st.page = p; load(); }, 'dipendenti')
+				]);
+				var first = box.querySelector('.dolly-doc-actions');
+				if (first) { first.dataset.tour = 'doc-actions'; }
+			}, function (err) { DOLLY.render(box, DOLLY.errorState(err, load)); });
+		}
+		load();
+	}
+
+	/** Categories (defaults fixed, custom ones editable): admin/documents/categories. */
+	function categoryOptions() {
+		return DOLLY.api('admin/documents/categories');
+	}
+
+	function sendDocumentDialog(e, done) {
+		var body = h('div', {}, DOLLY.loading());
+		var dlg = DOLLY.dialog({ title: __('Invia documento'), body: body });
+		categoryOptions().then(function (cats) {
+			var alertBox = h('div', { hidden: true });
+			var category = DOLLY.radios({ label: __('Categoria'), name: 'category', value: 'busta_paga', options: cats.map(function (c) { return { value: c.key, label: c.label }; }) });
+			category.classList.add('dolly-doc-cats');
+			var title = DOLLY.field({ label: __('Titolo'), name: 'title', required: true, attrs: { maxlength: 190 }, help: __('Es. «Busta paga ottobre 2026».') });
+			var desc = DOLLY.field({ label: __('Descrizione'), name: 'description', type: 'textarea', optional: true, attrs: { maxlength: 2000, rows: 3 } });
+			var fileInput = h('input', { type: 'file', class: 'dolly-input', id: DOLLY.uid('file'), accept: '.pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.odt,.ods' });
+			var fileField = h('div', { class: 'dolly-field', dataset: { name: 'file' } }, [
+				h('label', { class: 'dolly-label', for: fileInput.id, text: __('File') }), fileInput,
+				h('span', { class: 'dolly-help', text: __('PDF, JPG, PNG, Word, Excel o OpenDocument, massimo 20 MB.') }),
+				h('span', { class: 'dolly-error', hidden: true })
+			]);
+			// Title suggested from the category and the file name until the administrator types one.
+			var typed = false;
+			title.input.addEventListener('input', function () { typed = !!title.input.value; });
+			function suggest() {
+				if (typed) { return; }
+				var c = cats.filter(function (x) { return x.key === category.value(); })[0];
+				var f = fileInput.files[0];
+				title.input.value = f ? f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ') : (c && c.key !== 'altro' ? c.label : '');
+			}
+			category.addEventListener('change', suggest);
+			fileInput.addEventListener('change', suggest);
+			suggest();
+			var form = h('form', { class: 'dolly-form', novalidate: true }, [
+				alertBox,
+				h('p', { style: 'margin:0' }, [__('Destinatario: '), h('strong', { text: e.name })]),
+				category, title, desc, fileField
+			]);
+			DOLLY.render(body, form);
+			DOLLY.render(dlg.foot, []);
+			var cancel = DOLLY.button(__('Annulla'), { onClick: function () { dlg.close(); } });
+			var send = DOLLY.button(__('Invia'), { variant: 'primary', icon: 'send', onClick: submit });
+			dlg.el.appendChild(h('div', { class: 'dolly-dialog__foot' }, [cancel, send]));
+			DOLLY.icons();
+			form.addEventListener('submit', function (ev) { ev.preventDefault(); submit(); });
+			function submit() {
+				DOLLY.clearErrors(form); alertBox.hidden = true;
+				var f = fileInput.files[0], errors = {};
+				if (!title.input.value.trim()) { errors.title = __('Campo obbligatorio.'); }
+				if (!f) { errors.file = __('Scegli il file da inviare.'); }
+				else if (f.size > 20 * 1024 * 1024) { errors.file = __('Il file supera i 20 MB.'); }
+				if (Object.keys(errors).length) { DOLLY.showErrors(form, errors); return; }
+				var fd = new FormData();
+				fd.append('user_id', e.id); fd.append('category', category.value()); fd.append('title', title.input.value.trim()); fd.append('description', desc.input.value.trim()); fd.append('file', f);
+				DOLLY.busy(send, DOLLY.api('admin/documents', { method: 'POST', form: fd, timeout: 180000 })).then(function () {
+					dlg.close(); DOLLY.toast(DOLLY.sprintf(__('Documento inviato a %s.'), e.name), 'success'); done();
+				}, function (err) { DOLLY.formError(form, err, alertBox); });
+			}
+		}, function (err) { DOLLY.render(body, DOLLY.errorState(err)); });
+	}
+
+	/** Documents of one employee by category: open or delete. */
+	function documentsDialog(e, done) {
+		var body = h('div', {}, DOLLY.loading());
+		var changed = false;
+		DOLLY.dialog({
+			title: DOLLY.sprintf(__('Documenti di %s'), e.name), body: body, wide: true,
+			actions: [{ label: __('Invia documento'), icon: 'file-up', onClick: function (close) { close(); sendDocumentDialog(e, done); } }, { label: __('Chiudi'), variant: 'primary' }],
+			onClose: function () { if (changed) { done(); } }
+		});
+		function load() {
+			DOLLY.api('admin/documents', { query: { user_id: e.id } }).then(function (d) {
+				var groups = d.groups.filter(function (g) { return g.items.length; });
+				DOLLY.render(body, d.total ? h('div', { class: 'dolly-doc-groups' }, groups.map(function (g) {
+					return h('section', { class: 'dolly-doc-group' }, [
+						h('h3', { class: 'dolly-doc-group__title' }, [DOLLY.icon(docIcon(g.key)), g.label, h('span', { class: 'dolly-doc-group__count', text: String(g.items.length) })]),
+						h('ul', { class: 'dolly-doc-list' }, g.items.map(function (doc) {
+							var del = DOLLY.button(__('Elimina'), { size: 'sm', variant: 'ghost', icon: 'trash-2', onClick: function () {
+								DOLLY.confirm(__('Eliminare il documento?'), DOLLY.sprintf(__('«%s» viene eliminato definitivamente e il dipendente non potrà più aprirlo.'), doc.title), __('Elimina'), 'danger').then(function (ok) {
+									if (!ok) { return; }
+									DOLLY.busy(del, DOLLY.api('admin/documents/' + doc.id, { method: 'DELETE' })).then(function () { changed = true; DOLLY.toast(__('Documento eliminato.'), 'success'); load(); }, function (err) { DOLLY.toast(err.message, 'error'); });
+								});
+							} });
+							return h('li', { class: 'dolly-doc' }, [
+								h('span', { class: 'dolly-doc__icon', 'aria-hidden': 'true' }, DOLLY.icon(doc.mime === 'application/pdf' ? 'file-text' : (doc.inline ? 'image' : 'file'))),
+								h('div', { class: 'dolly-doc__text' }, [
+									h('strong', { text: doc.title }),
+									doc.description ? h('span', { class: 'dolly-small', text: doc.description }) : null,
+									h('span', { class: 'dolly-small dolly-muted', text: doc.original_name + ' · ' + DOLLY.fmt.bytes(doc.size) + ' · ' + DOLLY.fmt.dateTime(doc.uploaded_at) + (doc.uploaded_by ? ' · ' + doc.uploaded_by : '') }),
+									doc.viewed_at ? DOLLY.badge(__('Aperto dal dipendente il ') + DOLLY.fmt.dateTime(doc.viewed_at), 'green', 'eye') : DOLLY.badge(__('Non ancora aperto'), 'neutral', 'eye-off')
+								]),
+								h('div', { class: 'dolly-doc__actions' }, [
+									DOLLY.button(doc.inline ? __('Apri') : __('Scarica'), { size: 'sm', icon: doc.inline ? 'eye' : 'download', href: DOLLY.downloadUrl('documents/' + doc.id + '/download', doc.inline ? { inline: 1 } : {}) }),
+									del
+								])
+							]);
+						}))
+					]);
+				})) : DOLLY.empty(__('Nessun documento'), __('Usa «Invia documento» per inviarne uno.'), 'folder-open'));
+				Array.prototype.forEach.call(body.querySelectorAll('.dolly-doc__actions a'), function (a) { a.target = '_blank'; a.rel = 'noopener'; });
+				DOLLY.icons();
+			}, function (err) { DOLLY.render(body, DOLLY.errorState(err, load)); });
+		}
+		load();
+	}
+
+	/** Default categories are fixed; the administrator can add, rename and remove others. */
+	function categoriesDialog(done) {
+		var body = h('div', {}, DOLLY.loading());
+		var dlg = DOLLY.dialog({ title: __('Categorie dei documenti'), body: body });
+		categoryOptions().then(function (cats) {
+			var alertBox = h('div', { hidden: true });
+			var list = h('div', { class: 'dolly-stack' });
+			var rows = [];
+			function addRow(c) {
+				var i = rows.length;
+				var f = DOLLY.field({ label: __('Nome della categoria'), name: 'category_' + i, value: c ? c.label : '', attrs: { maxlength: 40 } });
+				var row = h('div', { class: 'dolly-doc-cat' }, [f]);
+				var item = { key: c ? c.key : '', field: f, row: row, removed: false };
+				var rm = DOLLY.button(__('Rimuovi'), { size: 'sm', variant: 'ghost', icon: 'trash-2', onClick: function () { item.removed = true; row.remove(); } });
+				row.appendChild(rm);
+				if (c && c.count) { row.appendChild(h('span', { class: 'dolly-small dolly-muted', text: DOLLY.sprintf(__('%d documenti: se la rimuovi passano in «Altro».'), c.count) })); }
+				rows.push(item); list.appendChild(row); DOLLY.icons();
+				if (!c) { f.input.focus(); }
+			}
+			cats.filter(function (c) { return c.custom; }).forEach(addRow);
+			var form = h('form', { class: 'dolly-form', novalidate: true }, [
+				alertBox,
+				h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: __('Categorie predefinite') }), h('div', { class: 'dolly-btn-row' }, cats.filter(function (c) { return !c.custom; }).map(function (c) { return DOLLY.badge(c.label + (c.count ? ' · ' + c.count : ''), 'blue', docIcon(c.key)); })), h('span', { class: 'dolly-help', text: __('Non si possono rimuovere.') })]),
+				h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: __('Altre categorie') }), list, h('div', {}, DOLLY.button(__('Aggiungi categoria'), { size: 'sm', icon: 'plus', onClick: function () { addRow(null); } }))])
+			]);
+			DOLLY.render(body, form);
+			var save = DOLLY.button(__('Salva categorie'), { variant: 'primary', icon: 'save', onClick: function () {
+				DOLLY.clearErrors(form); alertBox.hidden = true;
+				var out = rows.filter(function (r) { return !r.removed && r.field.input.value.trim(); }).map(function (r) { return { key: r.key, label: r.field.input.value.trim() }; });
+				DOLLY.busy(save, DOLLY.api('admin/documents/categories', { method: 'POST', body: { categories: out } })).then(function () {
+					dlg.close(); DOLLY.toast(__('Categorie salvate.'), 'success'); done();
+				}, function (err) { DOLLY.formError(form, err, alertBox); });
+			} });
+			dlg.el.appendChild(h('div', { class: 'dolly-dialog__foot' }, [DOLLY.button(__('Annulla'), { onClick: function () { dlg.close(); } }), save]));
+			DOLLY.icons();
+		}, function (err) { DOLLY.render(body, DOLLY.errorState(err)); });
+	}
+
+	/* ------------------------------------------------------------------ */
 	/* Guided setup                                                         */
 	/* ------------------------------------------------------------------ */
 
@@ -3169,21 +3410,50 @@
 				};
 			} },
 
+			{ id: 'smart', group: 'settings', icon: 'house', title: __('Smart working'), intro: __('Lavoro da remoto: si imposta nell\'orario di ogni dipendente, per tutti i giorni, per singoli giorni o per una parte della giornata.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var auto = DOLLY.switchControl({ label: __('Approvazione automatica dello smart working'), name: 'smart_auto', checked: s.smart_auto !== false });
+				var how = function (icon, title, text) { return h('div', {}, [DOLLY.icon(icon), h('strong', { text: title }), h('span', { text: text })]); };
+				return {
+					body: [
+						h('div', { class: 'dolly-ob__how' }, [
+							how('calendar-check', __('Turni normali'), __('Un orario fisso per tutti i giorni: l\'interruttore «Smart working» mette in smart working l\'intero orario.')),
+							how('calendar-range', __('Turni diversi'), __('Un orario per ogni giorno: ogni giorno è in presenza, in smart working oppure misto.')),
+							how('split', __('Giornata mista'), __('Una fascia in presenza e una in smart working, che non si sovrappongono (es. 9–13 in sede, 14–18 da casa).'))
+						]),
+						obNote(__('In smart working il dipendente timbra entrata e uscita con un tocco: niente GPS, QR/PIN o Bluetooth. Nelle giornate miste la verifica serve solo per le timbrature della fascia in presenza.'), 'house'),
+						explained(auto, [
+							['on', __('Le ore in smart working vengono conteggiate appena il dipendente timbra l\'uscita.')],
+							['off', __('Ogni giornata con ore in smart working arriva in Richieste da approvare (e ricevi una notifica). Finché non la approvi, quelle ore non vengono conteggiate; se la respingi restano escluse.')],
+							['tip', __('Le ore oltre la fine del turno seguono comunque le regole dello straordinario.')]
+						])
+					],
+					save: settingsSave(function () { return { smart_auto: auto.control.isOn() }; })
+				};
+			} },
+
 			{ id: 'sickness', group: 'settings', icon: 'stethoscope', title: __('Malattia e certificati'), intro: __('Cosa deve presentare il dipendente dopo una malattia, un infortunio o una donazione di sangue.'), build: function (ctx) {
 				var s = ctx.d.settings;
 				var cm = certModes(ctx.d, 'certificate_mode', s.certificate_mode);
 				var cdays = n('certificate_days', __('Giorni di calendario per il certificato'), s.certificate_days, 1, 365);
 				var dcm = certModes(ctx.d, 'donation_certificate_mode', s.donation_certificate_mode);
 				var dcdays = n('donation_certificate_days', __('Giorni di calendario per il certificato di donazione'), s.donation_certificate_days, 1, 365);
+				var reqFile = DOLLY.switchControl({ label: __('File del certificato obbligatorio'), name: 'certificate_require_file', checked: s.certificate_require_file !== false });
+				var reqProt = DOLLY.switchControl({ label: __('Numero di protocollo obbligatorio'), name: 'certificate_require_protocol', checked: !!s.certificate_require_protocol });
 				return {
 					body: [
 						explained(cm, [['tip', __('Il dipendente segnala la malattia dal portale e carica il certificato (foto o PDF); lo trovi in Richieste › Malattie, infortuni e certificati.')]]),
 						explained(cdays, [['change', __('Usato solo con la scadenza attiva: giorni di calendario dalla segnalazione entro cui caricare il certificato.')]]),
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(reqFile, [['on', __('Il dipendente deve caricare il file del certificato (PDF, JPG o PNG): senza il file la segnalazione resta "Certificato mancante".')], ['off', __('Il file è facoltativo.')]]),
+							explained(reqProt, [['on', __('Il dipendente deve inserire a mano il numero di protocollo del certificato telematico; lo vedi accanto alla segnalazione in Richieste.')], ['off', __('Il numero di protocollo è facoltativo.')]])
+						]),
+						obNote(__('Con entrambi disattivati basta uno dei due: il file oppure il numero di protocollo.'), 'info'),
 						explained(dcm, [['tip', __('La donazione di sangue si chiede da Richieste; dopo l\'approvazione il dipendente carica l\'attestato dal giorno successivo alla donazione.')]]),
 						explained(dcdays, [['change', __('Usato solo con la scadenza attiva: contati dal giorno successivo alla donazione.')]])
 					],
 					save: function (ctx2) {
-						var go = settingsSave(function () { return { certificate_mode: cm.value(), certificate_days: cdays.input.value, donation_certificate_mode: dcm.value(), donation_certificate_days: dcdays.input.value }; });
+						var go = settingsSave(function () { return { certificate_mode: cm.value(), certificate_days: cdays.input.value, donation_certificate_mode: dcm.value(), donation_certificate_days: dcdays.input.value, certificate_require_file: reqFile.control.isOn(), certificate_require_protocol: reqProt.control.isOn() }; });
 						if (cm.value() === 'disabled' && s.certificate_mode !== 'disabled') {
 							return DOLLY.confirm(__('Disattivare i certificati?'), __('Tutti i requisiti di certificato in sospeso verranno annullati e registrati nel registro modifiche.'), __('Disattiva e salva'), 'danger').then(function (ok) {
 								if (!ok) { return Promise.reject({ cancelled: true }); }
@@ -3212,6 +3482,27 @@
 						obNote(__('Sempre attive: uscita mancante (nessuna uscita entro le 23:59) e certificato mancante. Le anomalie si risolvono dalla sezione Anomalie, correggendo la timbratura o giustificando l\'assenza.'), 'info')
 					],
 					save: settingsSave(function () { return { absence_check: check.control.isOn(), absence_delay: delay.input.value }; })
+				};
+			} },
+
+			{ id: 'documents', group: 'settings', icon: 'folder-open', title: __('Documenti'), intro: __('Contratti, CU, buste paga e altri documenti da inviare ai dipendenti.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var ev = (s.events && s.events.document_received) || { portal: true, email: true };
+				var portal = DOLLY.switchControl({ label: __('Notifica nell\'app per un nuovo documento'), name: 'doc_portal', checked: ev.portal !== false });
+				var email = DOLLY.switchControl({ label: __('Email per un nuovo documento'), name: 'doc_email', checked: ev.email !== false });
+				return {
+					body: [
+						h('div', { class: 'dolly-ob__how' }, [
+							h('div', {}, [DOLLY.icon('file-up'), h('strong', { text: __('Invio') }), h('span', { text: __('Dalla sezione Documenti scegli il dipendente, la categoria (Contratto, CU, Busta paga, Altro o una tua), un titolo e il file.') })]),
+							h('div', {}, [DOLLY.icon('folder-open'), h('strong', { text: __('Archivio') }), h('span', { text: __('Per ogni dipendente vedi i documenti divisi per categoria, se li ha già aperti, e puoi aprirli o eliminarli.') })]),
+							h('div', {}, [DOLLY.icon('lock'), h('strong', { text: __('Riservatezza') }), h('span', { text: __('I file sono in una cartella privata separata per ogni dipendente: li vedono solo il dipendente e gli amministratori.') })])
+						]),
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(portal, [['on', __('Il dipendente vede il nuovo documento nella campanella e riceve una notifica push sul telefono.')], ['off', __('Nessun avviso nell\'app: il documento compare comunque nella sezione Documenti, con il contatore dei nuovi.')]]),
+							explained(email, [['on', __('Il dipendente riceve anche un\'email (senza allegato: il file si apre solo dal portale).')], ['off', __('Nessuna email per i nuovi documenti.')]])
+						])
+					],
+					save: settingsSave(function () { return { events: { document_received: { portal: portal.control.isOn(), email: email.control.isOn() } } }; })
 				};
 			} },
 
@@ -3335,7 +3626,7 @@
 					body: [
 						h('div', { class: 'dolly-ob__how' }, [
 							h('div', {}, [DOLLY.icon('id-card'), h('strong', { text: __('Dati e accesso') }), h('span', { text: __('Il nome utente non si può cambiare; la password iniziale la comunichi tu e il dipendente può cambiarla.') })]),
-							h('div', {}, [DOLLY.icon('clock'), h('strong', { text: __('Orario') }), h('span', { text: __('Giorni e orari di lavoro: servono per ritardi, straordinari, promemoria e assenze. Per i contratti a chiamata non serve un orario.') })]),
+							h('div', {}, [DOLLY.icon('clock'), h('strong', { text: __('Orario e smart working') }), h('span', { text: __('Giorni e orari di lavoro (turni normali o diversi per giorno) e lo smart working: tutti i giorni, alcuni giorni o giornate miste. Per i contratti a chiamata non serve un orario.') })]),
 							h('div', {}, [DOLLY.icon('map-pin'), h('strong', { text: __('Sedi e validità') }), h('span', { text: __('Il dipendente timbra solo nelle sedi assegnate. "Valido dal" permette di cambiare orario e sedi in futuro senza toccare lo storico.') })])
 						]),
 						list,
@@ -3519,14 +3810,23 @@
 			{ page: 'employees', section: __('Dipendenti'), target: '#dolly-admin-main .dolly-tabs', title: __('Dipendenti e dispositivi'), text: [p(__('Nella prima scheda l\'elenco dei dipendenti; in "Gestione dispositivi" i telefoni collegati, da scollegare quando un dipendente cambia telefono.'))] },
 			{ page: 'employees', section: __('Dipendenti'), target: '#dolly-admin-main .dolly-toolbar', title: __('Cerca e filtra'), text: [p(__('Cerca per nome, filtra per stato e per sede. "Nuovo dipendente" apre la creazione dell\'account.'))] },
 			{ page: 'employees', section: __('Dipendenti'), target: '#dolly-admin-main .dolly-table, #dolly-admin-main .dolly-empty', title: __('La scheda del dipendente'), text: [p(__('Tocca un dipendente per aprire la sua scheda:')), ul([__('Dati, orario e sedi, con lo storico delle modifiche.'), __('Eccezioni: permetti una timbratura fuori sede o senza verifica per un periodo.'), __('Disattiva l\'account quando il rapporto termina: lo storico resta.')])] },
-			{ page: 'employees', section: __('Dipendenti'), target: nav('employee-new'), title: __('Nuovo dipendente'), text: [p(__('Da qui crei un nuovo account con orario di lavoro, sedi e dati bancari. Il dipendente accede dal telefono con nome utente e password.'))] },
-			go('employees', 'requests', __('Dipendenti')),
+			go('employees', 'employee-new', __('Dipendenti')),
+			{ page: 'employee-new', section: navLabel('employee-new'), target: '#dolly-admin-main .dolly-card', title: __('Nuovo dipendente'), text: [p(__('Qui crei un nuovo account: dati anagrafici, orario di lavoro, sedi e dati bancari. Il dipendente accede dal telefono con nome utente e password. Le stesse schede servono per modificarlo da Dipendenti › Gestisci.'))] },
+			{ page: 'employee-new', section: navLabel('employee-new'), target: '[data-name="employment_type"]', scroll: true, title: __('Tipo di contratto'), text: [p(__('Tempo pieno, part-time o contratto a chiamata. A chiamata non ci sono giorni né orari: ogni turno viene approvato.'))] },
+			{ page: 'employee-new', section: navLabel('employee-new'), target: '[data-tour="per-day"]', scroll: true, title: __('Turni normali o turni diversi'), text: [p(__('Disattivato (turni normali): un orario fisso per i giorni selezionati. Attivato (turni diversi): ogni giorno ha il suo orario e la sua modalità: in presenza, smart working o mista, con una fascia in presenza e una in smart working che non si sovrappongono.'))] },
+			{ page: 'employee-new', section: navLabel('employee-new'), target: '[data-tour="smart"]', scroll: true, title: __('Smart working'), text: [p(__('Con i turni normali questo interruttore mette in smart working tutti i giorni. In smart working il dipendente timbra entrata e uscita con un tocco, senza GPS, QR/PIN o Bluetooth.')), p(__('Le ore in smart working vengono approvate in automatico o da te, secondo Impostazioni › Smart working.'))] },
+			go('employee-new', 'requests', navLabel('employee-new')),
 			{ page: 'requests', section: __('Richieste'), target: '#dolly-admin-main .dolly-tabs', title: __('Richieste e malattie'), text: [p(__('Ferie, permessi, donazioni, straordinari, turni a chiamata e correzioni di timbratura in una scheda; malattie, infortuni e certificati nell\'altra.'))] },
 			{ page: 'requests', section: __('Richieste'), target: '#dolly-admin-main .dolly-toolbar', title: __('Approva o respingi'), text: [p(__('Filtra per stato, tipo e sede. Ogni richiesta ha i pulsanti Approva e Respingi; il dipendente riceve subito l\'esito. Puoi anche inserire tu un\'autorizzazione per conto di un dipendente.'))] },
+			{ page: 'requests', section: __('Richieste'), target: '#dolly-admin-main .dolly-tabs', title: __('Turni e smart working da approvare'), text: [p(__('Qui arrivano anche i turni a chiamata e, se l\'approvazione automatica è disattivata, le giornate in smart working: finché non le approvi, quelle ore non vengono conteggiate nelle presenze.')), p(__('Nelle malattie vedi il certificato caricato e il numero di protocollo inserito dal dipendente.'))] },
 			go('requests', 'attendance', __('Richieste')),
 			{ page: 'attendance', section: __('Presenze'), target: '.dolly-att-modes', title: __('Per dipendente o per giorno'), text: [p(__('Il modulo mensile di un dipendente, oppure tutti i dipendenti in un giorno.'))] },
 			{ page: 'attendance', section: __('Presenze'), target: '.dolly-att-modes + div', title: __('Il modulo presenze'), text: [p(__('Entrate, pause, uscite, ore ordinarie, straordinari e assenze. Puoi correggere una timbratura (resta traccia nel registro), stampare ed esportare in CSV.'))] },
-			go('attendance', 'analytics', __('Presenze')),
+			go('attendance', 'documents', __('Presenze')),
+			{ page: 'documents', section: navLabel('documents'), target: '[data-tour="doc-toolbar"]', title: __('Documenti dei dipendenti'), text: [p(__('Cerca il dipendente per nome, utente o email. L\'elenco è diviso in pagine e mostra quanti documenti ha ciascuno e l\'ultimo invio.'))] },
+			{ page: 'documents', section: navLabel('documents'), target: '[data-tour="doc-actions"]', title: __('Invia o consulta'), text: [p(__('Il primo pulsante invia un documento: scegli la categoria, scrivi titolo e descrizione (facoltativa) e scegli il file. Il dipendente riceve una notifica.')), p(__('Il secondo apre l\'archivio del dipendente diviso per categoria: vedi se ha aperto ogni documento, puoi aprirlo o eliminarlo.'))] },
+			{ page: 'documents', section: navLabel('documents'), target: '[data-tour="doc-categories"]', title: __('Categorie'), text: [p(__('Contratto, CU, Busta paga e Altro sono sempre presenti; qui ne aggiungi di tue. I file restano in una cartella privata e separata per ogni dipendente.'))] },
+			go('documents', 'analytics', navLabel('documents')),
 			{ page: 'analytics', section: __('Analytics'), target: '#dolly-admin-main > :first-child', title: __('Analytics'), text: [p(__('Puntualità, assenze, straordinari e ore lavorate per periodo, sede e dipendente, con grafici ed esportazione.'))] },
 			go('analytics', 'anomalies', __('Analytics')),
 			{ page: 'anomalies', section: __('Anomalie'), target: '#dolly-admin-main .dolly-card', title: __('Anomalie'), text: [p(__('Assenze non giustificate, uscite mancanti e certificati mancanti. Risolvile correggendo la timbratura o giustificando l\'assenza: il dipendente viene avvisato.'))] },
@@ -3538,6 +3838,7 @@
 			{ page: 'appearance', section: __('Aspetto'), target: '.dolly-appearance__preview', title: __('Aspetto'), text: [p(__('Logo, colori, caratteri, modalità scura, pagina di accesso ed email: l\'anteprima mostra il risultato mentre modifichi.'))] },
 			go('appearance', 'settings', __('Aspetto')),
 			{ page: 'settings', section: __('Impostazioni'), target: '[data-tour="setup"]', scroll: true, title: __('Configurazione guidata'), text: [p(__('Da qui ricominci la configurazione guidata o rivedi questo tutorial quando vuoi.'))] },
+			{ page: 'settings', section: __('Impostazioni'), target: '[data-tour="smart-settings"]', scroll: true, title: __('Smart working e certificati'), text: [p(__('Scegli se le ore in smart working sono approvate in automatico o da te, e se per il certificato medico sono obbligatori il file, il numero di protocollo o entrambi.'))] },
 			{ page: 'settings', section: __('Impostazioni'), target: '#dolly-admin-main form > .dolly-card', scroll: true, title: __('Tutte le impostazioni'), text: [p(__('Le stesse scelte della configurazione guidata, più le notifiche evento per evento e lo stato del sistema in fondo alla pagina.'))] },
 			{ page: 'settings', section: __('Impostazioni'), title: __('Hai finito!'), text: [p(__('Ora conosci tutte le sezioni del pannello. I dipendenti, al primo accesso dal telefono, avranno il loro tutorial.')), p(__('Buon lavoro!'))], next: __('Fine'), nextIcon: 'check', noSkip: true, media: h('div', { class: 'dolly-ob__cheer', 'aria-hidden': 'true' }, DOLLY.icon('party-popper')) }
 		];
@@ -3615,7 +3916,7 @@
 	var pages = {
 		dashboard: pageDashboard, employees: pageEmployees, 'employee-new': pageEmployeeNew, workplaces: pageWorkplaces,
 		requests: pageRequests, attendance: pageAttendance, analytics: pageAnalytics, anomalies: pageAnomalies, broadcast: pageBroadcast, exports: pageExports, appearance: pageAppearance, settings: pageSettings,
-		onboarding: pageOnboarding
+		documents: pageDocuments, onboarding: pageOnboarding
 	};
 	menuToggle();
 	headerBell();
