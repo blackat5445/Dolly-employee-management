@@ -140,6 +140,8 @@ class Dolly_REST {
 			array( '/admin/settings', 'GET', 'admin_settings_get', $adm ),
 			array( '/admin/settings', 'POST', 'admin_settings_update', $adm ),
 			array( '/admin/cron/run', 'POST', 'admin_cron_run', $adm ),
+			array( '/admin/onboarding', 'POST', 'admin_onboarding', $adm ),
+			array( '/admin/tour', 'POST', 'admin_tour', $adm ),
 			array( '/admin/appearance', 'GET', 'admin_appearance_get', $adm ),
 			array( '/admin/appearance', 'POST', 'admin_appearance_update', $adm ),
 			array( '/admin/appearance/preview', 'POST', 'admin_appearance_preview', $adm ),
@@ -807,6 +809,23 @@ class Dolly_REST {
 			Dolly_Bluetooth::enable( $id, (bool) $b['enabled'] );
 		}
 		return Dolly_Bluetooth::admin_info( $id );
+	}
+
+	/** Guided setup: { step } saves progress, { complete: true } ends it. */
+	public static function admin_onboarding( WP_REST_Request $req ) {
+		$b = self::body( $req );
+		if ( ! empty( $b['complete'] ) ) {
+			Dolly_Onboarding::complete();
+		} elseif ( isset( $b['step'] ) ) {
+			Dolly_Onboarding::save_step( (string) $b['step'] );
+		}
+		return Dolly_Onboarding::client_config();
+	}
+
+	/** Tutorial of the current administrator: { state: done | skipped | '' (restart) }. */
+	public static function admin_tour( WP_REST_Request $req ) {
+		Dolly_Onboarding::set_tour_state( (string) ( self::body( $req )['state'] ?? 'done' ) );
+		return Dolly_Onboarding::client_config();
 	}
 
 	public static function admin_appearance_get() {

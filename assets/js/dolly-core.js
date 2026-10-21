@@ -18,9 +18,15 @@
 	function __(text) { return Object.prototype.hasOwnProperty.call(I18N, text) ? I18N[text] : text; }
 	DOLLY.__ = __;
 	/** "%s" placeholders filled in order, for sentences whose word order changes between languages. */
+	/** %s, %d, numbered %1$s / %2$d (word order of the translations) and %% for a literal percent sign. */
 	DOLLY.sprintf = function (text) {
 		var args = arguments, i = 1;
-		return String(text).replace(/%s/g, function () { return i < args.length ? args[i++] : ''; });
+		return String(text).replace(/%(?:(\d+)\$)?([sd%])/g, function (m, pos, type) {
+			if (type === '%') { return '%'; }
+			var v = pos ? args[+pos] : args[i++];
+			if (v === undefined || v === null) { return ''; }
+			return type === 'd' ? String(parseInt(v, 10) || 0) : String(v);
+		});
 	};
 	DOLLY.lang = CFG.lang || 'it';
 	/** Locale for Intl date and number formats ("it-IT", "en-US"…). */
@@ -1209,7 +1215,8 @@
 	 * DOLLY.coach.show(step) -> Promise resolved with 'next' (button or tap on the target) or 'skip'.
 	 * step: { target: selector | element | function, title, text, mode: 'click' (the user taps the
 	 *   highlighted element) | 'next' (button), next: button label, tap: finger animation,
-	 *   scroll: bring the target into view, progress: "3 / 20", padding, wait: ms to wait for the target }
+	 *   scroll: bring the target into view, progress: "3 / 20", padding, wait: ms to wait for the target,
+ *   back: show an "Indietro" button (resolves 'back'), media: element shown above the title }
 	 * Outside the highlighted area nothing can be tapped; in 'next' mode not even the target.
 	 */
 	DOLLY.coach = (function () {
@@ -1310,22 +1317,28 @@
 						// Target not available (e.g. screen not rendered): show the explanation anyway.
 						step = Object.assign({}, step, { target: null, mode: 'next', tap: false });
 					}
-					if (el && step.scroll) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-					return new Promise(function (resolve) { setTimeout(resolve, el && step.scroll ? 450 : 0); });
+					// Bring the target into view when asked or when it is (partly) off screen.
+					var r = el ? el.getBoundingClientRect() : null;
+					var move = el && (step.scroll || r.top < 0 || r.bottom > window.innerHeight);
+					if (move) { el.scrollIntoView({ block: r.height > window.innerHeight * 0.6 ? 'start' : 'center', behavior: 'smooth' }); }
+					return new Promise(function (resolve) { setTimeout(resolve, move ? 450 : 0); });
 				}).then(function () {
 					return new Promise(function (resolve) {
 						cur = step;
 						resolveFn = resolve;
 						var next = step.mode === 'click' ? null : DOLLY.button(step.next || __('Avanti'), { variant: 'primary', icon: step.nextIcon || 'arrow-right', onClick: function () { finish('next'); } });
-						var skip = step.noSkip ? null : DOLLY.button(__('Salta il tutorial'), { variant: 'ghost', size: 'sm', onClick: function () { finish('skip'); } });
+						var skip = step.noSkip ? null : DOLLY.button(step.skip || __('Salta il tutorial'), { variant: 'ghost', size: 'sm', onClick: function () { finish('skip'); } });
+						var back = step.back ? DOLLY.button(__('Indietro'), { size: 'sm', icon: 'arrow-left', onClick: function () { finish('back'); } }) : null;
 						DOLLY.render(bubble, [
+							step.media || null,
 							step.progress ? h('div', { class: 'dolly-coach__progress', text: step.progress }) : null,
 							step.title ? h('h3', { class: 'dolly-coach__title', text: step.title }) : null,
 							h('div', { class: 'dolly-coach__text' }, step.text),
 							step.mode === 'click' ? h('p', { class: 'dolly-coach__hint' }, [DOLLY.icon('pointer'), step.hint || __('Tocca l\'elemento evidenziato')]) : null,
-							h('div', { class: 'dolly-coach__actions' }, [skip, h('span', { class: 'dolly-coach__spacer' }), next])
+							h('div', { class: 'dolly-coach__actions' }, [skip, h('span', { class: 'dolly-coach__spacer' }), back, next])
 						]);
 						root.hidden = false;
+						DOLLY.icons();
 						loop();
 						setTimeout(function () { (next || bubble).focus({ preventScroll: true }); }, 60);
 					});

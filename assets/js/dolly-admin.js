@@ -1016,6 +1016,122 @@
 		load();
 	}
 
+	/* ------------------------------------------------------------------ */
+	/* Map for the position of a workplace                                  */
+	/* ------------------------------------------------------------------ */
+
+	function parseCoord(v) {
+		var n = parseFloat(String(v || '').trim().replace(',', '.'));
+		return isFinite(n) ? n : null;
+	}
+	function coordText(n) { return n.toFixed(7).replace('.', ','); }
+
+	/**
+	 * Interactive map (OpenStreetMap) for the GPS position of a workplace: shows where the administrator is,
+	 * a tap on the map or a drag of the pin sets latitude and longitude, the circle is the allowed radius.
+	 * The latitude/longitude fields stay editable and move the pin. Returns { el, init(dialogEl) }.
+	 */
+	function mapPicker(latField, lngField, radiusField, addressOf) {
+		var M = CFG.map || {};
+		var canvas = h('div', { class: 'dolly-map__canvas', role: 'application', 'aria-label': __('Mappa della sede: tocca un punto per posizionare la sede') });
+		var status = h('p', { class: 'dolly-help dolly-map__status', 'aria-live': 'polite' });
+		var search = h('input', { class: 'dolly-input', type: 'search', placeholder: __('Cerca un indirizzo o un luogo'), 'aria-label': __('Cerca un indirizzo o un luogo'), autocomplete: 'off' });
+		var searchBtn = DOLLY.button(__('Cerca'), { icon: 'search', onClick: find });
+		var hereBtn = DOLLY.button(__('Usa la mia posizione'), { icon: 'locate-fixed', onClick: function () { locate(true); } });
+		var el = h('div', { class: 'dolly-field dolly-field--full dolly-map' }, [
+			h('div', { class: 'dolly-map__tools' }, [h('div', { class: 'dolly-input-group dolly-map__search' }, [search, searchBtn]), hereBtn]),
+			canvas,
+			h('div', { class: 'dolly-map__legend' }, [
+				h('span', {}, [h('span', { class: 'dolly-map__key dolly-map__key--pin', 'aria-hidden': 'true' }), __('Sede (trascina il segnaposto o tocca la mappa)')]),
+				h('span', {}, [h('span', { class: 'dolly-map__key dolly-map__key--me', 'aria-hidden': 'true' }), __('La tua posizione')]),
+				h('span', {}, [h('span', { class: 'dolly-map__key dolly-map__key--area', 'aria-hidden': 'true' }), __('Area in cui si può timbrare')])
+			]),
+			status
+		]);
+		search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); find(); } });
+		var L = window.L, map = null, pin = null, area = null, me = null, meAcc = null;
+
+		function say(t) { status.textContent = t || ''; }
+		function radius() { return Math.max(10, Math.min(5000, parseInt(radiusField.input.value, 10) || CFG.defaultRadius || 100)); }
+		function place(lat, lng, o) {
+			o = o || {};
+			if (!pin) {
+				pin = L.marker([lat, lng], { draggable: true, autoPan: true, keyboard: true, title: __('Posizione della sede'), alt: __('Posizione della sede'),
+					icon: L.divIcon({ className: 'dolly-map__pin', html: '<span></span>', iconSize: [30, 30], iconAnchor: [15, 30] }) }).addTo(map);
+				area = L.circle([lat, lng], { radius: radius(), color: DOLLY.token('primary', '#2563EB'), weight: 2, fillOpacity: 0.12, interactive: false }).addTo(map);
+				pin.on('drag', function () { area.setLatLng(pin.getLatLng()); });
+				pin.on('dragend', function () { var p = pin.getLatLng(); write(p.lat, p.lng); say(__('Posizione della sede aggiornata.')); });
+			} else {
+				pin.setLatLng([lat, lng]); area.setLatLng([lat, lng]);
+			}
+			if (o.write) { write(lat, lng); }
+			if (o.fly) { map.setView([lat, lng], Math.max(map.getZoom(), 17)); }
+		}
+		function write(lat, lng) { latField.input.value = coordText(lat); lngField.input.value = coordText(lng); }
+		function fromFields(fly) {
+			var lat = parseCoord(latField.input.value), lng = parseCoord(lngField.input.value);
+			if (lat === null || lng === null || Math.abs(lat) > 90 || Math.abs(lng) > 180) { return false; }
+			place(lat, lng, { fly: fly });
+			return true;
+		}
+		function locate(movePin) {
+			if (!navigator.geolocation) { say(__('Geolocalizzazione non supportata da questo browser.')); return; }
+			hereBtn.classList.add('is-loading');
+			say(__('Ricerca della tua posizione…'));
+			navigator.geolocation.getCurrentPosition(function (p) {
+				hereBtn.classList.remove('is-loading');
+				var ll = [p.coords.latitude, p.coords.longitude], acc = Math.round(p.coords.accuracy);
+				if (!me) {
+					meAcc = L.circle(ll, { radius: acc, color: DOLLY.token('blue-solid', '#0369A1'), weight: 1, fillOpacity: 0.08, interactive: false }).addTo(map);
+					me = L.circleMarker(ll, { radius: 7, color: '#fff', weight: 3, fillColor: DOLLY.token('blue-solid', '#0369A1'), fillOpacity: 1 }).addTo(map).bindTooltip(__('Sei qui'));
+				} else { me.setLatLng(ll); meAcc.setLatLng(ll).setRadius(acc); }
+				if (movePin) {
+					place(ll[0], ll[1], { write: true, fly: true });
+					say(DOLLY.sprintf(__('Sede posizionata dove ti trovi (precisione ±%d m). Trascina il segnaposto per correggere.'), acc));
+				} else {
+					if (!pin) { map.setView(ll, 17); }
+					say(DOLLY.sprintf(__('Il punto blu è la tua posizione (precisione ±%d m). Tocca la mappa nel punto dell\'ingresso della sede.'), acc));
+				}
+			}, function (e) {
+				hereBtn.classList.remove('is-loading');
+				say(e.code === 1 ? __('Accesso alla posizione negato: cerca l\'indirizzo o tocca la mappa.') : __('Posizione non disponibile: cerca l\'indirizzo o tocca la mappa.'));
+			}, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+		}
+		function find() {
+			var q = search.value.trim() || addressOf();
+			if (!q) { say(__('Scrivi un indirizzo da cercare (oppure compila indirizzo e città).')); search.focus(); return; }
+			if (!search.value.trim()) { search.value = q; }
+			searchBtn.classList.add('is-loading');
+			var url = (M.geocoder || 'https://nominatim.openstreetmap.org/search') + '?format=json&limit=1&q=' + encodeURIComponent(q) + '&accept-language=' + encodeURIComponent((CFG.locale || 'it').slice(0, 2));
+			window.fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (list) {
+				searchBtn.classList.remove('is-loading');
+				if (!list || !list.length) { say(__('Nessun risultato: prova con via, numero civico e città.')); return; }
+				var lat = parseFloat(list[0].lat), lng = parseFloat(list[0].lon);
+				place(lat, lng, { write: true });
+				map.setView([lat, lng], 18);
+				say(__('Trovato: ') + list[0].display_name + __('. Controlla e trascina il segnaposto sull\'ingresso.'));
+			}, function () { searchBtn.classList.remove('is-loading'); say(__('Ricerca non disponibile al momento: tocca la mappa per posizionare la sede.')); });
+		}
+
+		return {
+			el: el,
+			init: function () {
+				if (!L) { canvas.hidden = true; el.querySelector('.dolly-map__legend').hidden = true; say(__('Mappa non disponibile: inserisci latitudine e longitudine.')); return; }
+				map = L.map(canvas, { zoomControl: true, attributionControl: true, scrollWheelZoom: 'center' }).setView([41.9, 12.5], 5);
+				map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
+				L.tileLayer(M.tiles || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: M.attribution || '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+				map.on('click', function (e) { place(e.latlng.lat, e.latlng.lng, { write: true }); say(__('Sede posizionata. Puoi trascinare il segnaposto per correggere.')); });
+				var had = fromFields(true);
+				locate(false);
+				if (!had) { say(__('Tocca la mappa nel punto dell\'ingresso della sede, cerca l\'indirizzo oppure usa la tua posizione.')); }
+				[latField.input, lngField.input].forEach(function (i) { i.addEventListener('change', function () { fromFields(true); }); });
+				radiusField.input.addEventListener('input', function () { if (area) { area.setRadius(radius()); } });
+				// The dialog finishes its layout after opening.
+				setTimeout(function () { map.invalidateSize(); }, 200);
+			}
+		};
+	}
+
 	function workplaceDialog(w, done) {
 		var isNew = !w; w = w || { radius_m: CFG.defaultRadius || 100, active: true };
 		var alertBox = h('div', { hidden: true });
@@ -1033,29 +1149,22 @@
 			account_password: DOLLY.field({ label: w.account_username ? __('Nuova password account sede') : __('Password account sede'), name: 'account_password', type: 'text', optional: !!w.account_username, help: __('Almeno 8 caratteri.'), attrs: { autocomplete: 'new-password' } })
 		};
 		var active = DOLLY.switchControl({ label: __('Sede attiva'), name: 'active', checked: w.active !== false });
-		var locate = DOLLY.button(__('Usa la posizione attuale'), { icon: 'locate-fixed', onClick: function () {
-			if (!navigator.geolocation) { DOLLY.toast(__('Geolocalizzazione non supportata.'), 'error'); return; }
-			locate.classList.add('is-loading');
-			navigator.geolocation.getCurrentPosition(function (p) {
-				locate.classList.remove('is-loading');
-				f.lat.input.value = p.coords.latitude.toFixed(7).replace('.', ',');
-				f.lng.input.value = p.coords.longitude.toFixed(7).replace('.', ',');
-				DOLLY.toast(__('Coordinate inserite (precisione ±') + Math.round(p.coords.accuracy) + ' m).', 'success');
-			}, function (e) { locate.classList.remove('is-loading'); DOLLY.toast(e.code === 1 ? __('Accesso alla posizione negato.') : __('Posizione non disponibile.'), 'error'); }, { enableHighAccuracy: true, timeout: 15000 });
-		} });
+		var map = mapPicker(f.lat, f.lng, f.radius_m, function () {
+			return [f.address.input.value, f.city.input.value, f.province.input.value].map(function (v) { return v.trim(); }).filter(Boolean).join(', ');
+		});
 		var form = h('form', { class: 'dolly-form', novalidate: true }, [
 			alertBox,
 			h('div', { class: 'dolly-form-grid' }, [f.name, f.address, f.city, f.province]),
 			h('h3', {}, [DOLLY.icon('map'), __(' Posizione GPS')]),
+			map.el,
 			h('div', { class: 'dolly-form-grid dolly-form-grid--3' }, [f.lat, f.lng, f.radius_m]),
-			h('div', { class: 'dolly-btn-row' }, locate),
 			h('h3', {}, [DOLLY.icon('clock'), __(' Timbrature')]),
 			h('div', { class: 'dolly-form-grid' }, [f.late_tolerance]),
 			h('h3', {}, [DOLLY.icon('monitor'), __(' Account dello schermo sede')]),
 			h('div', { class: 'dolly-form-grid' }, [f.account_username, f.account_password]),
 			active
 		]);
-		DOLLY.dialog({
+		var dlg = DOLLY.dialog({
 			title: isNew ? __('Nuova sede') : __('Modifica sede'), body: form, wide: true,
 			actions: [{ label: __('Annulla') }, { label: __('Salva sede'), variant: 'primary', icon: 'save', onClick: function (close, btn) {
 				DOLLY.clearErrors(form); alertBox.hidden = true;
@@ -1070,6 +1179,7 @@
 				DOLLY.busy(btn, p).then(function () { close(); DOLLY.toast(__('Sede salvata.'), 'success'); done(); }, function (err) { DOLLY.formError(form, err, alertBox); });
 			} }]
 		});
+		map.init(dlg.el);
 	}
 
 	/**
@@ -1905,6 +2015,43 @@
 		DOLLY.api('admin/settings').then(renderSettings, function (err) { DOLLY.render(main, DOLLY.errorState(err, pageSettings)); });
 	}
 
+	/**
+	 * Reminder offsets in minutes: chips with remove + "add" field.
+	 * Returns {el, values()}.
+	 */
+	function minutesList(initial, label, unitText) {
+		var list = (initial || []).map(Number).filter(function (n) { return n >= 1 && n <= 240; });
+		var chipsEl = h('div', { class: 'dolly-minutes', role: 'list', 'aria-label': label });
+		var input = h('input', { class: 'dolly-input', type: 'number', min: 1, max: 240, inputmode: 'numeric', placeholder: __('es. 5'), 'aria-label': __('Minuti da aggiungere') });
+		var addBtn = DOLLY.button(__('Aggiungi'), { size: 'sm', icon: 'plus', onClick: add });
+		var err = h('span', { class: 'dolly-error', hidden: true });
+		function draw() {
+			list.sort(function (a, b) { return a - b; });
+			DOLLY.render(chipsEl, list.length ? list.map(function (m) {
+				var rm = h('button', { type: 'button', 'aria-label': __('Rimuovi ') + m + __(' minuti') }, DOLLY.icon('x'));
+				rm.addEventListener('click', function () { list = list.filter(function (x) { return x !== m; }); draw(); });
+				return h('span', { class: 'dolly-minutes__chip', role: 'listitem' }, [m + __(' min ') + unitText, rm]);
+			}) : h('span', { class: 'dolly-small dolly-muted', text: __('Nessun orario configurato: il promemoria non viene inviato.') }));
+			DOLLY.icons();
+		}
+		function add() {
+			var v = parseInt(input.value, 10);
+			err.hidden = true;
+			if (!(v >= 1 && v <= 240)) { err.textContent = __('Inserisci un numero di minuti tra 1 e 240.'); err.hidden = false; return; }
+			if (list.indexOf(v) === -1) {
+				if (list.length >= 6) { err.textContent = __('Al massimo 6 orari per promemoria.'); err.hidden = false; return; }
+				list.push(v);
+			}
+			input.value = ''; draw();
+		}
+		input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+		draw();
+		return {
+			el: h('div', { class: 'dolly-field dolly-field--full' }, [h('span', { class: 'dolly-label', text: label }), chipsEl, h('div', { class: 'dolly-minutes__add', style: 'margin-top:8px' }, [input, addBtn]), err]),
+			values: function () { return list.slice(); }
+		};
+	}
+
 	function renderSettings(d) {
 		var s = d.settings;
 		var alertBox = h('div', { hidden: true });
@@ -1956,45 +2103,9 @@
 		// Device sessions.
 		var deviceSessions = DOLLY.switchControl({ label: __('Sessioni dispositivo'), name: 'device_sessions', checked: s.device_sessions !== false, description: __('Ogni dipendente accede da un solo dispositivo: il primo accesso lo registra come dispositivo principale. Da un altro dispositivo l\'accesso viene rifiutato finché non scolleghi il precedente (Dipendenti › Gestione dispositivi), dove puoi anche aumentare il limite per singolo dipendente. Non riguarda amministratori e account sede.') });
 
-		/**
-		 * Reminder offsets in minutes: chips with remove + "add" field.
-		 * Returns {el, values()}.
-		 */
-		function minutesList(initial, label, unitText) {
-			var list = (initial || []).map(Number).filter(function (n) { return n >= 1 && n <= 240; });
-			var chipsEl = h('div', { class: 'dolly-minutes', role: 'list', 'aria-label': label });
-			var input = h('input', { class: 'dolly-input', type: 'number', min: 1, max: 240, inputmode: 'numeric', placeholder: __('es. 5'), 'aria-label': __('Minuti da aggiungere') });
-			var addBtn = DOLLY.button(__('Aggiungi'), { size: 'sm', icon: 'plus', onClick: add });
-			var err = h('span', { class: 'dolly-error', hidden: true });
-			function draw() {
-				list.sort(function (a, b) { return a - b; });
-				DOLLY.render(chipsEl, list.length ? list.map(function (m) {
-					var rm = h('button', { type: 'button', 'aria-label': __('Rimuovi ') + m + __(' minuti') }, DOLLY.icon('x'));
-					rm.addEventListener('click', function () { list = list.filter(function (x) { return x !== m; }); draw(); });
-					return h('span', { class: 'dolly-minutes__chip', role: 'listitem' }, [m + __(' min ') + unitText, rm]);
-				}) : h('span', { class: 'dolly-small dolly-muted', text: __('Nessun orario configurato: il promemoria non viene inviato.') }));
-				DOLLY.icons();
-			}
-			function add() {
-				var v = parseInt(input.value, 10);
-				err.hidden = true;
-				if (!(v >= 1 && v <= 240)) { err.textContent = __('Inserisci un numero di minuti tra 1 e 240.'); err.hidden = false; return; }
-				if (list.indexOf(v) === -1) {
-					if (list.length >= 6) { err.textContent = __('Al massimo 6 orari per promemoria.'); err.hidden = false; return; }
-					list.push(v);
-				}
-				input.value = ''; draw();
-			}
-			input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); add(); } });
-			draw();
-			return {
-				el: h('div', { class: 'dolly-field dolly-field--full' }, [h('span', { class: 'dolly-label', text: label }), chipsEl, h('div', { class: 'dolly-minutes__add', style: 'margin-top:8px' }, [input, addBtn]), err]),
-				values: function () { return list.slice(); }
-			};
-		}
 		// Reminder mode.
-		var remEntryMin = minutesList(s.reminder_entry_minutes, __('Minuti prima dell\'inizio del turno'), 'prima');
-		var remExitMin = minutesList(s.reminder_exit_minutes, __('Minuti dopo la fine del turno'), 'dopo');
+		var remEntryMin = minutesList(s.reminder_entry_minutes, __('Minuti prima dell\'inizio del turno'), __('prima'));
+		var remExitMin = minutesList(s.reminder_exit_minutes, __('Minuti dopo la fine del turno'), __('dopo'));
 		var remEntryBox = h('div', { class: 'dolly-form-grid', hidden: !s.reminder_entry }, remEntryMin.el);
 		var remExitBox = h('div', { class: 'dolly-form-grid', hidden: !s.reminder_exit }, remExitMin.el);
 		var remEntry = DOLLY.switchControl({ label: __('Promemoria di entrata'), name: 'reminder_entry', checked: !!s.reminder_entry, description: __('Notifica push ai dipendenti che oggi devono lavorare e non hanno ancora timbrato l\'entrata. Puoi configurare più orari (es. 10 e 5 minuti prima).'), onChange: function (on) { remEntryBox.hidden = !on; } });
@@ -2152,7 +2263,21 @@
 				DOLLY.render(auditBox, [auditList(r.items), DOLLY.pagination(r, function (p) { auditPage = p; loadAudit(); }, 'registro')]);
 			}, function (err) { DOLLY.render(auditBox, DOLLY.errorState(err, loadAudit)); });
 		}
-		DOLLY.render(main, h('div', { class: 'dolly-stack' }, [form, status, DOLLY.card(__('Registro modifiche'), 'history', auditBox)]));
+		var ob = CFG.onboarding || {};
+		var tourBtn = DOLLY.button(__('Rivedi il tutorial'), { icon: 'circle-play', onClick: function () {
+			DOLLY.busy(tourBtn, DOLLY.api('admin/tour', { method: 'POST', body: { state: '' } })).then(function (c) { CFG.onboarding = c; tourStart(0); }, function (err) { DOLLY.toast(err.message, 'error'); });
+		} });
+		var setup = DOLLY.card(__('Configurazione guidata'), 'graduation-cap', [
+			h('p', { class: 'dolly-muted', style: 'margin-top:0', text: ob.done
+				? __('Ripercorri le impostazioni categoria per categoria con la spiegazione di ogni opzione, poi sede, dipendenti e tutorial. Le scelte attuali restano finché non le cambi.')
+				: __('La configurazione guidata non è ancora completa: riprendila dal punto in cui l\'hai lasciata.') }),
+			h('div', { class: 'dolly-btn-row' }, [
+				DOLLY.button(ob.done ? __('Ricomincia la configurazione guidata') : __('Riprendi la configurazione'), { variant: 'primary', icon: 'rotate-ccw', href: ob.url }),
+				tourBtn
+			])
+		], { level: 'h2' });
+		setup.setAttribute('data-tour', 'setup');
+		DOLLY.render(main, h('div', { class: 'dolly-stack' }, [setup, form, status, DOLLY.card(__('Registro modifiche'), 'history', auditBox)]));
 		loadAudit();
 	}
 
@@ -2796,15 +2921,705 @@
 	}
 
 	/* ------------------------------------------------------------------ */
+	/* Guided setup                                                         */
+	/* ------------------------------------------------------------------ */
+
+	var EFFECTS = {
+		on: ['toggle-right', __('Se attivo')],
+		off: ['toggle-left', __('Se disattivato')],
+		change: ['sliders-horizontal', __('Se cambi il valore')],
+		tip: ['lightbulb', __('Consiglio')]
+	};
+
+	/**
+	 * A setting followed by what it is for and what happens when it is turned on, off or changed.
+	 * rows: [[kind, text], ...] with kind on | off | change | tip. For a switch the row matching the
+	 * current state is highlighted while the administrator toggles it.
+	 */
+	function explained(control, rows) {
+		var list = h('dl', { class: 'dolly-ob__effects' }, rows.filter(Boolean).map(function (r) {
+			return h('div', { class: 'dolly-ob__effect', dataset: { kind: r[0] } }, [h('dt', {}, [DOLLY.icon(EFFECTS[r[0]][0]), EFFECTS[r[0]][1]]), h('dd', { text: r[1] })]);
+		}));
+		var sw = control && control.control && control.control.isOn ? control.control : null;
+		function sync() {
+			Array.prototype.forEach.call(list.children, function (row) {
+				var k = row.dataset.kind;
+				row.classList.toggle('is-current', (k === 'on' && sw.isOn()) || (k === 'off' && !sw.isOn()));
+			});
+		}
+		if (sw) { sw.addEventListener('click', function () { setTimeout(sync, 0); }); sync(); }
+		return h('div', { class: 'dolly-ob__setting' }, [control, list]);
+	}
+
+	function obNote(text, icon) {
+		return h('div', { class: 'dolly-ob__note' }, [DOLLY.icon(icon || 'info'), h('p', { text: text })]);
+	}
+
+	/** Steps of the guided setup. build(ctx) -> { body, save(): Promise, check(): error text | '', next, reload } */
+	function onboardingSteps() {
+		function settingsSave(collect) {
+			return function (ctx) {
+				return DOLLY.api('admin/settings', { method: 'POST', body: collect() }).then(function (nd) { ctx.d = nd; });
+			};
+		}
+		function certModes(d, name, value) {
+			var help = {
+				required: __('Il dipendente deve caricare il certificato, senza scadenza: finché manca resta l\'anomalia "Certificato mancante" e riceve un promemoria.'),
+				deadline: __('Il certificato va caricato entro i giorni indicati sotto; dopo la scadenza dipendente e amministratori ricevono una notifica e l\'anomalia resta aperta.'),
+				disabled: __('Nessun certificato richiesto. I requisiti in sospeso vengono annullati (con registrazione nel registro modifiche).')
+			};
+			return DOLLY.radios({ label: name === 'certificate_mode' ? __('Certificato medico') : __('Certificato di donazione sangue'), name: name, value: value, options: Object.keys(d.certificate_modes).map(function (k) { return { value: k, label: d.certificate_modes[k], description: help[k] || null }; }) });
+		}
+		var n = function (name, label, value, min, max, help) {
+			return DOLLY.field({ label: label, name: name, type: 'number', value: value, help: help, attrs: { min: min, max: max } });
+		};
+
+		return [
+			{ id: 'welcome', group: 'start', icon: 'sparkles', title: __('Benvenuto'), next: __('Iniziamo'), build: function () {
+				var phase = function (icon, title, text) { return h('li', { class: 'dolly-ob__phase' }, [h('span', { class: 'dolly-ob__phase-icon' }, DOLLY.icon(icon)), h('div', {}, [h('strong', { text: title }), h('span', { text: text })])]); };
+				return { body: [
+					h('p', { class: 'dolly-ob__lead', text: DOLLY.sprintf(__('In pochi minuti prepariamo %s per la tua azienda. Ti guidiamo passo per passo e per ogni impostazione ti spieghiamo a cosa serve e cosa succede quando la attivi, la disattivi o la modifichi.'), DOLLY.brandName) }),
+					h('ol', { class: 'dolly-ob__phases' }, [
+						phase('sliders-horizontal', __('Impostazioni'), __('Lingua e marchio, verifica delle timbrature, orari, portale, promemoria, certificati, anomalie e notifiche.')),
+						phase('map-pin', __('La prima sede'), __('Dove si timbra: posizione sulla mappa e account per il tablet all\'ingresso.')),
+						phase('user-plus', __('Il primo dipendente'), __('Account, orario di lavoro e sedi assegnate.')),
+						phase('graduation-cap', __('Il tutorial'), __('Un giro guidato e interattivo di tutte le sezioni del pannello.'))
+					]),
+					obNote(__('Puoi interrompere quando vuoi: il punto raggiunto viene salvato e la configurazione riprende da lì. Puoi ricominciarla in ogni momento da Impostazioni › Configurazione guidata, e ogni scelta resta modificabile in Impostazioni.'), 'info')
+				] };
+			} },
+
+			{ id: 'language', group: 'settings', icon: 'languages', title: __('Lingua e marchio'), intro: __('Come si presenta il sistema ai dipendenti e in quale lingua.'), build: function (ctx) {
+				var s = ctx.d.settings, a = ctx.a.appearance;
+				var langOptions = Object.keys(ctx.d.languages).map(function (k) { return { value: k, label: ctx.d.languages[k] }; });
+				var language = DOLLY.field({ label: __('Lingua predefinita'), name: 'language', type: 'select', value: s.language || 'auto', options: [{ value: 'auto', label: __('Come il sito') + ' (' + ctx.d.site_language + ')' }].concat(langOptions) });
+				var myLocale = DOLLY.field({ label: __('La tua lingua nel pannello'), name: 'my_locale', type: 'select', value: ctx.d.my_locale || '', options: [{ value: '', label: __('Predefinita') }].concat(langOptions) });
+				var brand = DOLLY.field({ label: __('Nome del marchio'), name: 'brand_name', value: a.brand_name, required: true, attrs: { maxlength: 40 } });
+				var title = DOLLY.field({ label: __('Nome del pannello di amministrazione'), name: 'admin_title', value: a.admin_title, required: true, attrs: { maxlength: 40 } });
+				var picked = '';
+				var primary = colorField('primary', __('Colore principale'), null, a.primary, function () {});
+				var swatches = h('div', { class: 'dolly-swatches', role: 'group', 'aria-label': __('Combinazioni di colori pronte') }, COLOR_PRESETS.map(function (p) {
+					var b = h('button', { type: 'button', class: 'dolly-swatch', title: p.label, 'aria-pressed': p.color === a.primary ? 'true' : 'false' }, [h('span', { class: 'dolly-swatch__dot', style: 'background:' + p.color, 'aria-hidden': 'true' }), h('span', { text: p.label })]);
+					b.addEventListener('click', function () {
+						picked = p.color; primary.set(p.color);
+						Array.prototype.forEach.call(swatches.children, function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+					});
+					return b;
+				}));
+				return {
+					body: [
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(language, [['change', __('Cambia la lingua di portale, pagine di accesso, email e notifiche per chi non ha scelto una lingua. Ogni dipendente può sceglierne un\'altra dal proprio profilo.')]]),
+							explained(myLocale, [['change', __('Cambia solo il tuo pannello. Dopo il salvataggio la pagina si ricarica nella nuova lingua e la configurazione continua.')]])
+						]),
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(brand, [['change', __('Appare sulle pagine di accesso, come nome dell\'app sul telefono dei dipendenti, nelle notifiche e nel mittente delle email.')]]),
+							explained(title, [['change', __('Voce del menu di WordPress e intestazione di queste pagine.')]])
+						]),
+						explained(h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: __('Combinazioni pronte') }), swatches, primary]), [
+							['change', __('Pulsanti, link, intestazioni del portale e del pannello e lo schermo della sede prendono questo colore. Le altre tonalità vengono calcolate in automatico.')],
+							['tip', __('Logo, icona dell\'app, caratteri, modalità scura e testi della pagina di accesso si personalizzano in Aspetto.')]
+						])
+					],
+					save: function () {
+						var body = { brand_name: brand.input.value, admin_title: title.input.value, primary: primary.value() };
+						if (picked && picked === primary.value()) { body.accent = picked; body.header_bg = picked; }
+						var langChanged = language.input.value !== (s.language || 'auto') || myLocale.input.value !== (ctx.d.my_locale || '');
+						this.reload = langChanged;
+						return DOLLY.api('admin/appearance', { method: 'POST', body: body }).then(function (nd) {
+							ctx.a = nd; applyAdminCss(nd.css);
+							return DOLLY.api('admin/settings', { method: 'POST', body: { language: language.input.value } });
+						}).then(function (nd) {
+							ctx.d = nd;
+							if (myLocale.input.value !== (ctx.d.my_locale || '')) { return DOLLY.api('me/language', { method: 'POST', body: { locale: myLocale.input.value } }); }
+						});
+					}
+				};
+			} },
+
+			{ id: 'verification', group: 'settings', icon: 'shield-check', title: __('Verifica timbrature'), intro: __('Come il sistema controlla che il dipendente sia davvero in sede quando timbra.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var methods = DOLLY.chips({ label: __('Metodi per verificare la presenza'), name: 'verification_methods', full: true, selected: s.verification_methods, options: Object.keys(ctx.d.verification_methods).map(function (k) { return { value: k, label: ctx.d.verification_methods[k] }; }) });
+				var requireGps = DOLLY.switchControl({ label: __('Richiedi sempre anche la posizione GPS'), name: 'verification_require_gps', checked: !!s.verification_require_gps });
+				var radius = n('default_radius', __('Raggio GPS predefinito per le nuove sedi (metri)'), s.default_radius, 10, 5000);
+				var grace = n('challenge_grace', __('Tolleranza di rete per QR/PIN (secondi)'), s.challenge_grace, 0, 10);
+				var pinMax = n('pin_max_attempts', __('Tentativi PIN o Bluetooth errati prima del blocco'), s.pin_max_attempts, 1, 50);
+				var pinLock = n('pin_lock_minutes', __('Durata del blocco PIN (minuti)'), s.pin_lock_minutes, 1, 1440);
+				return {
+					body: [
+						explained(methods, [
+							['tip', __('GPS: il telefono deve trovarsi entro il raggio della sede. QR o PIN: il dipendente inquadra il QR o digita il PIN mostrato dal tablet della sede; il codice cambia ogni pochi secondi. Bluetooth: il telefono legge il codice di un piccolo dispositivo installato in sede.')],
+							['change', __('Con più metodi attivi il dipendente sceglie quello che preferisce. Un metodo disattivato non può più essere usato da nessuno.')]
+						]),
+						explained(requireGps, [
+							['on', __('Oltre al codice della sede (QR/PIN o Bluetooth) serve anche la posizione: massima sicurezza, ma il GPS del telefono deve essere attivo. Richiede almeno un metodo QR/PIN o Bluetooth.')],
+							['off', __('Basta uno dei metodi attivi.')]
+						]),
+						DOLLY.alert(__('Bluetooth: funziona con Chrome, Edge e Samsung Internet su Android. Su iPhone serve l\'app gratuita Bluefy, perché Safari non supporta il Bluetooth per i siti web: lascia attivo anche un altro metodo se alcuni dipendenti usano iPhone.'), 'info'),
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(radius, [['change', __('Vale per le nuove sedi; ogni sede ha poi il suo raggio, visibile sulla mappa. Un raggio piccolo è più preciso, ma al chiuso il GPS può sbagliare di 20–50 m: 100 m è un buon compromesso.')]]),
+							explained(grace, [['change', __('Il QR/PIN cambia ogni pochi secondi. Con 0 il codice precedente viene rifiutato subito dopo il cambio; qualche secondo evita errori con le reti lente.')]])
+						]),
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(pinMax, [['change', __('Dopo questi tentativi errati il dipendente viene bloccato: protegge da chi prova a indovinare il codice. Un valore basso è più sicuro ma blocca anche chi sbaglia a digitare.')]]),
+							explained(pinLock, [['change', __('Per quanto tempo il dipendente bloccato non può riprovare. Puoi sbloccarlo prima creando un\'eccezione dalla sua scheda.')]])
+						])
+					],
+					save: settingsSave(function () {
+						return { verification_methods: methods.values(), verification_require_gps: requireGps.control.isOn(), default_radius: radius.input.value, challenge_grace: grace.input.value, pin_max_attempts: pinMax.input.value, pin_lock_minutes: pinLock.input.value };
+					})
+				};
+			} },
+
+			{ id: 'attendance', group: 'settings', icon: 'clock', title: __('Presenze e orari'), intro: __('Come vengono conteggiate pause, ritardi, uscite e straordinari nel modulo presenze.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var lunch = DOLLY.switchControl({ label: __('Timbratura della pausa pranzo'), name: 'lunch_punch', checked: s.lunch_punch });
+				var lateTol = n('late_tolerance', __('Tolleranza ritardo in entrata (minuti)'), s.late_tolerance, 0, 120);
+				var stepBox = h('div', { hidden: !s.exit_rounding });
+				var step = n('rounding_step', __('Intervallo di arrotondamento (minuti)'), s.rounding_step, 1, 60);
+				DOLLY.append(stepBox, explained(step, [['change', __('Esempio con intervallo 15 e fine turno alle 16:30: uscita fino alle 16:37 → 16:30; dalle 16:38 alle 16:52 → 16:45.')]]));
+				var rounding = DOLLY.switchControl({ label: __('Arrotondamento dell\'uscita'), name: 'exit_rounding', checked: s.exit_rounding, onChange: function (on) { stepBox.hidden = !on; } });
+				var overtime = n('overtime_auto', __('Straordinario approvato automaticamente (minuti al giorno)'), s.overtime_auto, 0, 1440);
+				var holiday = n('holiday_increase', __('Maggiorazione lavoro festivo (%)'), s.holiday_increase, 0, 300);
+				return {
+					body: [
+						explained(lunch, [
+							['on', __('I dipendenti timbrano inizio e fine pausa: la pausa reale viene sottratta dalle ore lavorate.')],
+							['off', __('La pausa non si timbra: viene sottratta in automatico la pausa prevista dall\'orario di ciascun dipendente.')]
+						]),
+						explained(lateTol, [['change', __('Un\'entrata entro questi minuti dall\'inizio del turno conta come puntuale (con 3: turno alle 08:00, entrata alle 08:03 → 08:00). Con 0 ogni minuto di ritardo viene conteggiato. Ogni sede può avere la sua tolleranza.')]]),
+						explained(rounding, [
+							['on', __('Nel modulo presenze l\'uscita dopo la fine del turno viene arrotondata all\'intervallo scelto; la timbratura reale resta comunque registrata.')],
+							['off', __('Viene usato l\'orario esatto di uscita.')]
+						]),
+						stepBox,
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(overtime, [['change', __('Il tempo dopo la fine del turno è straordinario: fino a questo limite viene approvato da solo (120 = 2 ore). Oltre, nasce una richiesta da approvare in Richieste. Con 0 ogni straordinario va approvato.')]]),
+							explained(holiday, [['change', __('Percentuale indicata per le ore lavorate nelle festività e nelle chiusure per festività, nel modulo presenze e nelle esportazioni.')]])
+						])
+					],
+					save: settingsSave(function () {
+						return { lunch_punch: lunch.control.isOn(), late_tolerance: lateTol.input.value, exit_rounding: rounding.control.isOn(), rounding_step: step.input.value, overtime_auto: overtime.input.value, holiday_increase: holiday.input.value };
+					})
+				};
+			} },
+
+			{ id: 'portal', group: 'settings', icon: 'smartphone', title: __('Portale e dispositivi'), intro: __('Come i dipendenti accedono al portale dal telefono.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var install = DOLLY.switchControl({ label: __('Installazione dell\'app obbligatoria sui telefoni'), name: 'require_install', checked: s.require_install !== false });
+				var sessions = DOLLY.switchControl({ label: __('Sessioni dispositivo'), name: 'device_sessions', checked: s.device_sessions !== false });
+				return {
+					body: [
+						obNote(DOLLY.sprintf(__('I dipendenti accedono da %s. Il portale funziona come un\'app: si aggiunge alla schermata Home del telefono e riceve le notifiche push.'), CFG.portalUrl.replace('/portale/', '/accesso/')), 'smartphone'),
+						explained(install, [
+							['on', __('Sul telefono, prima dell\'accesso, il dipendente vede come aggiungere il portale alla schermata Home e può entrare solo dall\'app installata. Al primo accesso parte il tutorial per i dipendenti.')],
+							['off', __('Il portale si può usare anche dal browser, senza installarlo.')]
+						]),
+						explained(sessions, [
+							['on', __('Ogni dipendente accede da un solo dispositivo: il primo accesso lo registra. Da un altro telefono l\'accesso viene rifiutato finché non scolleghi il precedente in Dipendenti › Gestione dispositivi. Impedisce di timbrare per un collega.')],
+							['off', __('I dipendenti possono accedere da qualsiasi dispositivo.')],
+							['tip', __('Non riguarda amministratori e account delle sedi. Il limite si può aumentare per il singolo dipendente.')]
+						])
+					],
+					save: settingsSave(function () { return { require_install: install.control.isOn(), device_sessions: sessions.control.isOn() }; })
+				};
+			} },
+
+			{ id: 'reminders', group: 'settings', icon: 'alarm-clock', title: __('Promemoria timbratura'), intro: __('Notifiche push sul telefono per chi dimentica di timbrare.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var inMin = minutesList(s.reminder_entry_minutes, __('Minuti prima dell\'inizio del turno'), __('prima'));
+				var outMin = minutesList(s.reminder_exit_minutes, __('Minuti dopo la fine del turno'), __('dopo'));
+				var inBox = h('div', { hidden: !s.reminder_entry }, inMin.el);
+				var outBox = h('div', { hidden: !s.reminder_exit }, outMin.el);
+				var entry = DOLLY.switchControl({ label: __('Promemoria di entrata'), name: 'reminder_entry', checked: !!s.reminder_entry, onChange: function (on) { inBox.hidden = !on; } });
+				var exit = DOLLY.switchControl({ label: __('Promemoria di uscita'), name: 'reminder_exit', checked: !!s.reminder_exit, onChange: function (on) { outBox.hidden = !on; } });
+				return {
+					body: [
+						explained(entry, [
+							['on', __('Chi oggi deve lavorare e non ha ancora timbrato l\'entrata riceve una notifica agli orari scelti (es. 10 e 5 minuti prima).')],
+							['off', __('Nessun promemoria di entrata.')]
+						]),
+						inBox,
+						explained(exit, [
+							['on', __('Chi, passata la fine del turno, non ha ancora timbrato l\'uscita riceve una notifica (es. 5 minuti dopo): evita le anomalie "uscita mancante".')],
+							['off', __('Nessun promemoria di uscita.')]
+						]),
+						outBox,
+						obNote(__('I promemoria non partono nei giorni di riposo, festivi o di chiusura, né a chi è in ferie, malattia o permesso. Richiedono lo scheduler attivo (passo "Stato del sistema") e le notifiche attivate dal dipendente.'), 'info')
+					],
+					save: settingsSave(function () { return { reminder_entry: entry.control.isOn(), reminder_entry_minutes: inMin.values(), reminder_exit: exit.control.isOn(), reminder_exit_minutes: outMin.values() }; })
+				};
+			} },
+
+			{ id: 'oncall', group: 'settings', icon: 'phone-call', title: __('Contratti a chiamata'), intro: __('I dipendenti a chiamata non hanno giorni né orari fissi: iniziano e terminano il turno quando vengono chiamati e ogni turno va approvato.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var box = h('div', { hidden: !s.oncall_auto });
+				var threshold = n('oncall_threshold', __('Soglia di approvazione automatica (minuti)'), s.oncall_threshold, 1, 1440);
+				DOLLY.append(box, explained(threshold, [['change', __('Un turno lungo fino a questa soglia è approvato da solo (120 = 2 ore); i turni più lunghi vanno approvati in Richieste.')]]));
+				var auto = DOLLY.switchControl({ label: __('Approvazione automatica dei turni brevi'), name: 'oncall_auto', checked: s.oncall_auto, onChange: function (on) { box.hidden = !on; } });
+				return {
+					body: [
+						explained(auto, [
+							['on', __('I turni entro la soglia vengono approvati automaticamente; tu approvi solo quelli più lunghi.')],
+							['off', __('Approvi manualmente in Richieste tutte le ore dei contratti a chiamata.')]
+						]),
+						box
+					],
+					save: settingsSave(function () { return { oncall_auto: auto.control.isOn(), oncall_threshold: threshold.input.value }; })
+				};
+			} },
+
+			{ id: 'sickness', group: 'settings', icon: 'stethoscope', title: __('Malattia e certificati'), intro: __('Cosa deve presentare il dipendente dopo una malattia, un infortunio o una donazione di sangue.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var cm = certModes(ctx.d, 'certificate_mode', s.certificate_mode);
+				var cdays = n('certificate_days', __('Giorni di calendario per il certificato'), s.certificate_days, 1, 365);
+				var dcm = certModes(ctx.d, 'donation_certificate_mode', s.donation_certificate_mode);
+				var dcdays = n('donation_certificate_days', __('Giorni di calendario per il certificato di donazione'), s.donation_certificate_days, 1, 365);
+				return {
+					body: [
+						explained(cm, [['tip', __('Il dipendente segnala la malattia dal portale e carica il certificato (foto o PDF); lo trovi in Richieste › Malattie, infortuni e certificati.')]]),
+						explained(cdays, [['change', __('Usato solo con la scadenza attiva: giorni di calendario dalla segnalazione entro cui caricare il certificato.')]]),
+						explained(dcm, [['tip', __('La donazione di sangue si chiede da Richieste; dopo l\'approvazione il dipendente carica l\'attestato dal giorno successivo alla donazione.')]]),
+						explained(dcdays, [['change', __('Usato solo con la scadenza attiva: contati dal giorno successivo alla donazione.')]])
+					],
+					save: function (ctx2) {
+						var go = settingsSave(function () { return { certificate_mode: cm.value(), certificate_days: cdays.input.value, donation_certificate_mode: dcm.value(), donation_certificate_days: dcdays.input.value }; });
+						if (cm.value() === 'disabled' && s.certificate_mode !== 'disabled') {
+							return DOLLY.confirm(__('Disattivare i certificati?'), __('Tutti i requisiti di certificato in sospeso verranno annullati e registrati nel registro modifiche.'), __('Disattiva e salva'), 'danger').then(function (ok) {
+								if (!ok) { return Promise.reject({ cancelled: true }); }
+								return go(ctx2);
+							});
+						}
+						return go(ctx2);
+					}
+				};
+			} },
+
+			{ id: 'anomalies', group: 'settings', icon: 'triangle-alert', title: __('Anomalie'), intro: __('Le anomalie segnalano ciò che non torna nelle presenze e restano aperte finché non le risolvi.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var box = h('div', { hidden: !s.absence_check });
+				var delay = n('absence_delay', __('Minuti dopo l\'inizio turno'), s.absence_delay, 0, 720);
+				DOLLY.append(box, explained(delay, [['change', __('Senza entrata dopo questo tempo il dipendente risulta "Assente non giustificato". Un valore più alto lascia margine a chi arriva in ritardo.')]]));
+				var check = DOLLY.switchControl({ label: __('Segnala le assenze non giustificate'), name: 'absence_check', checked: s.absence_check, onChange: function (on) { box.hidden = !on; } });
+				return {
+					body: [
+						explained(check, [
+							['on', __('Chi doveva lavorare e non ha timbrato riceve una notifica e trovi un\'anomalia da risolvere; il dipendente può chiedere la correzione della timbratura.')],
+							['off', __('Le assenze non timbrate non vengono segnalate.')],
+							['tip', __('Esclusi giorni di riposo, festività, chiusure, ferie, permessi e malattia.')]
+						]),
+						box,
+						obNote(__('Sempre attive: uscita mancante (nessuna uscita entro le 23:59) e certificato mancante. Le anomalie si risolvono dalla sezione Anomalie, correggendo la timbratura o giustificando l\'assenza.'), 'info')
+					],
+					save: settingsSave(function () { return { absence_check: check.control.isOn(), absence_delay: delay.input.value }; })
+				};
+			} },
+
+			{ id: 'notifications', group: 'settings', icon: 'bell', title: __('Notifiche'), intro: __('Chi riceve gli avvisi su richieste, anomalie e certificati, e su quali canali.'), build: function (ctx) {
+				var s = ctx.d.settings;
+				var sw = function (name, label) { return DOLLY.switchControl({ label: label, name: name, checked: s[name] }); };
+				var ePortal = sw('notify_portal', __('Dipendenti: notifiche nell\'app')), eEmail = sw('notify_email', __('Dipendenti: email'));
+				var aPortal = sw('admin_notify_portal', __('Amministratori: notifiche nel pannello')), aEmail = sw('admin_notify_email', __('Amministratori: email'));
+				var recipients = DOLLY.chips({ label: __('Amministratori che ricevono le notifiche'), name: 'admin_recipients', selected: s.admin_recipients, options: ctx.d.admins.map(function (x) { return { value: x.id, label: x.name + ' (' + x.email + ')' }; }) });
+				return {
+					body: [
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(ePortal, [['on', __('Campanella del portale e notifica push sul telefono (se il dipendente le ha attivate), per esito delle richieste, anomalie e certificati.')], ['off', __('Nessuna notifica nell\'app per nessun evento; stati e anomalie restano visibili nel portale.')]]),
+							explained(eEmail, [['on', __('Gli stessi avvisi arrivano anche via email.')], ['off', __('Nessuna email ai dipendenti.')]])
+						]),
+						h('div', { class: 'dolly-form-grid' }, [
+							explained(aPortal, [['on', __('Campanella in alto nel pannello (e push se attivata) per nuove richieste, malattie, straordinari e certificati.')], ['off', __('Nessun avviso nel pannello: controlli tu le sezioni.')]]),
+							explained(aEmail, [['on', __('Gli stessi avvisi arrivano via email agli amministratori scelti sotto.')], ['off', __('Nessuna email agli amministratori.')]])
+						]),
+						explained(recipients, [['change', __('Nessuna selezione = tutti gli amministratori ricevono le notifiche.')]]),
+						obNote(__('In Impostazioni › Notifiche puoi scegliere evento per evento cosa inviare e su quale canale.'), 'lightbulb')
+					],
+					save: settingsSave(function () { return { notify_portal: ePortal.control.isOn(), notify_email: eEmail.control.isOn(), admin_notify_portal: aPortal.control.isOn(), admin_notify_email: aEmail.control.isOn(), admin_recipients: recipients.values().map(Number) }; })
+				};
+			} },
+
+			{ id: 'system', group: 'settings', icon: 'activity', title: __('Stato del sistema'), intro: __('Lo scheduler esegue ogni minuto promemoria, controlli delle anomalie, scadenze dei certificati e l\'invio di email e notifiche.'), build: function (ctx) {
+				var c = ctx.d.cron;
+				var item = function (ok, label, bad) { return h('li', {}, [ok ? DOLLY.badge('OK', 'green', 'circle-check') : DOLLY.badge(__('Da verificare'), 'amber', 'circle-alert'), ' ', label, !ok && bad ? h('div', { class: 'dolly-help', text: bad }) : null]); };
+				var result = h('div', { 'aria-live': 'polite' });
+				var testMail = DOLLY.button(__('Invia email di prova'), { icon: 'mail', onClick: function () {
+					DOLLY.busy(testMail, DOLLY.api('admin/test-email', { method: 'POST' })).then(function (r) { DOLLY.render(result, DOLLY.alert(r.message, r.ok ? 'success' : 'error')); }, function (err) { DOLLY.render(result, DOLLY.alert(err.message, 'error')); });
+				} });
+				return {
+					next: __('Continua'),
+					body: [
+						h('ul', { class: 'dolly-stack dolly-ob__checks' }, [
+							item(c.healthy, __('Scheduler ogni minuto'), __('Senza cron di sistema i controlli partono solo quando qualcuno visita il sito: promemoria e anomalie possono arrivare in ritardo.')),
+							item(ctx.d.storage.https, __('HTTPS attivo'), __('GPS, fotocamera (QR), Bluetooth e notifiche push funzionano solo su HTTPS.')),
+							ctx.d.push ? item(ctx.d.push.available, __('Notifiche push sui telefoni'), __('OpenSSL del server non supporta le chiavi EC (P-256): le notifiche push non sono disponibili, quelle nell\'app funzionano comunque.')) : null
+						]),
+						explained(h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: __('Comando cron di sistema (una delle due opzioni, ogni minuto):') }), h('pre', { class: 'dolly-code', text: '* * * * * ' + c.wp_cli + ' >/dev/null 2>&1\n* * * * * curl -fsS "' + c.cron_url + '" >/dev/null 2>&1' })]), [
+							['tip', __('Chiedi al tuo hosting di aggiungere uno dei due comandi. L\'indirizzo contiene una chiave segreta: non condividerlo.')]
+						]),
+						explained(h('div', { class: 'dolly-field' }, [h('span', { class: 'dolly-label', text: __('Email') }), h('div', { class: 'dolly-btn-row' }, testMail), result]), [
+							['tip', __('Invia un\'email di prova al tuo indirizzo: se non arriva, configura un plugin SMTP prima di aggiungere i dipendenti.')]
+						])
+					]
+				};
+			} },
+
+			{ id: 'workplace', group: 'workplace', icon: 'map-pin', title: __('La prima sede'), intro: __('La sede è il luogo dove i dipendenti timbrano. Puoi aggiungerne altre in qualsiasi momento dalla sezione Sedi.'), build: function () {
+				var list = h('div', { class: 'dolly-ob__list' });
+				function draw() {
+					var active = (CFG.workplaces || []);
+					DOLLY.render(list, active.length ? active.map(function (w) {
+						return h('div', { class: 'dolly-ob__item' }, [
+							h('span', { class: 'dolly-ob__item-icon' }, DOLLY.icon('map-pin')),
+							h('div', { class: 'dolly-ob__item-text' }, [h('strong', { text: w.name }), h('span', { class: 'dolly-small dolly-muted', text: [w.address, w.city].filter(Boolean).join(', ') || __('Indirizzo non indicato') }),
+								h('div', { class: 'dolly-ob__badges' }, [
+									w.lat !== null ? DOLLY.badge(__('Posizione impostata'), 'green', 'circle-check') : DOLLY.badge(__('Posizione mancante'), 'amber', 'triangle-alert'),
+									w.account_username ? DOLLY.badge(__('Account tablet: ') + w.account_username, 'blue', 'monitor') : DOLLY.badge(__('Account tablet mancante'), 'amber', 'triangle-alert')
+								])]),
+							DOLLY.button(__('Modifica'), { size: 'sm', icon: 'pencil', onClick: function () { workplaceDialog(w, reload); } })
+						]);
+					}) : DOLLY.empty(__('Nessuna sede'), __('Crea la prima sede per continuare.'), 'map-pin'));
+					DOLLY.icons();
+				}
+				function reload() { refreshWorkplaces().then(draw); }
+				draw();
+				return {
+					body: [
+						h('div', { class: 'dolly-ob__how' }, [
+							h('div', {}, [DOLLY.icon('map'), h('strong', { text: __('Posizione sulla mappa') }), h('span', { text: __('Cerca l\'indirizzo o tocca la mappa sull\'ingresso: il cerchio mostra l\'area in cui si può timbrare con il GPS.') })]),
+							h('div', {}, [DOLLY.icon('monitor'), h('strong', { text: __('Tablet all\'ingresso') }), h('span', { text: DOLLY.sprintf(__('Con l\'account della sede il tablet apre %s e mostra QR e PIN che cambiano ogni pochi secondi.'), CFG.portalUrl.replace('/portale/', '/accesso-sede/')) })]),
+							h('div', {}, [DOLLY.icon('bluetooth'), h('strong', { text: __('Bluetooth (facoltativo)') }), h('span', { text: __('Dopo il salvataggio, dal pulsante Bluetooth in Sedi configuri il piccolo dispositivo da installare in sede.') })])
+						]),
+						list,
+						h('div', { class: 'dolly-btn-row' }, DOLLY.button(__('Aggiungi una sede'), { variant: 'primary', icon: 'plus', onClick: function () { workplaceDialog(null, reload); } }))
+					],
+					check: function () { return (CFG.workplaces || []).some(function (w) { return w.active; }) ? '' : __('Crea almeno una sede attiva per continuare.'); },
+					next: __('Continua')
+				};
+			} },
+
+			{ id: 'employee', group: 'employee', icon: 'user-plus', title: __('Il primo dipendente'), intro: __('Crea l\'account del dipendente: riceverà nome utente e password per accedere al portale dal telefono.'), build: function () {
+				var list = h('div', { class: 'dolly-ob__list' });
+				var formBox = h('div');
+				var employees = employeesCache || [];
+				function drawList() {
+					DOLLY.render(list, employees.length ? employees.slice(0, 6).map(function (e) {
+						return h('div', { class: 'dolly-ob__item' }, [h('span', { class: 'dolly-ob__item-icon' }, DOLLY.icon('user')), h('div', { class: 'dolly-ob__item-text' }, h('strong', { text: e.name }))]);
+					}).concat(employees.length > 6 ? [h('p', { class: 'dolly-small dolly-muted', text: DOLLY.sprintf(__('e altri %d dipendenti'), employees.length - 6) })] : []) : null);
+					DOLLY.icons();
+				}
+				function drawForm() {
+					var form = employeeForm(null, true);
+					var btn = DOLLY.button(__('Crea dipendente'), { type: 'submit', variant: 'primary', icon: 'user-plus' });
+					form.appendChild(h('div', { class: 'dolly-btn-row' }, btn));
+					form.addEventListener('submit', function (ev) {
+						ev.preventDefault();
+						var body = form.collect();
+						if (!body) { return; }
+						DOLLY.busy(btn, DOLLY.api('admin/employees', { method: 'POST', body: body })).then(function (emp) {
+							allEmployees(true).then(function (l) { employees = l; drawList(); });
+							DOLLY.render(formBox, [
+								DOLLY.alert(DOLLY.sprintf(__('%1$s (%2$s) è stato creato. Comunicagli nome utente e password: accede da %3$s.'), emp.name, emp.username, CFG.portalUrl.replace('/portale/', '/accesso/')), 'success'),
+								h('div', { class: 'dolly-btn-row' }, DOLLY.button(__('Aggiungi un altro dipendente'), { icon: 'user-plus', onClick: drawForm }))
+							]);
+							DOLLY.icons();
+						}, form.fail);
+					});
+					DOLLY.render(formBox, h('div', { class: 'dolly-ob__subcard' }, form));
+					DOLLY.icons();
+				}
+				drawList();
+				if (employees.length) {
+					DOLLY.render(formBox, h('div', { class: 'dolly-btn-row' }, DOLLY.button(__('Aggiungi un dipendente'), { icon: 'user-plus', onClick: drawForm })));
+				} else { drawForm(); }
+				return {
+					body: [
+						h('div', { class: 'dolly-ob__how' }, [
+							h('div', {}, [DOLLY.icon('id-card'), h('strong', { text: __('Dati e accesso') }), h('span', { text: __('Il nome utente non si può cambiare; la password iniziale la comunichi tu e il dipendente può cambiarla.') })]),
+							h('div', {}, [DOLLY.icon('clock'), h('strong', { text: __('Orario') }), h('span', { text: __('Giorni e orari di lavoro: servono per ritardi, straordinari, promemoria e assenze. Per i contratti a chiamata non serve un orario.') })]),
+							h('div', {}, [DOLLY.icon('map-pin'), h('strong', { text: __('Sedi e validità') }), h('span', { text: __('Il dipendente timbra solo nelle sedi assegnate. "Valido dal" permette di cambiare orario e sedi in futuro senza toccare lo storico.') })])
+						]),
+						list,
+						formBox
+					],
+					next: __('Continua'),
+					confirm: function () {
+						if (employees.length) { return Promise.resolve(true); }
+						return DOLLY.confirm(__('Continuare senza dipendenti?'), __('Potrai crearli in seguito da Nuovo dipendente.'), __('Continua'));
+					}
+				};
+			} },
+
+			{ id: 'finish', group: 'tour', icon: 'party-popper', title: __('Tutto pronto'), next: __('Avvia il tutorial'), nextIcon: 'circle-play', build: function () {
+				var done = function (icon, text) { return h('li', {}, [DOLLY.icon(icon), h('span', { text: text })]); };
+				return {
+					body: [
+						h('p', { class: 'dolly-ob__lead', text: __('La configurazione è completa. Ora ti mostriamo come usare il pannello ogni giorno: un tutorial interattivo passa per tutte le sezioni e ti spiega a cosa servono.') }),
+						h('ul', { class: 'dolly-ob__done' }, [
+							done('circle-check', __('Impostazioni salvate')),
+							done('circle-check', DOLLY.sprintf(__('Sedi: %d'), (CFG.workplaces || []).length)),
+							done('circle-check', DOLLY.sprintf(__('Dipendenti: %d'), (employeesCache || []).length))
+						]),
+						obNote(__('Il tutorial dura circa 3 minuti. Puoi interromperlo quando vuoi e rivederlo da Impostazioni › Configurazione guidata.'), 'graduation-cap')
+					],
+					secondary: { label: __('Vai alla dashboard'), icon: 'layout-dashboard', run: function () {
+						return DOLLY.api('admin/tour', { method: 'POST', body: { state: 'skipped' } }).then(function () { window.location.href = CFG.pages.dashboard; });
+					} },
+					finish: function () { tourStart(); }
+				};
+			} }
+		];
+	}
+
+	var OB_GROUPS = { start: __('Benvenuto'), settings: __('Impostazioni'), workplace: __('Sede'), employee: __('Dipendenti'), tour: __('Tutorial') };
+
+	function pageOnboarding() {
+		DOLLY.render(main, DOLLY.loading());
+		Promise.all([DOLLY.api('admin/settings'), DOLLY.api('admin/appearance'), refreshWorkplaces(), allEmployees(true)]).then(function (r) {
+			runOnboarding({ d: r[0], a: r[1] });
+		}, function (err) { DOLLY.render(main, DOLLY.errorState(err, pageOnboarding)); });
+	}
+
+	function runOnboarding(ctx) {
+		var steps = onboardingSteps();
+		var ids = steps.map(function (s) { return s.id; });
+		var ob = CFG.onboarding || {};
+		var at = Math.max(0, ids.indexOf(ob.step));
+		var reached = ob.done ? steps.length - 1 : at;
+		var rail = h('nav', { class: 'dolly-ob__rail', 'aria-label': __('Passi della configurazione') });
+		var panel = h('section', { class: 'dolly-card dolly-ob__panel', tabindex: '-1' });
+		DOLLY.render(main, h('div', { class: 'dolly-ob' }, [rail, panel]));
+
+		function saveStep(id) {
+			return DOLLY.api('admin/onboarding', { method: 'POST', body: { step: id } }).then(function (c) { CFG.onboarding = c; });
+		}
+
+		function drawRail() {
+			var pct = Math.round(at / (steps.length - 1) * 100);
+			var groups = [];
+			steps.forEach(function (s, i) {
+				var g = groups[groups.length - 1];
+				if (!g || g.id !== s.group) { g = { id: s.group, items: [] }; groups.push(g); }
+				g.items.push(i);
+			});
+			DOLLY.render(rail, [
+				h('div', { class: 'dolly-ob__rail-head' }, [
+					h('strong', { text: __('Configurazione guidata') }),
+					h('span', { class: 'dolly-small dolly-muted', text: DOLLY.sprintf(__('%d%% completato'), pct) })
+				]),
+				h('div', { class: 'dolly-ob__progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': pct, 'aria-label': __('Avanzamento') }, h('span', { style: 'width:' + pct + '%' })),
+				h('div', { class: 'dolly-ob__groups' }, groups.map(function (g) {
+					return h('div', { class: 'dolly-ob__group' }, [
+						h('span', { class: 'dolly-ob__group-label', text: OB_GROUPS[g.id] }),
+						h('ol', {}, g.items.map(function (i) {
+							var s = steps[i], state = i === at ? 'is-current' : (i < reached || (i <= reached && i < at) ? 'is-done' : '');
+							var b = h('button', { type: 'button', class: 'dolly-ob__step ' + state, disabled: i > reached ? true : null, 'aria-current': i === at ? 'step' : null }, [
+								h('span', { class: 'dolly-ob__dot', 'aria-hidden': 'true' }, state === 'is-done' ? DOLLY.icon('check') : String(i + 1)),
+								h('span', { text: s.title })
+							]);
+							b.addEventListener('click', function () { if (i !== at) { show(i); } });
+							return h('li', {}, b);
+						}))
+					]);
+				}))
+			]);
+		}
+
+		function drawPanel() {
+			var s = steps[at];
+			var built = s.build(ctx);
+			var alertBox = h('div', { hidden: true });
+			var form = h('div', { class: 'dolly-form dolly-ob__body' }, [alertBox].concat(built.body));
+			var next = DOLLY.button(built.next || s.next || __('Salva e continua'), { variant: 'primary', icon: s.nextIcon || 'arrow-right', onClick: submit });
+			var back = at > 0 ? DOLLY.button(__('Indietro'), { icon: 'arrow-left', variant: 'ghost', onClick: function () { show(at - 1); } }) : null;
+			var secondary = built.secondary ? DOLLY.button(built.secondary.label, { icon: built.secondary.icon, onClick: function () {
+				DOLLY.busy(secondary, DOLLY.api('admin/onboarding', { method: 'POST', body: { complete: true } }).then(built.secondary.run)).catch(function (err) { DOLLY.toast(err.message, 'error'); });
+			} }) : null;
+			function submit() {
+				DOLLY.clearErrors(form); alertBox.hidden = true;
+				var err = built.check ? built.check() : '';
+				if (err) { DOLLY.render(alertBox, DOLLY.alert(err, 'warning')); alertBox.hidden = false; alertBox.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+				var flow = (built.confirm ? built.confirm() : Promise.resolve(true)).then(function (ok) {
+					if (!ok) { return Promise.reject({ cancelled: true }); }
+					return built.save ? built.save.call(built, ctx) : null;
+				}).then(function () {
+					if (built.finish) {
+						return DOLLY.api('admin/onboarding', { method: 'POST', body: { complete: true } }).then(function (c) { CFG.onboarding = c; built.finish(); });
+					}
+					return saveStep(ids[at + 1]).then(function () {
+						if (built.reload) { window.location.reload(); return; }
+						show(at + 1);
+					});
+				});
+				DOLLY.busy(next, flow).catch(function (e) {
+					if (e && e.cancelled) { return; }
+					DOLLY.formError(form, e, alertBox);
+				});
+			}
+			DOLLY.render(panel, [
+				h('div', { class: 'dolly-ob__head' }, [
+					h('span', { class: 'dolly-ob__icon', 'aria-hidden': 'true' }, DOLLY.icon(s.icon)),
+					h('div', {}, [
+						h('span', { class: 'dolly-ob__eyebrow', text: DOLLY.sprintf(__('Passo %1$d di %2$d'), at + 1, steps.length) + ' · ' + OB_GROUPS[s.group] }),
+						h('h2', { class: 'dolly-ob__title', text: s.id === 'welcome' ? DOLLY.sprintf(__('Benvenuto in %s'), DOLLY.brandName) : s.title }),
+						s.intro ? h('p', { class: 'dolly-ob__intro', text: s.intro }) : null
+					])
+				]),
+				form,
+				h('div', { class: 'dolly-ob__foot' }, [back, h('span', { class: 'dolly-ob__spacer' }), secondary, next])
+			]);
+			DOLLY.icons();
+		}
+
+		function show(i) {
+			at = i; reached = Math.max(reached, i);
+			drawRail(); drawPanel();
+			panel.classList.remove('is-entering'); void panel.offsetWidth; panel.classList.add('is-entering');
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+			panel.focus({ preventScroll: true });
+		}
+		show(at);
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Administrators' tutorial: an interactive tour across the sections   */
+	/* ------------------------------------------------------------------ */
+
+	var TOUR_KEY = 'dolly_admin_tour_step';
+	function nav(page) { return '.dolly-admin__navlink[href$="=dolly-' + page + '"]'; }
+	function navLabel(page) {
+		var a = document.querySelector(nav(page));
+		return a ? a.textContent.trim() : page;
+	}
+	/** Step on the menu link of the next section: the administrator taps it to move on. */
+	function go(from, page, section) {
+		var label = navLabel(page);
+		return {
+			page: from, section: section, nav: page, target: nav(page), mode: 'click', scroll: true, tap: true, hint: __('Tocca la sezione evidenziata'),
+			title: DOLLY.sprintf(__('Prossima sezione: %s'), label), text: [h('p', { text: DOLLY.sprintf(__('Tocca "%s" nel menu per continuare.'), label) })]
+		};
+	}
+
+	function tourSteps() {
+		var p = function (t) { return h('p', { text: t }); };
+		var ul = function (items) { return h('ul', {}, items.map(function (t) { return h('li', { text: t }); })); };
+		return [
+			{ page: 'dashboard', section: __('Dashboard'), title: DOLLY.sprintf(__('Benvenuto in %s'), DOLLY.brandName), text: [p(__('Questo tutorial ti accompagna in tutte le sezioni del pannello. Puoi andare avanti, tornare indietro o interrompere quando vuoi.')), p(__('In alcuni passi ti chiediamo di toccare tu l\'elemento evidenziato: così impari facendo.'))], next: __('Iniziamo') },
+			{ page: 'dashboard', section: __('Dashboard'), target: '.dolly-admin__nav', title: __('Le sezioni'), text: [p(__('Da questo menu raggiungi tutte le sezioni. La Dashboard è la pagina iniziale: la situazione di oggi a colpo d\'occhio.'))] },
+			{ page: 'dashboard', section: __('Dashboard'), target: '.dolly-admin__bell', title: __('Notifiche'), text: [p(__('Qui arrivano nuove richieste, malattie, straordinari da approvare e certificati. Il numero indica le notifiche non lette.'))] },
+			{ page: 'dashboard', section: __('Dashboard'), target: '.dolly-dash__toolbar', title: __('Filtra per sede'), text: [p(__('Scegli una sede per vedere solo i suoi dati. La pagina si aggiorna da sola ogni pochi secondi.'))] },
+			{ page: 'dashboard', section: __('Dashboard'), target: '#dolly-admin-main > .dolly-grid--4', scroll: true, title: __('I numeri di oggi'), text: [p(__('Presenti, in pausa, richieste in attesa e anomalie aperte. Tocca i link per andare direttamente alla sezione.'))] },
+			{ page: 'dashboard', section: __('Dashboard'), target: '#dolly-admin-main > .dolly-grid--2', scroll: true, title: __('Presenze e ultime richieste'), text: [p(__('Chi ha timbrato oggi e a che ora, e le ultime richieste dei dipendenti da approvare.'))] },
+			{ page: 'dashboard', section: __('Dashboard'), target: '.dolly-dash__bottom > :first-child', scroll: true, title: __('Calendario e chiusure'), text: [p(__('Festività, ferie e chiusure aziendali. Tocca un giorno per impostare una chiusura: nei giorni chiusi la mancata timbratura non crea anomalie e chi lavora comunque ha la maggiorazione festiva.'))] },
+			{ page: 'dashboard', section: __('Dashboard'), target: '.dolly-dash__bottom > :last-child', scroll: true, title: __('Andamento presenze'), text: [p(__('Presenti, assenti e ritardi degli ultimi giorni. Per analisi più approfondite c\'è la sezione Analytics.'))] },
+			go('dashboard', 'workplaces', __('Dashboard')),
+			{ page: 'workplaces', section: __('Sedi'), target: '#dolly-admin-main .dolly-toolbar', title: __('Le sedi'), text: [p(__('Ogni sede è un luogo dove si timbra. Con "Nuova sede" imposti nome, posizione sulla mappa, raggio e l\'account per il tablet all\'ingresso.'))] },
+			{ page: 'workplaces', section: __('Sedi'), target: '#dolly-admin-main .dolly-table, #dolly-admin-main .dolly-empty', title: __('Elenco delle sedi'), text: [ul([__('Coordinate e raggio: dove funziona la timbratura GPS.'), __('Tolleranza ritardo: può essere diversa per ogni sede.'), __('Bluetooth: configura il dispositivo da installare in sede.'), __('Modifica: sposta il segnaposto sulla mappa o cambia la password del tablet.')])] },
+			{ page: 'workplaces', section: __('Sedi'), title: __('Lo schermo della sede'), text: [p(DOLLY.sprintf(__('Sul tablet all\'ingresso apri %s e accedi con l\'account della sede. Lo schermo mostra un QR e un PIN che cambiano ogni pochi secondi: il dipendente li inquadra o li digita per timbrare.'), CFG.portalUrl.replace('/portale/', '/accesso-sede/'))), p(__('Il tablet può anche fare da ponte Bluetooth per i telefoni che non lo supportano.'))] },
+			go('workplaces', 'employees', __('Sedi')),
+			{ page: 'employees', section: __('Dipendenti'), target: '#dolly-admin-main .dolly-tabs', title: __('Dipendenti e dispositivi'), text: [p(__('Nella prima scheda l\'elenco dei dipendenti; in "Gestione dispositivi" i telefoni collegati, da scollegare quando un dipendente cambia telefono.'))] },
+			{ page: 'employees', section: __('Dipendenti'), target: '#dolly-admin-main .dolly-toolbar', title: __('Cerca e filtra'), text: [p(__('Cerca per nome, filtra per stato e per sede. "Nuovo dipendente" apre la creazione dell\'account.'))] },
+			{ page: 'employees', section: __('Dipendenti'), target: '#dolly-admin-main .dolly-table, #dolly-admin-main .dolly-empty', title: __('La scheda del dipendente'), text: [p(__('Tocca un dipendente per aprire la sua scheda:')), ul([__('Dati, orario e sedi, con lo storico delle modifiche.'), __('Eccezioni: permetti una timbratura fuori sede o senza verifica per un periodo.'), __('Disattiva l\'account quando il rapporto termina: lo storico resta.')])] },
+			{ page: 'employees', section: __('Dipendenti'), target: nav('employee-new'), title: __('Nuovo dipendente'), text: [p(__('Da qui crei un nuovo account con orario di lavoro, sedi e dati bancari. Il dipendente accede dal telefono con nome utente e password.'))] },
+			go('employees', 'requests', __('Dipendenti')),
+			{ page: 'requests', section: __('Richieste'), target: '#dolly-admin-main .dolly-tabs', title: __('Richieste e malattie'), text: [p(__('Ferie, permessi, donazioni, straordinari, turni a chiamata e correzioni di timbratura in una scheda; malattie, infortuni e certificati nell\'altra.'))] },
+			{ page: 'requests', section: __('Richieste'), target: '#dolly-admin-main .dolly-toolbar', title: __('Approva o respingi'), text: [p(__('Filtra per stato, tipo e sede. Ogni richiesta ha i pulsanti Approva e Respingi; il dipendente riceve subito l\'esito. Puoi anche inserire tu un\'autorizzazione per conto di un dipendente.'))] },
+			go('requests', 'attendance', __('Richieste')),
+			{ page: 'attendance', section: __('Presenze'), target: '.dolly-att-modes', title: __('Per dipendente o per giorno'), text: [p(__('Il modulo mensile di un dipendente, oppure tutti i dipendenti in un giorno.'))] },
+			{ page: 'attendance', section: __('Presenze'), target: '.dolly-att-modes + div', title: __('Il modulo presenze'), text: [p(__('Entrate, pause, uscite, ore ordinarie, straordinari e assenze. Puoi correggere una timbratura (resta traccia nel registro), stampare ed esportare in CSV.'))] },
+			go('attendance', 'analytics', __('Presenze')),
+			{ page: 'analytics', section: __('Analytics'), target: '#dolly-admin-main > :first-child', title: __('Analytics'), text: [p(__('Puntualità, assenze, straordinari e ore lavorate per periodo, sede e dipendente, con grafici ed esportazione.'))] },
+			go('analytics', 'anomalies', __('Analytics')),
+			{ page: 'anomalies', section: __('Anomalie'), target: '#dolly-admin-main .dolly-card', title: __('Anomalie'), text: [p(__('Assenze non giustificate, uscite mancanti e certificati mancanti. Risolvile correggendo la timbratura o giustificando l\'assenza: il dipendente viene avvisato.'))] },
+			go('anomalies', 'broadcast', __('Anomalie')),
+			{ page: 'broadcast', section: navLabel('broadcast'), target: '#dolly-admin-main .dolly-card', title: navLabel('broadcast'), text: [p(__('Messaggi a tutti, a una sede o a singoli dipendenti, subito o programmati: arrivano come notifica nell\'app ed eventualmente via email.'))] },
+			go('broadcast', 'exports', navLabel('broadcast')),
+			{ page: 'exports', section: __('Esportazioni'), target: '#dolly-admin-main > :first-child', title: __('Esportazioni'), text: [p(__('Presenze per il consulente del lavoro, richieste, certificati e dati dei dipendenti in CSV o ZIP.'))] },
+			go('exports', 'appearance', __('Esportazioni')),
+			{ page: 'appearance', section: __('Aspetto'), target: '.dolly-appearance__preview', title: __('Aspetto'), text: [p(__('Logo, colori, caratteri, modalità scura, pagina di accesso ed email: l\'anteprima mostra il risultato mentre modifichi.'))] },
+			go('appearance', 'settings', __('Aspetto')),
+			{ page: 'settings', section: __('Impostazioni'), target: '[data-tour="setup"]', scroll: true, title: __('Configurazione guidata'), text: [p(__('Da qui ricominci la configurazione guidata o rivedi questo tutorial quando vuoi.'))] },
+			{ page: 'settings', section: __('Impostazioni'), target: '#dolly-admin-main form > .dolly-card', scroll: true, title: __('Tutte le impostazioni'), text: [p(__('Le stesse scelte della configurazione guidata, più le notifiche evento per evento e lo stato del sistema in fondo alla pagina.'))] },
+			{ page: 'settings', section: __('Impostazioni'), title: __('Hai finito!'), text: [p(__('Ora conosci tutte le sezioni del pannello. I dipendenti, al primo accesso dal telefono, avranno il loro tutorial.')), p(__('Buon lavoro!'))], next: __('Fine'), nextIcon: 'check', noSkip: true, media: h('div', { class: 'dolly-ob__cheer', 'aria-hidden': 'true' }, DOLLY.icon('party-popper')) }
+		];
+	}
+
+	function tourGet() {
+		try { var v = window.sessionStorage.getItem(TOUR_KEY); return v === null ? -1 : parseInt(v, 10); } catch (e) { return -1; }
+	}
+	function tourSet(i) {
+		try { if (i < 0) { window.sessionStorage.removeItem(TOUR_KEY); } else { window.sessionStorage.setItem(TOUR_KEY, String(i)); } } catch (e) { /* storage unavailable */ }
+	}
+	function tourStart(from) {
+		tourSet(from || 0);
+		var first = tourSteps()[from || 0];
+		if (CFG.page === first.page) { tourRun(); } else { window.location.href = CFG.pages[first.page]; }
+	}
+	function tourEnd(state) {
+		tourSet(-1);
+		DOLLY.coach.end();
+		DOLLY.api('admin/tour', { method: 'POST', body: { state: state } }).then(function (c) { CFG.onboarding = c; });
+		if (state === 'done') { DOLLY.toast(__('Tutorial completato.'), 'success'); } else { DOLLY.toast(__('Puoi rivedere il tutorial da Impostazioni › Configurazione guidata.'), 'info'); }
+	}
+	function tourRun() {
+		var steps = tourSteps(), i = tourGet();
+		if (i < 0 || i >= steps.length) { return; }
+		var step = steps[i];
+		if (step.page !== CFG.page) { window.location.href = CFG.pages[step.page]; return; }
+		// A tap on a menu link leaves the page: remember the next step first.
+		if (step.nav) { tourSet(i + 1); }
+		DOLLY.coach.show(Object.assign({}, step, {
+			progress: step.section + ' · ' + (i + 1) + ' / ' + steps.length,
+			back: i > 0,
+			next: step.next || (i === steps.length - 1 ? __('Fine') : null),
+			mode: step.mode || 'next'
+		})).then(function (res) {
+			if (res === 'end') { return; }
+			if (res === 'skip') { tourEnd('skipped'); return; }
+			if (res === 'back') { tourSet(i - 1); tourRun(); return; }
+			if (step.nav) { return; }
+			if (i === steps.length - 1) { tourEnd('done'); return; }
+			tourSet(i + 1); tourRun();
+		});
+	}
+
+	/** On every admin screen: continue a running tour, invite to the tour or to finish the setup. */
+	function guide() {
+		var ob = CFG.onboarding;
+		if (!ob || CFG.page === 'onboarding') { return; }
+		if (tourGet() >= 0) { setTimeout(tourRun, 300); return; }
+		if (!ob.done) {
+			app.insertBefore(h('div', { class: 'dolly-ob-banner' }, DOLLY.alert(__('La configurazione guidata non è ancora completa.'), 'warning',
+				h('div', { class: 'dolly-btn-row', style: 'margin-top:8px' }, DOLLY.button(__('Riprendi la configurazione'), { size: 'sm', variant: 'primary', icon: 'arrow-right', href: ob.url })))), main);
+			DOLLY.icons();
+			return;
+		}
+		if (!ob.tour) {
+			// Setup already done (for example by another administrator): only the tour.
+			setTimeout(function () {
+				DOLLY.coach.show({
+					title: DOLLY.sprintf(__('Ciao %s!'), CFG.userName || ''),
+					text: [h('p', { text: __('Ti mostriamo in un breve tutorial interattivo come funzionano dashboard, sedi, dipendenti, richieste e le altre sezioni del pannello.') })],
+					media: h('div', { class: 'dolly-ob__cheer', 'aria-hidden': 'true' }, DOLLY.icon('graduation-cap')),
+					next: __('Inizia il tutorial'), nextIcon: 'circle-play', skip: __('Non ora')
+				}).then(function (res) {
+					if (res === 'next') { tourStart(0); } else if (res === 'skip') { tourEnd('skipped'); }
+				});
+			}, 500);
+		}
+	}
+
+	/* ------------------------------------------------------------------ */
 	/* Boot                                                               */
 	/* ------------------------------------------------------------------ */
 
 	var pages = {
 		dashboard: pageDashboard, employees: pageEmployees, 'employee-new': pageEmployeeNew, workplaces: pageWorkplaces,
-		requests: pageRequests, attendance: pageAttendance, analytics: pageAnalytics, anomalies: pageAnomalies, broadcast: pageBroadcast, exports: pageExports, appearance: pageAppearance, settings: pageSettings
+		requests: pageRequests, attendance: pageAttendance, analytics: pageAnalytics, anomalies: pageAnomalies, broadcast: pageBroadcast, exports: pageExports, appearance: pageAppearance, settings: pageSettings,
+		onboarding: pageOnboarding
 	};
 	menuToggle();
 	headerBell();
 	(pages[CFG.page] || pageDashboard)();
+	guide();
 	DOLLY.icons();
 })(window, document);
