@@ -11,23 +11,23 @@ msgstr ""
 "X-Domain: dolly-employee-management\n"
 "X-Source-Language: en_US\n"
 
-#: includes/class-dolly-admin.php:161 includes/class-dolly-donations.php:149 includes/class-dolly-sickness.php:291
+#: includes/class-dolly-admin.php:184 includes/class-dolly-donations.php:149 includes/class-dolly-sickness.php:291
 msgid "Not authorized."
 msgstr "Non autorizzato."
 
-#: includes/class-dolly-admin.php:168 assets/js/dolly-admin.js:57
+#: includes/class-dolly-admin.php:191 assets/js/dolly-admin.js:57
 msgid "Hide the sidebar"
 msgstr "Nascondi il menu laterale"
 
-#: includes/class-dolly-admin.php:172
+#: includes/class-dolly-admin.php:195
 msgid "Sections "
 msgstr "Sezioni "
 
-#: includes/class-dolly-admin.php:202 assets/js/dolly-admin.js:1341 assets/js/dolly-core.js:416
+#: includes/class-dolly-admin.php:226 assets/js/dolly-admin.js:1341 assets/js/dolly-core.js:416
 msgid "Loading…"
 msgstr "Caricamento…"
 
-#: includes/class-dolly-admin.php:204
+#: includes/class-dolly-admin.php:228
 msgid "JavaScript is required to use the panel."
 msgstr "Per usare il pannello è necessario JavaScript."
 
@@ -55,7 +55,8 @@ msgstr "Sedi"
 
 #: includes/class-dolly-admin.php:PAGES assets/js/dolly-admin.js:1332 assets/js/dolly-admin.js:2560 assets/js/dolly-admin.js:2876
 #: assets/js/dolly-admin.js:3824 assets/js/dolly-admin.js:3825 assets/js/dolly-admin.js:3826 assets/js/dolly-admin.js:3827
-#: assets/js/dolly-employee.js:22 assets/js/dolly-employee.js:705 assets/js/dolly-employee.js:1078 assets/js/dolly-employee.js:1312
+#: assets/js/dolly-admin.js:3906 assets/js/dolly-employee.js:22 assets/js/dolly-employee.js:705 assets/js/dolly-employee.js:1078
+#: assets/js/dolly-employee.js:1312
 msgid "Requests"
 msgstr "Richieste"
 
@@ -63,8 +64,8 @@ msgstr "Richieste"
 msgid "Attendance"
 msgstr "Presenze"
 
-#: includes/class-dolly-admin.php:PAGES assets/js/dolly-admin.js:3008 assets/js/dolly-admin.js:3493 assets/js/dolly-employee.js:24
-#: assets/js/dolly-employee.js:77 assets/js/dolly-employee.js:877 assets/js/dolly-employee.js:1331
+#: includes/class-dolly-admin.php:PAGES assets/js/dolly-admin.js:3008 assets/js/dolly-admin.js:3493 assets/js/dolly-admin.js:3907
+#: assets/js/dolly-employee.js:24 assets/js/dolly-employee.js:77 assets/js/dolly-employee.js:877 assets/js/dolly-employee.js:1331
 msgid "Documents"
 msgstr "Documenti"
 
@@ -95,6 +96,10 @@ msgstr "Aspetto"
 #: assets/js/dolly-admin.js:3846 assets/js/dolly-admin.js:3847 assets/js/dolly-admin.js:3848
 msgid "Settings"
 msgstr "Impostazioni"
+
+#: includes/class-dolly-admin.php:PAGES
+msgid "About"
+msgstr "Informazioni"
 
 #: includes/class-dolly-admin.php:HIDDEN assets/js/dolly-admin.js:2322 assets/js/dolly-admin.js:3702 assets/js/dolly-admin.js:3845
 msgid "Guided setup"
@@ -5697,7 +5702,7 @@ msgstr "La configurazione guidata non è ancora completa: riprendila dal punto i
 msgid "Restart the guided setup"
 msgstr "Ricomincia la configurazione guidata"
 
-#: assets/js/dolly-admin.js:2327 assets/js/dolly-admin.js:3931
+#: assets/js/dolly-admin.js:2327 assets/js/dolly-admin.js:3982
 msgid "Resume the setup"
 msgstr "Riprendi la configurazione"
 
@@ -7387,7 +7392,7 @@ msgstr "Potrai crearli in seguito da Nuovo dipendente."
 msgid "All set"
 msgstr "Tutto pronto"
 
-#: assets/js/dolly-admin.js:3648 assets/js/dolly-admin.js:3947
+#: assets/js/dolly-admin.js:3648 assets/js/dolly-admin.js:3998
 msgid "Start the tutorial"
 msgstr "Avvia il tutorial"
 
@@ -7735,59 +7740,143 @@ msgstr "Tutorial completato."
 msgid "You can watch the tutorial again from Settings › Guided setup."
 msgstr "Puoi rivedere il tutorial da Impostazioni › Configurazione guidata."
 
-#: assets/js/dolly-admin.js:3899
+#: assets/js/dolly-admin.js:3901
+msgid "%s (available soon)"
+msgstr "%s (disponibile a breve)"
+
+#: assets/js/dolly-admin.js:3904
+msgid "Verified clock-in"
+msgstr "Timbratura verificata"
+
+#: assets/js/dolly-admin.js:3904
+msgid "Entry, break and exit from the phone, verified by GPS, the QR code or PIN of the workplace tablet, or a Bluetooth device. Remote work with one tap."
+msgstr "Entrata, pausa e uscita dal telefono, verificate con il GPS, il codice QR o PIN del tablet della sede o un dispositivo Bluetooth. Smart working con un tocco."
+
+#: assets/js/dolly-admin.js:3905
+msgid "Schedules"
+msgstr "Orari"
+
+#: assets/js/dolly-admin.js:3905
+msgid "Regular or different shifts per day, on site, remote or mixed, holidays and closures."
+msgstr "Turni regolari o diversi per ogni giorno, in presenza, in smart working o misti, ferie e chiusure."
+
+#: assets/js/dolly-admin.js:3906
+msgid "Holidays, hourly leave, overtime and punch corrections, approved by you. Sickness reports with the medical certificate."
+msgstr "Ferie, permessi orari, straordinari e correzioni delle timbrature, approvati da te. Segnalazioni di malattia con il certificato medico."
+
+#: assets/js/dolly-admin.js:3907
+msgid "Payslips, contracts and other documents sent privately to each employee."
+msgstr "Buste paga, contratti e altri documenti inviati in modo riservato a ogni dipendente."
+
+#: assets/js/dolly-admin.js:3908
+msgid "Analytics and exports"
+msgstr "Analytics ed esportazioni"
+
+#: assets/js/dolly-admin.js:3908
+msgid "Attendance in real time, anomalies, charts and monthly exports for payroll."
+msgstr "Presenze in tempo reale, anomalie, grafici ed esportazioni mensili per le buste paga."
+
+#: assets/js/dolly-admin.js:3909
+msgid "Employee app"
+msgstr "App per i dipendenti"
+
+#: assets/js/dolly-admin.js:3909
+msgid "An installable app with push notifications, available in English and Italian, with your brand and colors."
+msgstr "Un'app installabile con notifiche push, in italiano e in inglese, con il tuo marchio e i tuoi colori."
+
+#: assets/js/dolly-admin.js:3916
+msgid "Version %s"
+msgstr "Versione %s"
+
+#: assets/js/dolly-admin.js:3917
+msgid "Dolly turns WordPress into a complete attendance and HR portal for small and medium companies. Employees use a mobile app to clock in, see their schedule and send requests; you manage everything from this dashboard."
+msgstr "Dolly trasforma WordPress in un portale completo per presenze e personale, pensato per piccole e medie imprese. I dipendenti usano un'app sul telefono per timbrare, vedere i propri orari e inviare richieste; tu gestisci tutto da questo pannello."
+
+#: assets/js/dolly-admin.js:3918
+msgid "It is free and open source. Your data stays on your site: the plugin does not send it to its authors."
+msgstr "È gratuito e open source. I tuoi dati restano sul tuo sito: il plugin non li invia ai suoi autori."
+
+#: assets/js/dolly-admin.js:3920
+msgid "GitHub"
+msgstr "GitHub"
+
+#: assets/js/dolly-admin.js:3921
+msgid "Website"
+msgstr "Sito web"
+
+#: assets/js/dolly-admin.js:3922
+msgid "Report a problem"
+msgstr "Segnala un problema"
+
+#: assets/js/dolly-admin.js:3924
+msgid "The website will be available soon."
+msgstr "Il sito web sarà disponibile a breve."
+
+#: assets/js/dolly-admin.js:3927
+msgid "What Dolly does"
+msgstr "Cosa fa Dolly"
+
+#: assets/js/dolly-admin.js:3936
+msgid "Made by "
+msgstr "Realizzato da "
+
+#: assets/js/dolly-admin.js:3937
+msgid " · License GPLv2 or later"
+msgstr " · Licenza GPLv2 o successiva"
+
+#: assets/js/dolly-admin.js:3950
 msgid "We'll ask again in a month."
 msgstr "Te lo chiederemo di nuovo tra un mese."
 
-#: assets/js/dolly-admin.js:3902
+#: assets/js/dolly-admin.js:3953
 msgid "Later"
 msgstr "Più tardi"
 
-#: assets/js/dolly-admin.js:3903
+#: assets/js/dolly-admin.js:3954
 msgid "Don't show again"
 msgstr "Non mostrare più"
 
-#: assets/js/dolly-admin.js:3905 assets/js/dolly-admin.js:3906
+#: assets/js/dolly-admin.js:3956 assets/js/dolly-admin.js:3957
 msgid "Review on WordPress.org"
 msgstr "Recensisci su WordPress.org"
 
-#: assets/js/dolly-admin.js:3906
+#: assets/js/dolly-admin.js:3957
 msgid "Review on WordPress.org (available soon)"
 msgstr "Recensisci su WordPress.org (disponibile a breve)"
 
-#: assets/js/dolly-admin.js:3910
+#: assets/js/dolly-admin.js:3961
 msgid "Enjoying Dolly Employee Management?"
 msgstr "Ti piace Dolly Employee Management?"
 
-#: assets/js/dolly-admin.js:3911
+#: assets/js/dolly-admin.js:3962
 msgid "It is free and open source. A star on GitHub or a review on WordPress.org helps other teams find it, and your ideas and bug reports shape the next versions."
 msgstr "È gratuito e open source. Una stella su GitHub o una recensione su WordPress.org aiuta altri team a trovarlo, e le tue idee e segnalazioni di errori guidano le prossime versioni."
 
-#: assets/js/dolly-admin.js:3913
+#: assets/js/dolly-admin.js:3964
 msgid "Star on GitHub"
 msgstr "Metti una stella su GitHub"
 
-#: assets/js/dolly-admin.js:3914
+#: assets/js/dolly-admin.js:3965
 msgid "Send feedback"
 msgstr "Invia un feedback"
 
-#: assets/js/dolly-admin.js:3917
+#: assets/js/dolly-admin.js:3968
 msgid "Reviews open once the plugin is published in the WordPress.org directory."
 msgstr "Le recensioni saranno disponibili quando il plugin sarà pubblicato nella directory di WordPress.org."
 
-#: assets/js/dolly-admin.js:3930
+#: assets/js/dolly-admin.js:3981
 msgid "The guided setup is not complete yet."
 msgstr "La configurazione guidata non è ancora completa."
 
-#: assets/js/dolly-admin.js:3944
+#: assets/js/dolly-admin.js:3995
 msgid "Hi %s!"
 msgstr "Ciao %s!"
 
-#: assets/js/dolly-admin.js:3945
+#: assets/js/dolly-admin.js:3996
 msgid "A short interactive tutorial shows you how the dashboard, workplaces, employees, requests and the other sections of the panel work."
 msgstr "Ti mostriamo in un breve tutorial interattivo come funzionano dashboard, sedi, dipendenti, richieste e le altre sezioni del pannello."
 
-#: assets/js/dolly-admin.js:3947 assets/js/dolly-employee.js:1449
+#: assets/js/dolly-admin.js:3998 assets/js/dolly-employee.js:1449
 msgid "Not now"
 msgstr "Non ora"
 

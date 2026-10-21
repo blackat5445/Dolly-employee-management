@@ -3888,6 +3888,57 @@
 		});
 	}
 
+	/* ------------------------------------------------------------------ */
+	/* About                                                               */
+	/* ------------------------------------------------------------------ */
+
+	function pageAbout() {
+		var ab = CFG.about || {};
+		function external(btn) { btn.target = '_blank'; btn.rel = 'noopener noreferrer'; return btn; }
+		function link(label, icon, url, variant) {
+			return url
+				? external(DOLLY.button(label, { icon: icon, href: url, variant: variant }))
+				: DOLLY.button(label, { icon: icon, variant: variant, disabled: true, ariaLabel: DOLLY.sprintf(__('%s (available soon)'), label) });
+		}
+		var features = [
+			['clock', __('Verified clock-in'), __('Entry, break and exit from the phone, verified by GPS, the QR code or PIN of the workplace tablet, or a Bluetooth device. Remote work with one tap.')],
+			['calendar-days', __('Schedules'), __('Regular or different shifts per day, on site, remote or mixed, holidays and closures.')],
+			['inbox', __('Requests'), __('Holidays, hourly leave, overtime and punch corrections, approved by you. Sickness reports with the medical certificate.')],
+			['folder-open', __('Documents'), __('Payslips, contracts and other documents sent privately to each employee.')],
+			['chart-line', __('Analytics and exports'), __('Attendance in real time, anomalies, charts and monthly exports for payroll.')],
+			['smartphone', __('Employee app'), __('An installable app with push notifications, available in English and Italian, with your brand and colors.')]
+		];
+		DOLLY.render(main, [
+			h('section', { class: 'dolly-card dolly-about__hero' }, [
+				h('img', { class: 'dolly-about__logo', src: CFG.dollyIcon, alt: '' }),
+				h('div', { class: 'dolly-about__intro' }, [
+					h('h2', { class: 'dolly-about__name', text: 'Dolly Employee Management' }),
+					h('p', { class: 'dolly-muted dolly-about__version', text: DOLLY.sprintf(__('Version %s'), ab.version || '') }),
+					h('p', { class: 'dolly-about__text', text: __('Dolly turns WordPress into a complete attendance and HR portal for small and medium companies. Employees use a mobile app to clock in, see their schedule and send requests; you manage everything from this dashboard.') }),
+					h('p', { class: 'dolly-about__text', text: __('It is free and open source. Your data stays on your site: the plugin does not send it to its authors.') }),
+					h('div', { class: 'dolly-btn-row' }, [
+						link(__('GitHub'), 'github', ab.github, 'primary'),
+						link(__('Website'), 'globe', ab.website),
+						ab.github ? external(DOLLY.button(__('Report a problem'), { icon: 'message-square-heart', href: ab.github + '/issues' })) : null
+					]),
+					ab.website ? null : h('p', { class: 'dolly-small dolly-muted dolly-about__note', text: __('The website will be available soon.') })
+				])
+			]),
+			h('h2', { class: 'dolly-about__heading', text: __('What Dolly does') }),
+			h('div', { class: 'dolly-grid dolly-about__features' }, features.map(function (f) {
+				return h('div', { class: 'dolly-card dolly-about__feature' }, [
+					h('span', { class: 'dolly-about__icon', 'aria-hidden': 'true' }, DOLLY.icon(f[0])),
+					h('h3', { text: f[1] }),
+					h('p', { class: 'dolly-muted', text: f[2] })
+				]);
+			})),
+			h('p', { class: 'dolly-small dolly-muted dolly-about__credits' }, [
+				__('Made by '), h('a', { href: ab.authorUrl, target: '_blank', rel: 'noopener noreferrer', text: ab.author }),
+				__(' · License GPLv2 or later')
+			])
+		]);
+	}
+
 	/** Dashboard banner asking for a star on GitHub and a review on WordPress.org (no review link yet: disabled). */
 	function feedbackBanner(fb) {
 		var box;
@@ -3959,7 +4010,7 @@
 	var pages = {
 		dashboard: pageDashboard, employees: pageEmployees, 'employee-new': pageEmployeeNew, workplaces: pageWorkplaces,
 		requests: pageRequests, attendance: pageAttendance, analytics: pageAnalytics, anomalies: pageAnomalies, broadcast: pageBroadcast, exports: pageExports, appearance: pageAppearance, settings: pageSettings,
-		documents: pageDocuments, onboarding: pageOnboarding
+		documents: pageDocuments, onboarding: pageOnboarding, about: pageAbout
 	};
 	menuToggle();
 	headerBell();
