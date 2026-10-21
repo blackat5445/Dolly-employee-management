@@ -1052,13 +1052,19 @@
 
 			var form3 = bankForm(me);
 
-			// Language of the portal and of the notifications: saved at once, then the page reloads.
-			var lang = me.language || { choice: '', available: {}, default: '' };
-			var langSel = DOLLY.field({ label: __('Lingua del portale'), name: 'locale', type: 'select', value: lang.choice, help: __('Anche le notifiche e le email ti arriveranno in questa lingua.'),
-				options: [{ value: '', label: __('Predefinita') + (lang.default ? ' (' + lang.default + ')' : '') }].concat(Object.keys(lang.available).map(function (k) { return { value: k, label: lang.available[k] }; })) });
-			langSel.input.addEventListener('change', function () {
-				DOLLY.api('me/language', { method: 'POST', body: { locale: langSel.input.value } }).then(function () { window.location.reload(); }, function (err) { DOLLY.toast(err.message, 'error'); });
-			});
+			// Language of the portal and of the notifications: round flags; saved at once, then the page reloads.
+			var lang = me.language || { choice: '', available: {}, default: '', flags: {} };
+			var langBtns = h('div', { class: 'dolly-langs', role: 'group', 'aria-label': __('Lingua del portale') });
+			function langButton(value, label, flag) {
+				var b = h('button', { type: 'button', class: 'dolly-lang', 'aria-pressed': lang.choice === value ? 'true' : 'false' }, [flag ? h('span', { html: flag }) : DOLLY.icon('globe'), h('span', { text: label })]);
+				b.addEventListener('click', function () {
+					if (b.getAttribute('aria-pressed') === 'true') { return; }
+					DOLLY.busy(b, DOLLY.api('me/language', { method: 'POST', body: { locale: value } })).then(function () { window.location.reload(); }, function (err) { DOLLY.toast(err.message, 'error'); });
+				});
+				return b;
+			}
+			DOLLY.append(langBtns, [langButton('', __('Predefinita') + (lang.default ? ' (' + lang.default + ')' : ''), null)].concat(Object.keys(lang.available).map(function (k) { return langButton(k, lang.available[k], (lang.flags || {})[k]); })));
+			var langSel = h('div', { class: 'dolly-field' }, [langBtns, h('span', { class: 'dolly-help', text: __('Anche le notifiche e le email ti arriveranno in questa lingua.') })]);
 
 			var s = me.schedule;
 			DOLLY.render(main, [

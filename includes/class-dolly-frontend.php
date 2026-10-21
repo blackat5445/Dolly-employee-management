@@ -518,9 +518,9 @@ class Dolly_Frontend {
 		echo '<nav class="dolly-auth__langs" aria-label="' . esc_attr__( 'Lingua', 'dolly-employee-management' ) . '">';
 		foreach ( $langs as $loc => $name ) {
 			if ( Dolly_I18n::locale() === $loc ) {
-				echo '<span aria-current="true" lang="' . esc_attr( substr( $loc, 0, 2 ) ) . '">' . esc_html( $name ) . '</span>';
+				echo '<span class="dolly-lang is-current" aria-current="true" lang="' . esc_attr( substr( $loc, 0, 2 ) ) . '">' . Dolly_I18n::flag( $loc ) . '<span>' . esc_html( $name ) . '</span></span>'; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed SVG markup.
 			} else {
-				echo '<a href="' . esc_url( add_query_arg( 'dolly_lang', $loc ) ) . '" lang="' . esc_attr( substr( $loc, 0, 2 ) ) . '" hreflang="' . esc_attr( substr( $loc, 0, 2 ) ) . '">' . esc_html( $name ) . '</a>';
+				echo '<a class="dolly-lang" href="' . esc_url( add_query_arg( 'dolly_lang', $loc ) ) . '" lang="' . esc_attr( substr( $loc, 0, 2 ) ) . '" hreflang="' . esc_attr( substr( $loc, 0, 2 ) ) . '">' . Dolly_I18n::flag( $loc ) . '<span>' . esc_html( $name ) . '</span></a>'; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed SVG markup.
 			}
 		}
 		echo '</nav>';

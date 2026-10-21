@@ -43,12 +43,12 @@ msgid "Nuovo dipendente"
 msgstr ""
 
 #: includes/class-dolly-admin.php:PAGES includes/class-dolly-reports.php:611 assets/js/dolly-admin.js:856 assets/js/dolly-admin.js:1013
-#: assets/js/dolly-employee.js:193 assets/js/dolly-employee.js:1081 assets/js/dolly-employee.js:1205
+#: assets/js/dolly-employee.js:193 assets/js/dolly-employee.js:1087 assets/js/dolly-employee.js:1211
 msgid "Sedi"
 msgstr ""
 
 #: includes/class-dolly-admin.php:PAGES assets/js/dolly-admin.js:1180 assets/js/dolly-admin.js:2383 assets/js/dolly-admin.js:2698
-#: assets/js/dolly-employee.js:22 assets/js/dolly-employee.js:691 assets/js/dolly-employee.js:980 assets/js/dolly-employee.js:1208
+#: assets/js/dolly-employee.js:22 assets/js/dolly-employee.js:691 assets/js/dolly-employee.js:980 assets/js/dolly-employee.js:1214
 msgid "Richieste"
 msgstr ""
 
@@ -126,13 +126,13 @@ msgstr ""
 #: assets/js/dolly-admin.js:248 assets/js/dolly-admin.js:1207 assets/js/dolly-admin.js:1316 assets/js/dolly-admin.js:1329
 #: assets/js/dolly-admin.js:1408 assets/js/dolly-admin.js:1432 assets/js/dolly-core.js:971 assets/js/dolly-employee.js:23
 #: assets/js/dolly-employee.js:27 assets/js/dolly-employee.js:609 assets/js/dolly-employee.js:896 assets/js/dolly-employee.js:915
-#: assets/js/dolly-employee.js:980 assets/js/dolly-employee.js:1156 assets/js/dolly-employee.js:1216 assets/js/dolly-employee.js:1220
+#: assets/js/dolly-employee.js:980 assets/js/dolly-employee.js:1162 assets/js/dolly-employee.js:1222 assets/js/dolly-employee.js:1226
 msgid "Malattia"
 msgstr ""
 
 #: includes/class-dolly-analytics.php:ABSENCE_GROUPS includes/class-dolly-hours.php:CODES includes/class-dolly-sickness.php:KINDS assets/js/dolly-admin.js:1208
 #: assets/js/dolly-admin.js:1316 assets/js/dolly-core.js:972 assets/js/dolly-employee.js:27 assets/js/dolly-employee.js:916
-#: assets/js/dolly-employee.js:1220
+#: assets/js/dolly-employee.js:1226
 msgid "Infortunio"
 msgstr ""
 
@@ -243,7 +243,7 @@ msgstr ""
 msgid "Nessuna entrata registrata entro le %s (inizio previsto %s%s). Se la presenza c'è stata, invia una richiesta di correzione timbratura."
 msgstr ""
 
-#: includes/class-dolly-anomalies.php:234 assets/js/dolly-admin.js:1972 assets/js/dolly-employee.js:1172
+#: includes/class-dolly-anomalies.php:234 assets/js/dolly-admin.js:1972 assets/js/dolly-employee.js:1178
 msgid " minuti"
 msgstr ""
 
@@ -326,7 +326,7 @@ msgid "Uscita oltre l'orario autorizzato"
 msgstr ""
 
 #: includes/class-dolly-anomalies.php:TYPES includes/class-dolly-donations.php:CERT_STATUSES includes/class-dolly-sickness.php:CERT_STATUSES assets/js/dolly-admin.js:1709
-#: assets/js/dolly-employee.js:1156
+#: assets/js/dolly-employee.js:1162
 msgid "Certificato mancante"
 msgstr ""
 
@@ -581,7 +581,7 @@ msgid "QR o PIN"
 msgstr ""
 
 #: includes/class-dolly-attendance.php:378 includes/class-dolly-devices.php:323 includes/class-dolly-employees.php:336 includes/class-dolly-employees.php:393
-#: includes/class-dolly-employees.php:414 includes/class-dolly-rest.php:474 includes/class-dolly-verification.php:252
+#: includes/class-dolly-employees.php:414 includes/class-dolly-rest.php:475 includes/class-dolly-verification.php:252
 msgid "Dipendente non trovato."
 msgstr ""
 
@@ -590,7 +590,7 @@ msgid "Data non valida (non sono ammesse date future)."
 msgstr ""
 
 #: includes/class-dolly-attendance.php:381 includes/class-dolly-closures.php:144 includes/class-dolly-closures.php:147 includes/class-dolly-requests.php:198
-#: includes/class-dolly-requests.php:203 includes/class-dolly-rest.php:680
+#: includes/class-dolly-requests.php:203 includes/class-dolly-rest.php:681
 msgid "Data non valida."
 msgstr ""
 
@@ -1128,7 +1128,7 @@ msgstr ""
 msgid "Requisito annullato"
 msgstr ""
 
-#: includes/class-dolly-employees.php:59 assets/js/dolly-admin.js:713 assets/js/dolly-employee.js:1105
+#: includes/class-dolly-employees.php:59 assets/js/dolly-admin.js:713 assets/js/dolly-employee.js:1111
 msgid "IBAN non valido: controlla lettere e cifre."
 msgstr ""
 
@@ -1315,7 +1315,7 @@ msgstr ""
 msgid "Nome utente"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:484 assets/js/dolly-admin.js:913 assets/js/dolly-employee.js:1070
+#: includes/class-dolly-frontend.php:484 assets/js/dolly-admin.js:913 assets/js/dolly-employee.js:1076
 msgid "Password"
 msgstr ""
 
@@ -1335,7 +1335,7 @@ msgstr ""
 msgid "Password dimenticata?"
 msgstr ""
 
-#: includes/class-dolly-frontend.php:518 assets/js/dolly-admin.js:2050 assets/js/dolly-employee.js:1068
+#: includes/class-dolly-frontend.php:518 assets/js/dolly-admin.js:2050 assets/js/dolly-employee.js:1074
 msgid "Lingua"
 msgstr ""
 
@@ -1681,7 +1681,7 @@ msgid "Giorni lavorativi"
 msgstr ""
 
 #: includes/class-dolly-reports.php:611 assets/js/dolly-admin.js:857 assets/js/dolly-admin.js:963 assets/js/dolly-admin.js:1679
-#: assets/js/dolly-employee.js:192 assets/js/dolly-employee.js:1077 assets/js/dolly-employee.js:1204
+#: assets/js/dolly-employee.js:192 assets/js/dolly-employee.js:1083 assets/js/dolly-employee.js:1210
 msgid "Orario"
 msgstr ""
 
@@ -1693,11 +1693,11 @@ msgstr ""
 msgid "Data creazione"
 msgstr ""
 
-#: includes/class-dolly-reports.php:611 assets/js/dolly-admin.js:679 assets/js/dolly-employee.js:1092
+#: includes/class-dolly-reports.php:611 assets/js/dolly-admin.js:679 assets/js/dolly-employee.js:1098
 msgid "Nome beneficiario"
 msgstr ""
 
-#: includes/class-dolly-reports.php:611 assets/js/dolly-admin.js:680 assets/js/dolly-employee.js:1093
+#: includes/class-dolly-reports.php:611 assets/js/dolly-admin.js:680 assets/js/dolly-employee.js:1099
 msgid "Banca"
 msgstr ""
 
@@ -1861,7 +1861,7 @@ msgstr ""
 msgid "Tipo di richiesta non valido."
 msgstr ""
 
-#: includes/class-dolly-requests.php:181 includes/class-dolly-rest.php:588
+#: includes/class-dolly-requests.php:181 includes/class-dolly-rest.php:589
 msgid "Seleziona il tipo."
 msgstr ""
 
@@ -2152,63 +2152,63 @@ msgstr ""
 msgid "Accesso riservato agli amministratori."
 msgstr ""
 
-#: includes/class-dolly-rest.php:215
+#: includes/class-dolly-rest.php:216
 msgid "Lingua non disponibile."
 msgstr ""
 
-#: includes/class-dolly-rest.php:223
+#: includes/class-dolly-rest.php:224
 msgid "Password aggiornata."
 msgstr ""
 
-#: includes/class-dolly-rest.php:289
+#: includes/class-dolly-rest.php:290
 msgid "Mese o anno non valido."
 msgstr ""
 
-#: includes/class-dolly-rest.php:306
+#: includes/class-dolly-rest.php:307
 msgid "Intervallo non valido."
 msgstr ""
 
-#: includes/class-dolly-rest.php:337
+#: includes/class-dolly-rest.php:338
 msgid "Gli straordinari non si richiedono: vengono calcolati automaticamente dalle timbrature e, oltre il limite o nei giorni di riposo, autorizzati dall'amministratore."
 msgstr ""
 
-#: includes/class-dolly-rest.php:408
+#: includes/class-dolly-rest.php:409
 msgid "Questo account non è collegato a una sede attiva."
 msgstr ""
 
-#: includes/class-dolly-rest.php:494
+#: includes/class-dolly-rest.php:495
 msgid "Password aggiornata. Le sessioni attive del dipendente sono state chiuse."
 msgstr ""
 
-#: includes/class-dolly-rest.php:566 includes/class-dolly-rest.php:580 includes/class-dolly-rest.php:620 assets/js/dolly-admin.js:1295
+#: includes/class-dolly-rest.php:567 includes/class-dolly-rest.php:581 includes/class-dolly-rest.php:621 assets/js/dolly-admin.js:1295
 msgid "Seleziona un dipendente."
 msgstr ""
 
-#: includes/class-dolly-rest.php:588
+#: includes/class-dolly-rest.php:589
 msgid "Tipo di autorizzazione non valido."
 msgstr ""
 
-#: includes/class-dolly-rest.php:636
+#: includes/class-dolly-rest.php:637
 msgid "Parametri non validi."
 msgstr ""
 
-#: includes/class-dolly-rest.php:710
+#: includes/class-dolly-rest.php:711
 msgid "Dipendenti_"
 msgstr ""
 
-#: includes/class-dolly-rest.php:724 assets/js/dolly-admin.js:1660
+#: includes/class-dolly-rest.php:725 assets/js/dolly-admin.js:1660
 msgid "Presenze_"
 msgstr ""
 
-#: includes/class-dolly-rest.php:751
+#: includes/class-dolly-rest.php:752
 msgid "Riepilogo_ore_"
 msgstr ""
 
-#: includes/class-dolly-rest.php:792 includes/class-dolly-rest.php:800 includes/class-dolly-workplaces.php:138
+#: includes/class-dolly-rest.php:793 includes/class-dolly-rest.php:801 includes/class-dolly-workplaces.php:138
 msgid "Sede non trovata."
 msgstr ""
 
-#: includes/class-dolly-rest.php:859
+#: includes/class-dolly-rest.php:860
 msgid "Chiave non valida."
 msgstr ""
 
@@ -2851,7 +2851,7 @@ msgstr ""
 
 #: assets/js/dolly-admin.js:93 assets/js/dolly-admin.js:511 assets/js/dolly-admin.js:515 assets/js/dolly-admin.js:1081
 #: assets/js/dolly-core.js:278 assets/js/dolly-core.js:755 assets/js/dolly-employee.js:360 assets/js/dolly-employee.js:997
-#: assets/js/dolly-employee.js:1225
+#: assets/js/dolly-employee.js:1231
 msgid "Chiudi"
 msgstr ""
 
@@ -3268,7 +3268,7 @@ msgstr ""
 #: assets/js/dolly-admin.js:432 assets/js/dolly-admin.js:454 assets/js/dolly-admin.js:547 assets/js/dolly-admin.js:1060
 #: assets/js/dolly-admin.js:1286 assets/js/dolly-admin.js:1361 assets/js/dolly-admin.js:1793 assets/js/dolly-core.js:326
 #: assets/js/dolly-core.js:855 assets/js/dolly-employee.js:255 assets/js/dolly-employee.js:502 assets/js/dolly-employee.js:824
-#: assets/js/dolly-employee.js:926 assets/js/dolly-employee.js:1215 assets/js/dolly-employee.js:1225
+#: assets/js/dolly-employee.js:926 assets/js/dolly-employee.js:1221 assets/js/dolly-employee.js:1231
 msgid "Annulla"
 msgstr ""
 
@@ -3319,7 +3319,7 @@ msgstr ""
 
 #: assets/js/dolly-admin.js:495 assets/js/dolly-admin.js:964 assets/js/dolly-admin.js:1158 assets/js/dolly-admin.js:1215
 #: assets/js/dolly-admin.js:1316 assets/js/dolly-admin.js:1329 assets/js/dolly-admin.js:1709 assets/js/dolly-employee.js:914
-#: assets/js/dolly-employee.js:1076
+#: assets/js/dolly-employee.js:1082
 msgid "Tipo"
 msgstr ""
 
@@ -3463,7 +3463,7 @@ msgstr ""
 msgid "Inizio"
 msgstr ""
 
-#: assets/js/dolly-admin.js:604 assets/js/dolly-admin.js:1267 assets/js/dolly-employee.js:1233
+#: assets/js/dolly-admin.js:604 assets/js/dolly-admin.js:1267 assets/js/dolly-employee.js:1239
 msgid "Fine"
 msgstr ""
 
@@ -3607,7 +3607,7 @@ msgstr ""
 msgid "Scollega "
 msgstr ""
 
-#: assets/js/dolly-admin.js:781 assets/js/dolly-core.js:578 assets/js/dolly-employee.js:1247
+#: assets/js/dolly-admin.js:781 assets/js/dolly-core.js:578 assets/js/dolly-employee.js:1253
 msgid " di "
 msgstr ""
 
@@ -4469,7 +4469,7 @@ msgid "Con permesso orario"
 msgstr ""
 
 #: assets/js/dolly-admin.js:1522 assets/js/dolly-admin.js:2304 assets/js/dolly-admin.js:2332 assets/js/dolly-admin.js:2352
-#: assets/js/dolly-employee.js:862 assets/js/dolly-employee.js:1217
+#: assets/js/dolly-employee.js:862 assets/js/dolly-employee.js:1223
 msgid "Malattia e infortunio"
 msgstr ""
 
@@ -4498,7 +4498,7 @@ msgid "Giorno successivo"
 msgstr ""
 
 #: assets/js/dolly-admin.js:1540 assets/js/dolly-core.js:753 assets/js/dolly-employee.js:190 assets/js/dolly-employee.js:554
-#: assets/js/dolly-employee.js:1203
+#: assets/js/dolly-employee.js:1209
 msgid "Oggi"
 msgstr ""
 
@@ -4887,7 +4887,7 @@ msgstr ""
 msgid "Solo per il tuo account. I dipendenti scelgono la loro lingua nel profilo del portale."
 msgstr ""
 
-#: assets/js/dolly-admin.js:1915 assets/js/dolly-employee.js:1058
+#: assets/js/dolly-admin.js:1915 assets/js/dolly-employee.js:1066
 msgid "Predefinita"
 msgstr ""
 
@@ -5588,7 +5588,7 @@ msgstr ""
 msgid " · risposta media in "
 msgstr ""
 
-#: assets/js/dolly-admin.js:2316 assets/js/dolly-employee.js:1172
+#: assets/js/dolly-admin.js:2316 assets/js/dolly-employee.js:1178
 msgid " ore"
 msgstr ""
 
@@ -6725,7 +6725,7 @@ msgstr ""
 msgid "Nascondi password"
 msgstr ""
 
-#: assets/js/dolly-employee.js:13 assets/js/dolly-employee.js:1195
+#: assets/js/dolly-employee.js:13 assets/js/dolly-employee.js:1201
 msgid "Registra entrata"
 msgstr ""
 
@@ -6741,11 +6741,11 @@ msgstr ""
 msgid "Registra uscita"
 msgstr ""
 
-#: assets/js/dolly-employee.js:25 assets/js/dolly-employee.js:49 assets/js/dolly-employee.js:980 assets/js/dolly-employee.js:1065
+#: assets/js/dolly-employee.js:25 assets/js/dolly-employee.js:49 assets/js/dolly-employee.js:980 assets/js/dolly-employee.js:1071
 msgid "Profilo"
 msgstr ""
 
-#: assets/js/dolly-employee.js:50 assets/js/dolly-employee.js:1405 assets/js/dolly-workplace.js:52
+#: assets/js/dolly-employee.js:50 assets/js/dolly-employee.js:1411 assets/js/dolly-workplace.js:52
 msgid "Esci"
 msgstr ""
 
@@ -6801,7 +6801,7 @@ msgstr ""
 msgid "da registrare"
 msgstr ""
 
-#: assets/js/dolly-employee.js:181 assets/js/dolly-employee.js:1079
+#: assets/js/dolly-employee.js:181 assets/js/dolly-employee.js:1085
 msgid " · pausa "
 msgstr ""
 
@@ -6837,7 +6837,7 @@ msgstr ""
 msgid "Se lavori comunque, le ore di oggi sono conteggiate come ore ordinarie."
 msgstr ""
 
-#: assets/js/dolly-employee.js:194 assets/js/dolly-employee.js:1206
+#: assets/js/dolly-employee.js:194 assets/js/dolly-employee.js:1212
 msgid "Verifica"
 msgstr ""
 
@@ -6957,11 +6957,11 @@ msgstr ""
 msgid " anticipata"
 msgstr ""
 
-#: assets/js/dolly-employee.js:373 assets/js/dolly-employee.js:1197 assets/js/dolly-employee.js:1201
+#: assets/js/dolly-employee.js:373 assets/js/dolly-employee.js:1203 assets/js/dolly-employee.js:1207
 msgid "Usa la mia posizione"
 msgstr ""
 
-#: assets/js/dolly-employee.js:374 assets/js/dolly-employee.js:1198
+#: assets/js/dolly-employee.js:374 assets/js/dolly-employee.js:1204
 msgid "Scansiona il QR della sede"
 msgstr ""
 
@@ -6969,7 +6969,7 @@ msgstr ""
 msgid "Scegli come verificare la tua presenza in sede."
 msgstr ""
 
-#: assets/js/dolly-employee.js:382 assets/js/dolly-employee.js:1199
+#: assets/js/dolly-employee.js:382 assets/js/dolly-employee.js:1205
 msgid "Inserisci il PIN della sede"
 msgstr ""
 
@@ -7089,7 +7089,7 @@ msgstr ""
 msgid "Calendario e presenze"
 msgstr ""
 
-#: assets/js/dolly-employee.js:545 assets/js/dolly-employee.js:691 assets/js/dolly-employee.js:821 assets/js/dolly-employee.js:1210
+#: assets/js/dolly-employee.js:545 assets/js/dolly-employee.js:691 assets/js/dolly-employee.js:821 assets/js/dolly-employee.js:1216
 msgid "Nuova richiesta"
 msgstr ""
 
@@ -7181,7 +7181,7 @@ msgstr ""
 msgid "Crea una richiesta dal pulsante o dal calendario."
 msgstr ""
 
-#: assets/js/dolly-employee.js:704 assets/js/dolly-employee.js:1209
+#: assets/js/dolly-employee.js:704 assets/js/dolly-employee.js:1215
 msgid "Le tue richieste"
 msgstr ""
 
@@ -7305,7 +7305,7 @@ msgstr ""
 msgid "Il certificato medico è obbligatorio: caricalo appena disponibile."
 msgstr ""
 
-#: assets/js/dolly-employee.js:862 assets/js/dolly-employee.js:924 assets/js/dolly-employee.js:1218
+#: assets/js/dolly-employee.js:862 assets/js/dolly-employee.js:924 assets/js/dolly-employee.js:1224
 msgid "Segnala malattia/infortunio"
 msgstr ""
 
@@ -7393,7 +7393,7 @@ msgstr ""
 msgid "Ripeti nuova password"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1041 assets/js/dolly-employee.js:1231
+#: assets/js/dolly-employee.js:1041 assets/js/dolly-employee.js:1237
 msgid "Cambia password"
 msgstr ""
 
@@ -7409,515 +7409,515 @@ msgstr ""
 msgid "Lingua del portale"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1057
+#: assets/js/dolly-employee.js:1067
 msgid "Anche le notifiche e le email ti arriveranno in questa lingua."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1066 assets/js/dolly-employee.js:1228
+#: assets/js/dolly-employee.js:1072 assets/js/dolly-employee.js:1234
 msgid "Dati personali"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1066
+#: assets/js/dolly-employee.js:1072
 msgid "Nome utente: "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1066
+#: assets/js/dolly-employee.js:1072
 msgid " (non modificabile)"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1067 assets/js/dolly-employee.js:1229
+#: assets/js/dolly-employee.js:1073 assets/js/dolly-employee.js:1235
 msgid "Dati bancari"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1069 assets/js/dolly-employee.js:1230
+#: assets/js/dolly-employee.js:1075 assets/js/dolly-employee.js:1236
 msgid "Notifiche sul telefono"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1071
+#: assets/js/dolly-employee.js:1077
 msgid "Tutorial"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1072
+#: assets/js/dolly-employee.js:1078
 msgid "Rivedi la guida che mostra come timbrare, inviare richieste e segnalare malattie."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1073
+#: assets/js/dolly-employee.js:1079
 msgid "Rivedi il tutorial"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1075
+#: assets/js/dolly-employee.js:1081
 msgid "Contratto e orario"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1077
+#: assets/js/dolly-employee.js:1083
 msgid "Nessun orario fisso: turni su chiamata, approvati dall'amministratore."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1091
+#: assets/js/dolly-employee.js:1097
 msgid "IT60 X054 2811 1010 0000 0123 456"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1092
+#: assets/js/dolly-employee.js:1098
 msgid "Intestatario del conto."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1094
+#: assets/js/dolly-employee.js:1100
 msgid "Codice BIC/SWIFT, 8 o 11 caratteri."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1095
+#: assets/js/dolly-employee.js:1101
 msgid "Salva dati bancari"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1098
+#: assets/js/dolly-employee.js:1104
 msgid "Usati per l'accredito dello stipendio. Se modifichi l'IBAN, l'amministratore riceve una notifica."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1111
+#: assets/js/dolly-employee.js:1117
 msgid "Dati bancari salvati. L'amministratore è stato avvisato del nuovo IBAN."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1111
+#: assets/js/dolly-employee.js:1117
 msgid "Dati bancari salvati."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1159
+#: assets/js/dolly-employee.js:1165
 msgid "Esempio del tutorial"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1172
+#: assets/js/dolly-employee.js:1178
 msgid " ora"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1172
+#: assets/js/dolly-employee.js:1178
 msgid " e "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1174
+#: assets/js/dolly-employee.js:1180
 msgid "Gli straordinari "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1174
+#: assets/js/dolly-employee.js:1180
 msgid "non si richiedono"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1174
+#: assets/js/dolly-employee.js:1180
 msgid ": vengono calcolati in automatico dalle tue timbrature."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1176
+#: assets/js/dolly-employee.js:1182
 msgid "Fino a "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1176
+#: assets/js/dolly-employee.js:1182
 msgid " al giorno"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1176
+#: assets/js/dolly-employee.js:1182
 msgid ": se esci dopo la fine del turno, il tempo in più è approvato automaticamente."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1177
+#: assets/js/dolly-employee.js:1183
 msgid "Oltre "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1177
+#: assets/js/dolly-employee.js:1183
 msgid ": la parte in più resta in attesa dell'approvazione dell'amministratore. Ricevi una notifica con l'esito."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1178 assets/js/dolly-employee.js:1181
+#: assets/js/dolly-employee.js:1184 assets/js/dolly-employee.js:1187
 msgid "Giorni di riposo"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1178 assets/js/dolly-employee.js:1181
+#: assets/js/dolly-employee.js:1184 assets/js/dolly-employee.js:1187
 msgid ": puoi lavorare solo se l'amministratore ti ha autorizzato lo straordinario."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1180
+#: assets/js/dolly-employee.js:1186
 msgid "Dopo la fine del turno"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1180
+#: assets/js/dolly-employee.js:1186
 msgid ": il tempo in più resta in attesa dell'approvazione dell'amministratore. Ricevi una notifica con l'esito."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1183
+#: assets/js/dolly-employee.js:1189
 msgid "Le ore di straordinario compaiono in «Calendario e presenze», colonna «Straordinario»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1184
+#: assets/js/dolly-employee.js:1190
 msgid "Anche le ore di straordinario sono soggette a verifica da parte del datore di lavoro."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1189
+#: assets/js/dolly-employee.js:1195
 msgid "Ho capito"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1191
+#: assets/js/dolly-employee.js:1197
 msgid "Tipi di richiesta · "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1194
+#: assets/js/dolly-employee.js:1200
 msgid "Benvenuto nel portale %s!"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1194
+#: assets/js/dolly-employee.js:1200
 msgid "In un paio di minuti ti mostriamo come timbrare, inviare richieste e segnalare una malattia."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1194
+#: assets/js/dolly-employee.js:1200
 msgid "Durante il tutorial non viene registrato nulla: è solo una prova."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1194
+#: assets/js/dolly-employee.js:1200
 msgid "Inizia"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1195
+#: assets/js/dolly-employee.js:1201
 msgid "Quando arrivi al lavoro tocca questo pulsante. Cambia testo e colore a ogni fase: entrata, pausa, uscita."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1195
+#: assets/js/dolly-employee.js:1201
 msgid "Provalo ora."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1195
+#: assets/js/dolly-employee.js:1201
 msgid "Tocca «Registra entrata»"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1196
+#: assets/js/dolly-employee.js:1202
 msgid "Come verificare la presenza"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1197
+#: assets/js/dolly-employee.js:1203
 msgid ": il telefono verifica con il GPS che sei in sede."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1198
+#: assets/js/dolly-employee.js:1204
 msgid ": inquadra il codice sullo schermo della sede. Usalo se il GPS non funziona."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1199
+#: assets/js/dolly-employee.js:1205
 msgid ": in alternativa al QR, il codice di 6 cifre mostrato sullo schermo."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1201
+#: assets/js/dolly-employee.js:1207
 msgid "Tocca «Usa la mia posizione»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1201
+#: assets/js/dolly-employee.js:1207
 msgid "Se il GPS non funziona o la posizione non viene rilevata, scegli «Scansiona il QR della sede»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1201
+#: assets/js/dolly-employee.js:1207
 msgid "Tocca «Usa la mia posizione»"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1202
+#: assets/js/dolly-employee.js:1208
 msgid "Conferma entrata"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1202
+#: assets/js/dolly-employee.js:1208
 msgid "Controlla i dati e tocca «Conferma entrata». L'orario registrato è quello del server."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1202
+#: assets/js/dolly-employee.js:1208
 msgid "Tocca «Conferma entrata»"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1204
+#: assets/js/dolly-employee.js:1210
 msgid ": il tuo turno di oggi e l'eventuale pausa."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1205
+#: assets/js/dolly-employee.js:1211
 msgid ": dove puoi timbrare."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1206
+#: assets/js/dolly-employee.js:1212
 msgid ": come devi confermare la presenza (posizione, QR o PIN)."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1208
+#: assets/js/dolly-employee.js:1214
 msgid "Qui chiedi ferie, permessi, donazione sangue e correzioni delle timbrature. Tocca «Richieste»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1208
+#: assets/js/dolly-employee.js:1214
 msgid "Tocca «Richieste»"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1209
+#: assets/js/dolly-employee.js:1215
 msgid "Qui trovi tutte le tue richieste con il loro stato: in attesa, approvata o respinta. Per ogni decisione ricevi una notifica."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1209
+#: assets/js/dolly-employee.js:1215
 msgid "Le richieste in attesa si possono modificare o eliminare; per quelle approvate puoi chiedere una modifica o l'annullamento."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1210
+#: assets/js/dolly-employee.js:1216
 msgid "Tocca «Nuova richiesta» per vedere i tipi di richiesta."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1210
+#: assets/js/dolly-employee.js:1216
 msgid "Tocca «Nuova richiesta»"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1211
+#: assets/js/dolly-employee.js:1217
 msgid "Ferie (1 di 3)"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1211
+#: assets/js/dolly-employee.js:1217
 msgid "Per giornate intere: indica «Dal» e «Al» e, se vuoi, una nota."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1211
+#: assets/js/dolly-employee.js:1217
 msgid "L'amministratore approva o respinge la richiesta e ricevi una notifica."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1212
+#: assets/js/dolly-employee.js:1218
 msgid "Permesso orario (2 di 3)"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1212
+#: assets/js/dolly-employee.js:1218
 msgid "Per assentarti alcune ore: scegli il tipo di permesso (retribuito, non retribuito o per eventi specifici: il pulsante «?» li spiega), poi il giorno e l'orario «Dalle ore» / «Alle ore»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1212
+#: assets/js/dolly-employee.js:1218
 msgid "Le ore di permesso approvate vengono tolte dalle ore lavorate."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1213
+#: assets/js/dolly-employee.js:1219
 msgid "Correzione timbratura (3 di 3)"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1213
+#: assets/js/dolly-employee.js:1219
 msgid "Se hai dimenticato di timbrare o hai sbagliato: scegli giorno e timbratura, indica l'orario corretto e il motivo."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1213
+#: assets/js/dolly-employee.js:1219
 msgid "Quando la richiesta è approvata, la timbratura viene corretta."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1214
+#: assets/js/dolly-employee.js:1220
 msgid "Verifica del datore di lavoro"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1215
+#: assets/js/dolly-employee.js:1221
 msgid "Chiudi senza inviare"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1215
+#: assets/js/dolly-employee.js:1221
 msgid "Per ora non inviamo nulla: tocca «Annulla»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1215 assets/js/dolly-employee.js:1225
+#: assets/js/dolly-employee.js:1221 assets/js/dolly-employee.js:1231
 msgid "Tocca «Annulla»"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1216
+#: assets/js/dolly-employee.js:1222
 msgid "Tocca «Malattia»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1216
+#: assets/js/dolly-employee.js:1222
 msgid "Tocca «Malattia»"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1217
+#: assets/js/dolly-employee.js:1223
 msgid "Qui segnali una malattia o un infortunio: la segnalazione viene registrata subito, senza approvazione."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1217
+#: assets/js/dolly-employee.js:1223
 msgid "Sotto trovi le tue segnalazioni con lo stato del certificato medico."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1218
+#: assets/js/dolly-employee.js:1224
 msgid "Tocca il pulsante per vedere come si fa una segnalazione."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1218
+#: assets/js/dolly-employee.js:1224
 msgid "Tocca «Segnala malattia/infortunio»"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1219
+#: assets/js/dolly-employee.js:1225
 msgid "Tipo di segnalazione"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1220
+#: assets/js/dolly-employee.js:1226
 msgid ": quando sei assente dal lavoro per motivi di salute."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1220
+#: assets/js/dolly-employee.js:1226
 msgid ": quando subisci un infortunio sul lavoro o durante il normale tragitto tra casa e lavoro."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1221
+#: assets/js/dolly-employee.js:1227
 msgid "Se non puoi farlo tu, la segnalazione può essere registrata anche dall'amministratore per tuo conto."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1222
+#: assets/js/dolly-employee.js:1228
 msgid "Indica le date e, se vuoi, una nota (non inserire diagnosi)."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1223
+#: assets/js/dolly-employee.js:1229
 msgid "Dopo la segnalazione devi "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1223
+#: assets/js/dolly-employee.js:1229
 msgid "caricare il certificato medico"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1223
+#: assets/js/dolly-employee.js:1229
 msgid " nella tabella «Le tue segnalazioni»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1225
+#: assets/js/dolly-employee.js:1231
 msgid "Tocca «Annulla»: ti mostriamo un esempio di segnalazione."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1226
+#: assets/js/dolly-employee.js:1232
 msgid "Carica il certificato"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1226
+#: assets/js/dolly-employee.js:1232
 msgid "Ogni segnalazione compare in «Le tue segnalazioni» (questa è solo un esempio)."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1226
+#: assets/js/dolly-employee.js:1232
 msgid "Tocca «Carica certificato» e scegli il file: PDF, JPG o PNG fino a 10 MB. Finché il certificato manca, la segnalazione resta in rosso."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1227
+#: assets/js/dolly-employee.js:1233
 msgid "Il tuo profilo"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1227
+#: assets/js/dolly-employee.js:1233
 msgid "In alto trovi le notifiche (campanella) e il tuo profilo. Tocca il profilo."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1227
+#: assets/js/dolly-employee.js:1233
 msgid "Tocca l'icona del profilo"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1228
+#: assets/js/dolly-employee.js:1234
 msgid "Aggiorna nome, cognome, telefono ed email e tocca «Salva profilo». Il nome utente non si può cambiare."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1229
+#: assets/js/dolly-employee.js:1235
 msgid "IBAN, intestatario, banca e BIC per l'accredito dello stipendio: tocca «Salva dati bancari». Se cambi l'IBAN l'amministratore viene avvisato."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1230
+#: assets/js/dolly-employee.js:1236
 msgid "Attiva le notifiche per ricevere esiti delle richieste, anomalie e messaggi anche con l'app chiusa."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1231
+#: assets/js/dolly-employee.js:1237
 msgid "Inserisci la password attuale e quella nuova (almeno 8 caratteri), poi tocca «Cambia password»."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1232
+#: assets/js/dolly-employee.js:1238
 msgid "Come funzionano gli straordinari"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1233
+#: assets/js/dolly-employee.js:1239
 msgid "Tutto pronto!"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1233
+#: assets/js/dolly-employee.js:1239
 msgid "Da qui timbri ogni giorno."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1233
+#: assets/js/dolly-employee.js:1239
 msgid "Puoi rivedere il tutorial quando vuoi da Profilo › Tutorial."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1247
+#: assets/js/dolly-employee.js:1253
 msgid "Passo "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1319
+#: assets/js/dolly-employee.js:1325
 msgid "Le notifiche sono bloccate: riattivale dalle impostazioni del telefono (Notifiche › "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1319
+#: assets/js/dolly-employee.js:1325
 msgid "Permesso per le notifiche non concesso."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1340
+#: assets/js/dolly-employee.js:1346
 msgid "Attiva le notifiche"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1341
+#: assets/js/dolly-employee.js:1347
 msgid "Ricevi sul telefono gli esiti delle richieste, le anomalie da sistemare e i messaggi dell'amministrazione, anche con l'app chiusa."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1343
+#: assets/js/dolly-employee.js:1349
 msgid "Non ora"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1344 assets/js/dolly-employee.js:1378
+#: assets/js/dolly-employee.js:1350 assets/js/dolly-employee.js:1384
 msgid "Attiva notifiche"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1345
+#: assets/js/dolly-employee.js:1351
 msgid "Notifiche attivate su questo telefono."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1354
+#: assets/js/dolly-employee.js:1360
 msgid "Le notifiche sul telefono non sono disponibili. Trovi tutto nella sezione Notifiche."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1356
+#: assets/js/dolly-employee.js:1362
 msgid "Su iPhone le notifiche funzionano con il portale installato: tocca Condividi › \"Aggiungi alla schermata Home\", poi apri "
 msgstr ""
 
-#: assets/js/dolly-employee.js:1356
+#: assets/js/dolly-employee.js:1362
 msgid " dall'icona e attiva le notifiche."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1359
+#: assets/js/dolly-employee.js:1365
 msgid "Questo browser non supporta le notifiche push."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1361
+#: assets/js/dolly-employee.js:1367
 msgid "Le notifiche sono bloccate per questo sito: riattivale dalle impostazioni del telefono o del browser."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1364
+#: assets/js/dolly-employee.js:1370
 msgid "Disattiva su questo dispositivo"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1364
+#: assets/js/dolly-employee.js:1370
 msgid "Notifiche disattivate su questo dispositivo."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1366
+#: assets/js/dolly-employee.js:1372
 msgid "Invia una notifica di prova"
 msgstr ""
 
-#: assets/js/dolly-employee.js:1371
+#: assets/js/dolly-employee.js:1377
 msgid "Notifica di prova inviata: dovrebbe comparire tra pochi secondi."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1371
+#: assets/js/dolly-employee.js:1377
 msgid " Chiudi l'app per vederla come notifica del telefono."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1372
+#: assets/js/dolly-employee.js:1378
 msgid "Invio non riuscito."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1372
+#: assets/js/dolly-employee.js:1378
 msgid "Nessun dispositivo registrato: riattiva le notifiche."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1375
+#: assets/js/dolly-employee.js:1381
 msgid "Notifiche attive su questo dispositivo."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1378
+#: assets/js/dolly-employee.js:1384
 msgid "Notifiche attivate."
 msgstr ""
 
-#: assets/js/dolly-employee.js:1379
+#: assets/js/dolly-employee.js:1385
 msgid "Ricevi le notifiche del portale anche con l'app chiusa."
 msgstr ""
 

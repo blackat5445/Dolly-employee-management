@@ -804,9 +804,17 @@
 html:has(.dolly-app.dolly-portal), body:has(.dolly-app.dolly-portal) { overflow-x: hidden; overflow-x: clip; }
 
 /* Language links under the sign-in form */
-.dolly-app .dolly-auth__langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin-top: var(--dolly-s2); padding-top: var(--dolly-s2); border-top: 1px solid var(--dolly-border); font-size: .875rem; }
-.dolly-app .dolly-auth__langs a, .dolly-app .dolly-auth__langs span { display: inline-flex; align-items: center; min-height: 32px; }
-.dolly-app .dolly-auth__langs span { font-weight: 700; color: var(--dolly-text); }
+.dolly-app .dolly-auth__langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: var(--dolly-s2); padding-top: var(--dolly-s2); border-top: 1px solid var(--dolly-border); font-size: .875rem; }
+/* Language switch: round flag + name. The current language is a filled pill. */
+.dolly-app .dolly-lang {
+	display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 14px 4px 6px;
+	border: 1px solid var(--dolly-border-strong); border-radius: 999px; background: var(--dolly-surface);
+	color: var(--dolly-text); font: 600 .875rem/1 var(--dolly-font); text-decoration: none; cursor: pointer;
+}
+.dolly-app a.dolly-lang:hover, .dolly-app button.dolly-lang:hover { background: var(--dolly-surface-2); }
+.dolly-app .dolly-lang.is-current, .dolly-app .dolly-lang[aria-pressed="true"] { border-color: var(--dolly-primary); background: var(--dolly-primary-soft); color: var(--dolly-heading); }
+.dolly-app .dolly-flag { flex: none; width: 24px; height: 24px; border-radius: 50%; display: block; }
+.dolly-app .dolly-langs { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* Skip link (plugin template and themes): hidden until focused with the keyboard. */
 .dolly-skip-link {

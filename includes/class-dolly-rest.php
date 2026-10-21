@@ -189,6 +189,7 @@ class Dolly_REST {
 			'choice'    => Dolly_I18n::user_choice( $uid ),
 			'available' => Dolly_I18n::available(),
 			'default'   => Dolly_I18n::available()[ Dolly_I18n::default_locale() ] ?? Dolly_I18n::default_locale(),
+			'flags'     => array_combine( array_keys( Dolly_I18n::available() ), array_map( array( 'Dolly_I18n', 'flag' ), array_keys( Dolly_I18n::available() ) ) ),
 		);
 		$e['settings'] = array(
 			'verification'       => Dolly_Settings::verification(),

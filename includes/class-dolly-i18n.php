@@ -192,6 +192,34 @@ class Dolly_I18n {
 		return self::SOURCE !== self::locale() && is_readable( DOLLY_DIR . $file ) ? DOLLY_URL . $file : '';
 	}
 
+	/**
+	 * Round flag of a language (inline SVG, decorative: the language name is always written next to it).
+	 * Italian: tricolore; English: Union Jack. Other languages: a neutral circle with the language code.
+	 */
+	public static function flag( $locale ) {
+		static $n = 0;
+		$n++;
+		$lang = strtolower( substr( (string) $locale, 0, 2 ) );
+		$open = '<svg class="dolly-flag" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">'
+			. '<defs><clipPath id="dolly-flag-c' . $n . '"><circle cx="12" cy="12" r="12"/></clipPath></defs><g clip-path="url(#dolly-flag-c' . $n . ')">';
+		$close = '</g><circle cx="12" cy="12" r="11.5" fill="none" stroke="rgba(15,23,42,.18)"/></svg>';
+		if ( 'it' === $lang ) {
+			return $open . '<rect width="8" height="24" fill="#009246"/><rect x="8" width="8" height="24" fill="#FFFFFF"/><rect x="16" width="8" height="24" fill="#CE2B37"/>' . $close;
+		}
+		if ( 'en' === $lang ) {
+			// Union Jack, centre square of the 2:1 flag scaled to the circle.
+			return $open . '<svg x="0" y="0" width="24" height="24" viewBox="15 0 30 30" preserveAspectRatio="xMidYMid slice">'
+				. '<defs><clipPath id="dolly-flag-t' . $n . '"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath></defs>'
+				. '<rect width="60" height="30" fill="#012169"/>'
+				. '<path d="M0,0 L60,30 M60,0 L0,30" stroke="#FFFFFF" stroke-width="6"/>'
+				. '<path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#dolly-flag-t' . $n . ')" stroke="#C8102E" stroke-width="4"/>'
+				. '<path d="M30,0 v30 M0,15 h60" stroke="#FFFFFF" stroke-width="10"/>'
+				. '<path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></svg>' . $close;
+		}
+		return $open . '<rect width="24" height="24" fill="#E2E8F0"/><text x="12" y="15.5" font-size="9" font-weight="700" text-anchor="middle" fill="#0F172A" font-family="sans-serif">'
+			. esc_html( strtoupper( $lang ) ) . '</text>' . $close;
+	}
+
 	/** Languages for the selectors: '' = default of the plugin. */
 	public static function choices( $default_label ) {
 		return array_merge( array( '' => $default_label ), self::available() );
