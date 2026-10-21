@@ -802,3 +802,8 @@
 	.dolly-app .dolly-main .dolly-btn--block, .dolly-app .dolly-clock__btn { text-align: center; }
 }
 html:has(.dolly-app.dolly-portal), body:has(.dolly-app.dolly-portal) { overflow-x: hidden; overflow-x: clip; }
+
+/* Language links under the sign-in form */
+.dolly-app .dolly-auth__langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin-top: var(--dolly-s2); padding-top: var(--dolly-s2); border-top: 1px solid var(--dolly-border); font-size: .875rem; }
+.dolly-app .dolly-auth__langs a, .dolly-app .dolly-auth__langs span { display: inline-flex; align-items: center; min-height: 32px; }
+.dolly-app .dolly-auth__langs span { font-weight: 700; color: var(--dolly-text); }

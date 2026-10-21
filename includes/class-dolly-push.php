@@ -118,7 +118,7 @@ class Dolly_Push {
 		$host     = wp_parse_url( $endpoint, PHP_URL_HOST );
 		// Only the format is checked: a DNS lookup here fails on some hosts and rejected valid phones.
 		if ( 0 !== strpos( $endpoint, 'https://' ) || ! $host || strlen( $endpoint ) > 2000 ) {
-			return new WP_Error( 'dolly_invalid', 'Iscrizione alle notifiche non valida.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Iscrizione alle notifiche non valida.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$t    = Dolly_Install::t( 'push_subs' );
 		$hash = hash( 'sha256', $endpoint );
@@ -280,11 +280,11 @@ class Dolly_Push {
 		global $wpdb;
 		$p = wp_parse_url( $sub->endpoint );
 		if ( empty( $p['host'] ) ) {
-			return array( 'ok' => false, 'code' => 0, 'error' => 'Indirizzo del servizio push non valido.' );
+			return array( 'ok' => false, 'code' => 0, 'error' => __( 'Indirizzo del servizio push non valido.', 'dolly-employee-management' ) );
 		}
 		$jwt = self::jwt( $p['scheme'] . '://' . $p['host'] . ( isset( $p['port'] ) ? ':' . $p['port'] : '' ), $keys );
 		if ( '' === $jwt ) {
-			return self::fail( 0, 'Firma VAPID non riuscita (OpenSSL).' );
+			return self::fail( 0, __( 'Firma VAPID non riuscita (OpenSSL).', 'dolly-employee-management' ) );
 		}
 		$headers = array(
 			'TTL'           => '86400',
@@ -305,14 +305,14 @@ class Dolly_Push {
 			)
 		);
 		if ( is_wp_error( $res ) ) {
-			return self::fail( 0, 'Connessione al servizio push non riuscita: ' . $res->get_error_message() );
+			return self::fail( 0, __( 'Connessione al servizio push non riuscita: ', 'dolly-employee-management' ) . $res->get_error_message() );
 		}
 		$code = (int) wp_remote_retrieve_response_code( $res );
 		$t    = Dolly_Install::t( 'push_subs' );
 		if ( 404 === $code || 410 === $code ) {
 			$wpdb->delete( $t, array( 'id' => (int) $sub->id ) );
 			unset( self::$has_sub[ (int) $sub->user_id ] );
-			return self::fail( $code, 'Iscrizione scaduta sul telefono: riattiva le notifiche dal Profilo.' );
+			return self::fail( $code, __( 'Iscrizione scaduta sul telefono: riattiva le notifiche dal Profilo.', 'dolly-employee-management' ) );
 		}
 		if ( $code >= 200 && $code < 300 ) {
 			$wpdb->update( $t, array( 'last_success_at' => Dolly_Time::now_utc() ), array( 'id' => (int) $sub->id ) );
@@ -385,7 +385,7 @@ class Dolly_Push {
 				return $label;
 			}
 		}
-		return 'Dispositivo';
+		return __( 'Dispositivo', 'dolly-employee-management' );
 	}
 
 	/**
@@ -394,7 +394,7 @@ class Dolly_Push {
 	 */
 	public static function test( $user_id ) {
 		$devices = count( self::subscriptions( $user_id ) );
-		Dolly_Notifications::deliver( $user_id, 'test', 'Notifica di prova', 'Se vedi questo messaggio sul telefono, le notifiche push funzionano.', 'notifiche', true, false );
+		Dolly_Notifications::deliver( $user_id, 'test', __( 'Notifica di prova', 'dolly-employee-management' ), __( 'Se vedi questo messaggio sul telefono, le notifiche push funzionano.', 'dolly-employee-management' ), 'notifiche', true, false );
 		$results = self::process_queue( 5, $user_id );
 		return array(
 			'available' => (bool) self::keys(),
@@ -466,10 +466,11 @@ class Dolly_Push {
 		$portal = wp_json_encode( Dolly_Frontend::url( 'portale' ), JSON_UNESCAPED_SLASHES );
 		$icon   = wp_json_encode( self::icon_url( 192 ), JSON_UNESCAPED_SLASHES );
 		$brand  = wp_json_encode( Dolly_Appearance::brand(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG );
+		$note   = wp_json_encode( __( 'Hai una nuova notifica nel portale.', 'dolly-employee-management' ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG );
 		echo <<<JS
 'use strict';
 /* Portal service worker (v2): shows push notifications and opens the portal when one is tapped. */
-var FEED = {$feed}, PORTAL = {$portal}, ICON = {$icon}, BRAND = {$brand};
+var FEED = {$feed}, PORTAL = {$portal}, ICON = {$icon}, BRAND = {$brand}, NOTE = {$note};
 self.addEventListener('install', function () { self.skipWaiting(); });
 self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
 function show(n) {
@@ -484,7 +485,7 @@ self.addEventListener('push', function (e) {
 		.then(function (r) { return r.ok ? r.json() : { items: [] }; })
 		.catch(function () { return { items: [] }; })
 		.then(function (d) {
-			var items = d && d.items && d.items.length ? d.items : [{ id: 0, title: BRAND, body: 'Hai una nuova notifica nel portale.', url: PORTAL + '#notifiche' }];
+			var items = d && d.items && d.items.length ? d.items : [{ id: 0, title: BRAND, body: NOTE, url: PORTAL + '#notifiche' }];
 			return Promise.all(items.map(show));
 		}));
 });

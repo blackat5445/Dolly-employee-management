@@ -87,7 +87,7 @@ class Dolly_Devices {
 	/** "iPhone · Safari", "Android (SM-G991B) · Chrome", "PC Windows · Edge"... */
 	public static function name_from_ua( $ua ) {
 		$ua = (string) $ua;
-		$os = 'Dispositivo';
+		$os = __( 'Dispositivo', 'dolly-employee-management' );
 		if ( false !== stripos( $ua, 'iPhone' ) ) {
 			$os = 'iPhone';
 		} elseif ( false !== stripos( $ua, 'iPad' ) ) {
@@ -148,11 +148,11 @@ class Dolly_Devices {
 		$devices = self::active( $user_id );
 		$names   = array();
 		foreach ( $devices as $d ) {
-			$names[] = '«' . $d->name . '» (collegato il ' . Dolly_Time::utc_to_local( $d->created_at, 'd/m/Y' ) . ')';
+			$names[] = '«' . $d->name . __( '» (collegato il ', 'dolly-employee-management' ) . Dolly_Time::utc_to_local( $d->created_at, 'd/m/Y' ) . ')';
 		}
 		return sprintf(
-			'Questo account è già collegato %s: %s. Per accedere da questo dispositivo chiedi all\'amministrazione di scollegare il dispositivo precedente.',
-			count( $names ) > 1 ? 'al numero massimo di dispositivi' : 'a un altro dispositivo',
+			__( 'Questo account è già collegato %s: %s. Per accedere da questo dispositivo chiedi all\'amministrazione di scollegare il dispositivo precedente.', 'dolly-employee-management' ),
+			count( $names ) > 1 ? __( 'al numero massimo di dispositivi', 'dolly-employee-management' ) : __( 'a un altro dispositivo', 'dolly-employee-management' ),
 			implode( ', ', $names )
 		);
 	}
@@ -310,7 +310,7 @@ class Dolly_Devices {
 		$t = self::table();
 		$d = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $device_id ) ); // phpcs:ignore
 		if ( ! $d || $d->revoked_at ) {
-			return new WP_Error( 'dolly_not_found', 'Dispositivo non trovato o già scollegato.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Dispositivo non trovato o già scollegato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$wpdb->update( $t, array( 'revoked_at' => Dolly_Time::now_utc(), 'revoked_by' => get_current_user_id() ), array( 'id' => (int) $d->id ) );
 		WP_Session_Tokens::get_instance( (int) $d->user_id )->destroy_all();
@@ -320,11 +320,11 @@ class Dolly_Devices {
 
 	public static function set_limit( $user_id, $limit ) {
 		if ( ! Dolly_Employees::is_employee( $user_id ) ) {
-			return new WP_Error( 'dolly_not_found', 'Dipendente non trovato.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$limit = (int) $limit;
 		if ( $limit < 1 || $limit > self::MAX_LIMIT ) {
-			return new WP_Error( 'dolly_invalid', 'Il limite deve essere compreso tra 1 e ' . self::MAX_LIMIT . '.', array( 'status' => 400, 'fields' => array( 'limit' => 'Valore tra 1 e ' . self::MAX_LIMIT . '.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Il limite deve essere compreso tra 1 e ', 'dolly-employee-management' ) . self::MAX_LIMIT . '.', array( 'status' => 400, 'fields' => array( 'limit' => __( 'Valore tra 1 e ', 'dolly-employee-management' ) . self::MAX_LIMIT . '.' ) ) );
 		}
 		$before = self::limit( $user_id );
 		update_user_meta( $user_id, self::LIMIT_META, $limit );

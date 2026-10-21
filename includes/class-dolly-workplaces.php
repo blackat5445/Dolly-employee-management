@@ -59,7 +59,7 @@ class Dolly_Workplaces {
 		if ( $is_new || isset( $data['name'] ) ) {
 			$out['name'] = sanitize_text_field( $data['name'] ?? '' );
 			if ( '' === $out['name'] ) {
-				$errors['name'] = 'Inserisci il nome della sede.';
+				$errors['name'] = __( 'Inserisci il nome della sede.', 'dolly-employee-management' );
 			}
 		}
 		foreach ( array( 'address', 'city' ) as $k ) {
@@ -75,7 +75,7 @@ class Dolly_Workplaces {
 				if ( '' === $data[ $k ] || null === $data[ $k ] ) {
 					$out[ $k ] = null;
 				} elseif ( ! is_numeric( $data[ $k ] ) || abs( (float) $data[ $k ] ) > $max ) {
-					$errors[ $k ] = 'lat' === $k ? 'Latitudine non valida.' : 'Longitudine non valida.';
+					$errors[ $k ] = 'lat' === $k ? __( 'Latitudine non valida.', 'dolly-employee-management' ) : __( 'Longitudine non valida.', 'dolly-employee-management' );
 				} else {
 					$out[ $k ] = round( (float) $data[ $k ], 7 );
 				}
@@ -84,7 +84,7 @@ class Dolly_Workplaces {
 		if ( isset( $data['radius_m'] ) ) {
 			$r = (int) $data['radius_m'];
 			if ( $r < 10 || $r > 5000 ) {
-				$errors['radius_m'] = 'Il raggio deve essere compreso tra 10 e 5000 metri.';
+				$errors['radius_m'] = __( 'Il raggio deve essere compreso tra 10 e 5000 metri.', 'dolly-employee-management' );
 			}
 			$out['radius_m'] = $r;
 		} elseif ( $is_new ) {
@@ -95,7 +95,7 @@ class Dolly_Workplaces {
 			if ( '' === $data['late_tolerance'] || null === $data['late_tolerance'] ) {
 				$out['late_tolerance'] = null;
 			} elseif ( ! is_numeric( $data['late_tolerance'] ) || (int) $data['late_tolerance'] < 0 || (int) $data['late_tolerance'] > 120 ) {
-				$errors['late_tolerance'] = 'La tolleranza deve essere compresa tra 0 e 120 minuti.';
+				$errors['late_tolerance'] = __( 'La tolleranza deve essere compresa tra 0 e 120 minuti.', 'dolly-employee-management' );
 			} else {
 				$out['late_tolerance'] = (int) $data['late_tolerance'];
 			}
@@ -104,7 +104,7 @@ class Dolly_Workplaces {
 			$out['active'] = $data['active'] ? 1 : 0;
 		}
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', 'Controlla i campi evidenziati.', array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		return $out;
 	}
@@ -121,7 +121,7 @@ class Dolly_Workplaces {
 		$wpdb->insert( Dolly_Install::t( 'workplaces' ), $clean );
 		$id = (int) $wpdb->insert_id;
 		if ( ! $id ) {
-			return new WP_Error( 'dolly_db', 'Impossibile salvare la sede.', array( 'status' => 500 ) );
+			return new WP_Error( 'dolly_db', __( 'Impossibile salvare la sede.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 		}
 		$acc = self::save_account( $id, $data );
 		if ( is_wp_error( $acc ) ) {
@@ -135,7 +135,7 @@ class Dolly_Workplaces {
 		global $wpdb;
 		$before = self::get( $id );
 		if ( ! $before ) {
-			return new WP_Error( 'dolly_not_found', 'Sede non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Sede non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$clean = self::clean( $data, false );
 		if ( is_wp_error( $clean ) ) {
@@ -163,7 +163,7 @@ class Dolly_Workplaces {
 		if ( $w->account_user_id && get_userdata( (int) $w->account_user_id ) ) {
 			if ( '' !== $password ) {
 				if ( strlen( $password ) < 8 ) {
-					return new WP_Error( 'dolly_invalid', 'La password dell\'account sede deve avere almeno 8 caratteri.', array( 'status' => 400, 'fields' => array( 'account_password' => 'Minimo 8 caratteri.' ) ) );
+					return new WP_Error( 'dolly_invalid', __( 'La password dell\'account sede deve avere almeno 8 caratteri.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'account_password' => __( 'Minimo 8 caratteri.', 'dolly-employee-management' ) ) ) );
 				}
 				wp_set_password( $password, (int) $w->account_user_id );
 			}
@@ -173,17 +173,17 @@ class Dolly_Workplaces {
 			return true; // Account can be added later.
 		}
 		if ( username_exists( $username ) ) {
-			return new WP_Error( 'dolly_invalid', 'Nome utente già in uso.', array( 'status' => 400, 'fields' => array( 'account_username' => 'Nome utente già in uso.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Nome utente già in uso.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'account_username' => __( 'Nome utente già in uso.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( strlen( $password ) < 8 ) {
-			return new WP_Error( 'dolly_invalid', 'La password dell\'account sede deve avere almeno 8 caratteri.', array( 'status' => 400, 'fields' => array( 'account_password' => 'Minimo 8 caratteri.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'La password dell\'account sede deve avere almeno 8 caratteri.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'account_password' => __( 'Minimo 8 caratteri.', 'dolly-employee-management' ) ) ) );
 		}
 		$user_id = wp_insert_user(
 			array(
 				'user_login'   => $username,
 				'user_pass'    => $password,
 				'user_email'   => '',
-				'display_name' => 'Sede ' . $w->name,
+				'display_name' => __( 'Sede ', 'dolly-employee-management' ) . $w->name,
 				'role'         => Dolly_Install::ROLE_WORKPLACE,
 			)
 		);

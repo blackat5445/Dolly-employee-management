@@ -4,7 +4,7 @@ A WordPress plugin for running a small or medium workforce: employee accounts, c
 
 Employees use a mobile-first portal that installs as an app (PWA). Each workplace runs a display screen that shows the rotating QR code. Administrators manage everything from a dedicated area in wp-admin.
 
-> **Language and locale:** the interface is in Italian. Dates use the `Europe/Rome` timezone and Italian national holidays are built in.
+> **Languages:** Italian and English, chosen per user. Dates use the `Europe/Rome` timezone and Italian national holidays are built in.
 
 ## Features
 
@@ -135,6 +135,24 @@ define( 'DOLLY_PRIVATE_DIR', '/absolute/path/outside/webroot' );
 The default theme uses `#2563EB` as its primary colour. All the other shades (hover states, tinted backgrounds, text on coloured buttons, dark-mode variants) are derived automatically from the colours you choose.
 
 Every visual value is a CSS custom property (`--dolly-primary`, `--dolly-surface`, `--dolly-radius`…) defined in `assets/css/dolly-ui.css` and overridden by the Appearance settings, so you can also use them in custom CSS or a theme. Dark mode applies to the employee-facing pages; the admin screens always stay light.
+
+## Languages
+
+The plugin ships in **Italian** (the source language) and **English**.
+
+- **Default language:** set in *Impostazioni › Lingua*. It applies to the portal, the login pages, emails and the admin screens. **Come il sito** follows the WordPress site language: Italian for Italian sites, English otherwise.
+- **Per user:** administrators pick their own language in the same card. Employees choose theirs in *Profilo › Lingua* in the portal. Visitors can switch language with the links under the login form, and the choice is kept when they sign in.
+- **Notifications and emails** are written in each recipient's language, including those sent by the scheduler.
+
+Translations are standard gettext files in [`languages/`](languages): a `.po` source for translators, a `.mo` for PHP and a `.js` dictionary for the browser screens. To add a language, copy `dolly-employee-management.pot` to `dolly-employee-management-<locale>.po`, translate it (for example with Poedit), then run:
+
+```bash
+python3 tools/i18n/i18n.py update    # after code changes: refresh the .pot and merge new strings into every .po
+python3 tools/i18n/i18n.py check     # untranslated strings and placeholder mistakes
+python3 tools/i18n/i18n.py compile   # build the .mo and .js files
+```
+
+A translation placed in `wp-content/languages/plugins/` takes priority over the bundled one.
 
 ## Theme integration
 

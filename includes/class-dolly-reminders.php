@@ -101,7 +101,9 @@ class Dolly_Reminders {
 		$now    = time();
 		$sent   = 0;
 		$shifts = self::shifts( $today );
+		$locale = Dolly_I18n::locale();
 		foreach ( $shifts as $uid => $shift ) {
+			Dolly_I18n::load( Dolly_I18n::for_user( $uid ) ); // Texts in the employee's language.
 			$start_ts = Dolly_Time::local_ts( $today, $shift[0] );
 			$end_ts   = Dolly_Time::local_ts( $today, $shift[1] );
 			$todo     = array();
@@ -129,16 +131,16 @@ class Dolly_Reminders {
 					if ( isset( $punches['entrata'] ) || self::leave_covers( $leaves, $shift[0], false ) ) {
 						continue;
 					}
-					$title = 'Promemoria: timbra l\'entrata';
+					$title = __( 'Promemoria: timbra l\'entrata', 'dolly-employee-management' );
 					$body  = $now < $start_ts
-						? sprintf( 'Il tuo turno inizia alle %s. Ricordati di timbrare l\'entrata.', $shift[0] )
-						: sprintf( 'Il tuo turno è iniziato alle %s. Ricordati di timbrare l\'entrata.', $shift[0] );
+						? sprintf( __( 'Il tuo turno inizia alle %s. Ricordati di timbrare l\'entrata.', 'dolly-employee-management' ), $shift[0] )
+						: sprintf( __( 'Il tuo turno è iniziato alle %s. Ricordati di timbrare l\'entrata.', 'dolly-employee-management' ), $shift[0] );
 				} else {
 					if ( ! isset( $punches['entrata'] ) || isset( $punches['uscita'] ) || self::leave_covers( $leaves, $shift[1], true ) ) {
 						continue;
 					}
-					$title = 'Promemoria: timbra l\'uscita';
-					$body  = sprintf( 'Il tuo turno è terminato alle %s e non risulta ancora l\'uscita. Ricordati di timbrarla.', $shift[1] );
+					$title = __( 'Promemoria: timbra l\'uscita', 'dolly-employee-management' );
+					$body  = sprintf( __( 'Il tuo turno è terminato alle %s e non risulta ancora l\'uscita. Ricordati di timbrarla.', 'dolly-employee-management' ), $shift[1] );
 				}
 				if ( ! self::claim( $uid, $today, $kind, $m ) ) {
 					continue;
@@ -149,6 +151,7 @@ class Dolly_Reminders {
 			}
 		}
 		self::cleanup( $today );
+		Dolly_I18n::load( $locale );
 		return $sent;
 	}
 

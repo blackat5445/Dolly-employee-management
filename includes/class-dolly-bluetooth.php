@@ -140,18 +140,18 @@ class Dolly_Bluetooth {
 		$lock_key = 'dolly_ble_lock_' . $user_id;
 		$fail_key = 'dolly_ble_fail_' . $user_id;
 		if ( get_transient( $lock_key ) ) {
-			return new WP_Error( 'dolly_ble_locked', 'Troppi codici Bluetooth non validi. Riprova tra qualche minuto oppure usa un altro metodo.', array( 'status' => 429 ) );
+			return new WP_Error( 'dolly_ble_locked', __( 'Troppi codici Bluetooth non validi. Riprova tra qualche minuto oppure usa un altro metodo.', 'dolly-employee-management' ), array( 'status' => 429 ) );
 		}
 		if ( ! preg_match( '/^\s*(\d+):(\d{6})\s*$/', (string) $raw, $m ) ) {
-			return new WP_Error( 'dolly_ble_invalid', 'Il dispositivo Bluetooth non ha fornito un codice valido. Avvicinati al dispositivo e riprova; se il problema continua, il dispositivo potrebbe non essere sincronizzato.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_ble_invalid', __( 'Il dispositivo Bluetooth non ha fornito un codice valido. Avvicinati al dispositivo e riprova; se il problema continua, il dispositivo potrebbe non essere sincronizzato.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$wid  = (int) $m[1];
 		$code = $m[2];
 		if ( ! in_array( $wid, Dolly_Workplaces::ids_for_user( $user_id ), true ) ) {
-			return new WP_Error( 'dolly_wrong_workplace', 'Questo dispositivo Bluetooth appartiene a una sede che non ti è assegnata.', array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_wrong_workplace', __( 'Questo dispositivo Bluetooth appartiene a una sede che non ti è assegnata.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		if ( ! self::enabled_for( $wid ) ) {
-			return new WP_Error( 'dolly_ble_disabled', 'Il Bluetooth non è attivo per questa sede.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_ble_disabled', __( 'Il Bluetooth non è attivo per questa sede.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$secret = self::device( $wid )['secret'];
 		$now    = (int) floor( time() / self::STEP );
@@ -173,7 +173,7 @@ class Dolly_Bluetooth {
 			set_transient( $lock_key, 1, $mins * MINUTE_IN_SECONDS );
 			delete_transient( $fail_key );
 		}
-		return new WP_Error( 'dolly_ble_expired', 'Il codice letto dal dispositivo Bluetooth è scaduto o non valido. Controlla che il dispositivo sia acceso e sincronizzato, poi riprova.', array( 'status' => 400 ) );
+		return new WP_Error( 'dolly_ble_expired', __( 'Il codice letto dal dispositivo Bluetooth è scaduto o non valido. Controlla che il dispositivo sia acceso e sincronizzato, poi riprova.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 	}
 
 	/* ---------- Administration ---------- */

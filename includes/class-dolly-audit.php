@@ -98,7 +98,7 @@ class Dolly_Audit {
 			$items[] = array(
 				'id'         => (int) $r->id,
 				'action'     => $r->action,
-				'label'      => self::LABELS[ $r->action ] ?? $r->action,
+				'label'      => Dolly_I18n::t( self::LABELS[ $r->action ] ?? $r->action ),
 				'actor'      => Dolly_Employees::display_name( (int) $r->actor_id ),
 				'subject'    => $r->subject_user_id ? Dolly_Employees::display_name( (int) $r->subject_user_id ) : '',
 				'reason'     => $r->reason,

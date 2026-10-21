@@ -70,9 +70,9 @@ class Dolly_Requests {
 		if ( ! $r ) {
 			return null;
 		}
-		$label = self::TYPES[ $r->type ] ?? $r->type;
+		$label = Dolly_I18n::t( self::TYPES[ $r->type ] ?? $r->type );
 		if ( 'straordinario' === $r->type ) {
-			$label .= 'rest_day' === $r->extra_kind ? ' (giorno di riposo)' : ' (giorno lavorativo)';
+			$label .= 'rest_day' === $r->extra_kind ? __( ' (giorno di riposo)', 'dolly-employee-management' ) : __( ' (giorno lavorativo)', 'dolly-employee-management' );
 		}
 		$pending_amendment = null;
 		if ( 'approved' === $r->status ) {
@@ -84,9 +84,9 @@ class Dolly_Requests {
 			$code  = self::leave_code_of( $r );
 			$extra = array(
 				'leave_kind'       => $kind,
-				'leave_kind_label' => self::LEAVE_KINDS[ $kind ],
+				'leave_kind_label' => Dolly_I18n::t( self::LEAVE_KINDS[ $kind ] ),
 				'hours_code'       => $code,
-				'hours_code_label' => Dolly_Hours::CODES[ $code ] ?? $code,
+				'hours_code_label' => Dolly_I18n::t( Dolly_Hours::CODES[ $code ] ?? $code ),
 				'law104'           => 'PL' === $code,
 			);
 		} elseif ( Dolly_Donations::TYPE === $r->type ) {
@@ -99,7 +99,7 @@ class Dolly_Requests {
 			'type'              => $r->type,
 			'type_label'        => $label,
 			'status'            => $r->status,
-			'status_label'      => self::STATUSES[ $r->status ] ?? $r->status,
+			'status_label'      => Dolly_I18n::t( self::STATUSES[ $r->status ] ?? $r->status ),
 			'start_date'        => $r->start_date,
 			'end_date'          => $r->end_date,
 			'start_time'        => Dolly_Time::hm( $r->start_time ),
@@ -108,7 +108,7 @@ class Dolly_Requests {
 			'lunch_end'         => Dolly_Time::hm( $r->lunch_end ),
 			'extra_kind'        => $r->extra_kind,
 			'correction_action' => $r->correction_action,
-			'correction_label'  => $r->correction_action ? ( Dolly_Attendance::ACTIONS[ $r->correction_action ] ?? '' ) : '',
+			'correction_label'  => $r->correction_action ? ( Dolly_I18n::t( Dolly_Attendance::ACTIONS[ $r->correction_action ] ?? '' ) ) : '',
 			'notes'             => (string) $r->notes,
 			'parent_id'         => $r->parent_id ? (int) $r->parent_id : null,
 			'amend_action'      => $r->amend_action,
@@ -129,37 +129,37 @@ class Dolly_Requests {
 		$range = $d1 === $d2 ? $d1 : $d1 . ' – ' . $d2;
 		switch ( $r->type ) {
 			case 'ferie':
-				$s = 'Ferie ' . $range;
+				$s = __( 'Ferie ', 'dolly-employee-management' ) . $range;
 				break;
 			case 'permesso':
-				$s = 'Permesso ' . $range . ', ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time ) . ' (' . self::leave_code_of( $r ) . ' · ' . self::LEAVE_KINDS[ self::leave_kind_of( $r ) ] . ')';
+				$s = __( 'Permesso ', 'dolly-employee-management' ) . $range . ', ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time ) . ' (' . self::leave_code_of( $r ) . ' · ' . Dolly_I18n::t( self::LEAVE_KINDS[ self::leave_kind_of( $r ) ] ) . ')';
 				break;
 			case 'donazione':
-				$s = 'Donazione sangue ' . $d1;
+				$s = __( 'Donazione sangue ', 'dolly-employee-management' ) . $d1;
 				break;
 			case 'straordinario':
 				if ( 'rest_day' === $r->extra_kind ) {
-					$s = 'Straordinario in giorno di riposo ' . $d1 . ', ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time );
+					$s = __( 'Straordinario in giorno di riposo ', 'dolly-employee-management' ) . $d1 . ', ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time );
 					if ( $r->lunch_start ) {
-						$s .= ' (pausa ' . Dolly_Time::hm( $r->lunch_start ) . '–' . Dolly_Time::hm( $r->lunch_end ) . ')';
+						$s .= __( ' (pausa ', 'dolly-employee-management' ) . Dolly_Time::hm( $r->lunch_start ) . '–' . Dolly_Time::hm( $r->lunch_end ) . ')';
 					}
 				} else {
-					$s = 'Straordinario ' . $d1 . ', uscita prolungata fino alle ' . Dolly_Time::hm( $r->end_time );
+					$s = __( 'Straordinario ', 'dolly-employee-management' ) . $d1 . __( ', uscita prolungata fino alle ', 'dolly-employee-management' ) . Dolly_Time::hm( $r->end_time );
 				}
 				break;
 			case 'correzione':
-				$s = 'Correzione ' . $d1 . ': ' . ( Dolly_Attendance::ACTIONS[ $r->correction_action ] ?? '' ) . ' ' . ( $r->start_time ? 'alle ' . Dolly_Time::hm( $r->start_time ) : '(da annullare)' );
+				$s = __( 'Correzione ', 'dolly-employee-management' ) . $d1 . ': ' . ( Dolly_I18n::t( Dolly_Attendance::ACTIONS[ $r->correction_action ] ?? '' ) ) . ' ' . ( $r->start_time ? __( 'alle ', 'dolly-employee-management' ) . Dolly_Time::hm( $r->start_time ) : __( '(da annullare)', 'dolly-employee-management' ) );
 				break;
 			case 'turno':
-				$s = 'Turno a chiamata ' . $d1 . ', ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time );
+				$s = __( 'Turno a chiamata ', 'dolly-employee-management' ) . $d1 . ', ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time );
 				break;
 			default:
 				$s = $range;
 		}
 		if ( 'cancel' === $r->amend_action ) {
-			$s = 'Annullamento: ' . $s;
+			$s = __( 'Annullamento: ', 'dolly-employee-management' ) . $s;
 		} elseif ( 'modify' === $r->amend_action ) {
-			$s = 'Modifica: ' . $s;
+			$s = __( 'Modifica: ', 'dolly-employee-management' ) . $s;
 		}
 		return $s;
 	}
@@ -178,7 +178,7 @@ class Dolly_Requests {
 		$errors = array();
 		if ( ! isset( self::TYPES[ $type ] ) || 'turno' === $type ) {
 			// On-call shifts are created from the punches (sync_oncall_shift), never by hand.
-			return new WP_Error( 'dolly_invalid', 'Tipo di richiesta non valido.', array( 'status' => 400, 'fields' => array( 'type' => 'Seleziona il tipo.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Tipo di richiesta non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'type' => __( 'Seleziona il tipo.', 'dolly-employee-management' ) ) ) );
 		}
 		$out = array(
 			'type'              => $type,
@@ -195,23 +195,23 @@ class Dolly_Requests {
 			'notes'             => sanitize_textarea_field( $data['notes'] ?? '' ),
 		);
 		if ( ! Dolly_Time::is_date( $out['start_date'] ) ) {
-			$errors['start_date'] = 'Data non valida.';
+			$errors['start_date'] = __( 'Data non valida.', 'dolly-employee-management' );
 		}
 		if ( in_array( $type, array( 'straordinario', 'correzione', 'donazione' ), true ) ) {
 			$out['end_date'] = $out['start_date'];
 		} elseif ( ! Dolly_Time::is_date( $out['end_date'] ) ) {
-			$errors['end_date'] = 'Data non valida.';
+			$errors['end_date'] = __( 'Data non valida.', 'dolly-employee-management' );
 		} elseif ( empty( $errors['start_date'] ) && $out['end_date'] < $out['start_date'] ) {
-			$errors['end_date'] = 'La data di fine deve essere uguale o successiva all\'inizio.';
+			$errors['end_date'] = __( 'La data di fine deve essere uguale o successiva all\'inizio.', 'dolly-employee-management' );
 		}
 		if ( empty( $errors ) && ( strtotime( $out['end_date'] ) - strtotime( $out['start_date'] ) ) > 366 * DAY_IN_SECONDS ) {
-			$errors['end_date'] = 'Intervallo troppo lungo.';
+			$errors['end_date'] = __( 'Intervallo troppo lungo.', 'dolly-employee-management' );
 		}
 
 		$time = function ( $key, $label ) use ( &$errors, $data ) {
 			$v = $data[ $key ] ?? '';
 			if ( ! Dolly_Time::is_time( $v ) ) {
-				$errors[ $key ] = $label . ' non valido.';
+				$errors[ $key ] = $label . __( ' non valido.', 'dolly-employee-management' );
 				return null;
 			}
 			return $v . ':00';
@@ -219,14 +219,14 @@ class Dolly_Requests {
 
 		switch ( $type ) {
 			case 'permesso':
-				$out['start_time'] = $time( 'start_time', 'Orario di inizio' );
-				$out['end_time']   = $time( 'end_time', 'Orario di fine' );
+				$out['start_time'] = $time( 'start_time', __( 'Orario di inizio', 'dolly-employee-management' ) );
+				$out['end_time']   = $time( 'end_time', __( 'Orario di fine', 'dolly-employee-management' ) );
 				if ( $out['start_time'] && $out['end_time'] && $out['end_time'] <= $out['start_time'] ) {
-					$errors['end_time'] = 'L\'orario di fine deve essere successivo all\'inizio.';
+					$errors['end_time'] = __( 'L\'orario di fine deve essere successivo all\'inizio.', 'dolly-employee-management' );
 				}
 				$kind = (string) ( $data['leave_kind'] ?? '' );
 				if ( ! isset( self::LEAVE_KINDS[ $kind ] ) ) {
-					$errors['leave_kind'] = 'Scegli il tipo di permesso.';
+					$errors['leave_kind'] = __( 'Scegli il tipo di permesso.', 'dolly-employee-management' );
 					break;
 				}
 				$out['leave_kind'] = $kind;
@@ -237,7 +237,7 @@ class Dolly_Requests {
 				}
 				$out['hours_code'] = $code;
 				if ( 'evento' === $kind && '' === $out['notes'] ) {
-					$errors['notes'] = 'Indica l\'evento per cui chiedi il permesso.';
+					$errors['notes'] = __( 'Indica l\'evento per cui chiedi il permesso.', 'dolly-employee-management' );
 				}
 				break;
 
@@ -255,29 +255,29 @@ class Dolly_Requests {
 					$day_end    = $is_working ? Dolly_Schedules::times_for( $plan, $wd )['end'] : null;
 					if ( 'working_day' === $kind ) {
 						if ( ! $is_working ) {
-							$errors['extra_kind'] = 'La data non è un giorno lavorativo: scegli "Giorno di riposo".';
+							$errors['extra_kind'] = __( 'La data non è un giorno lavorativo: scegli "Giorno di riposo".', 'dolly-employee-management' );
 						}
-						$out['end_time'] = $time( 'end_time', 'Orario di fine prolungato' );
+						$out['end_time'] = $time( 'end_time', __( 'Orario di fine prolungato', 'dolly-employee-management' ) );
 						if ( $is_working && $out['end_time'] && $out['end_time'] <= $day_end . ':00' ) {
-							$errors['end_time'] = 'L\'orario deve essere successivo alla fine turno (' . $day_end . ').';
+							$errors['end_time'] = __( 'L\'orario deve essere successivo alla fine turno (', 'dolly-employee-management' ) . $day_end . ').';
 						}
 					} else {
 						if ( $is_working ) {
-							$errors['extra_kind'] = 'La data è un giorno lavorativo: scegli "Giorno lavorativo".';
+							$errors['extra_kind'] = __( 'La data è un giorno lavorativo: scegli "Giorno lavorativo".', 'dolly-employee-management' );
 						}
-						$out['start_time'] = $time( 'start_time', 'Orario di inizio' );
-						$out['end_time']   = $time( 'end_time', 'Orario di fine' );
+						$out['start_time'] = $time( 'start_time', __( 'Orario di inizio', 'dolly-employee-management' ) );
+						$out['end_time']   = $time( 'end_time', __( 'Orario di fine', 'dolly-employee-management' ) );
 						if ( $out['start_time'] && $out['end_time'] && $out['end_time'] <= $out['start_time'] ) {
-							$errors['end_time'] = 'L\'orario di fine deve essere successivo all\'inizio.';
+							$errors['end_time'] = __( 'L\'orario di fine deve essere successivo all\'inizio.', 'dolly-employee-management' );
 						}
 						if ( ! empty( $data['has_lunch'] ) ) {
-							$out['lunch_start'] = $time( 'lunch_start', 'Inizio pausa' );
-							$out['lunch_end']   = $time( 'lunch_end', 'Fine pausa' );
+							$out['lunch_start'] = $time( 'lunch_start', __( 'Inizio pausa', 'dolly-employee-management' ) );
+							$out['lunch_end']   = $time( 'lunch_end', __( 'Fine pausa', 'dolly-employee-management' ) );
 							if ( $out['lunch_start'] && $out['lunch_end'] && $out['start_time'] && $out['end_time'] ) {
 								if ( $out['lunch_end'] <= $out['lunch_start'] ) {
-									$errors['lunch_end'] = 'La fine pausa deve essere successiva all\'inizio pausa.';
+									$errors['lunch_end'] = __( 'La fine pausa deve essere successiva all\'inizio pausa.', 'dolly-employee-management' );
 								} elseif ( $out['lunch_start'] <= $out['start_time'] || $out['lunch_end'] >= $out['end_time'] ) {
-									$errors['lunch_start'] = 'La pausa deve essere compresa nell\'orario.';
+									$errors['lunch_start'] = __( 'La pausa deve essere compresa nell\'orario.', 'dolly-employee-management' );
 								}
 							}
 						}
@@ -288,21 +288,21 @@ class Dolly_Requests {
 			case 'correzione':
 				$action = $data['correction_action'] ?? '';
 				if ( ! isset( Dolly_Attendance::ACTIONS[ $action ] ) ) {
-					$errors['correction_action'] = 'Seleziona la timbratura da correggere.';
+					$errors['correction_action'] = __( 'Seleziona la timbratura da correggere.', 'dolly-employee-management' );
 				}
 				$out['correction_action'] = $action;
-				$out['start_time']        = $time( 'start_time', 'Orario corretto' );
+				$out['start_time']        = $time( 'start_time', __( 'Orario corretto', 'dolly-employee-management' ) );
 				if ( empty( $errors['start_date'] ) && $out['start_date'] > Dolly_Time::today() ) {
-					$errors['start_date'] = 'Non puoi correggere una data futura.';
+					$errors['start_date'] = __( 'Non puoi correggere una data futura.', 'dolly-employee-management' );
 				}
 				if ( '' === $out['notes'] ) {
-					$errors['notes'] = 'Spiega il motivo della correzione.';
+					$errors['notes'] = __( 'Spiega il motivo della correzione.', 'dolly-employee-management' );
 				}
 				break;
 		}
 
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', 'Controlla i campi evidenziati.', array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		return $out;
 	}
@@ -332,12 +332,12 @@ class Dolly_Requests {
 			}
 			// A pending amendment's parent is being replaced, but stays in force until approved: still a conflict source
 			// only if it isn't the parent of this request (handled via $exclude_ids).
-			return sprintf( 'Esiste già una richiesta %s: %s.', 'pending' === $r->status ? 'in attesa' : 'approvata', self::summary( $r ) );
+			return sprintf( __( 'Esiste già una richiesta %s: %s.', 'dolly-employee-management' ), 'pending' === $r->status ? __( 'in attesa', 'dolly-employee-management' ) : 'approvata', self::summary( $r ) );
 		}
 		$s   = Dolly_Install::t( 'sickness' );
 		$sick = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $s WHERE user_id = %d AND status = 'active' AND start_date <= %s AND end_date >= %s LIMIT 1", $user_id, $clean['end_date'], $clean['start_date'] ) ); // phpcs:ignore
 		if ( $sick ) {
-			return sprintf( 'Nel periodo risulta %s (%s – %s).', 'infortunio' === Dolly_Sickness::kind_of( $sick ) ? 'un infortunio' : 'una malattia', Dolly_Time::fmt_date( $sick->start_date ), Dolly_Time::fmt_date( $sick->end_date ) );
+			return sprintf( __( 'Nel periodo risulta %s (%s – %s).', 'dolly-employee-management' ), 'infortunio' === Dolly_Sickness::kind_of( $sick ) ? __( 'un infortunio', 'dolly-employee-management' ) : __( 'una malattia', 'dolly-employee-management' ), Dolly_Time::fmt_date( $sick->start_date ), Dolly_Time::fmt_date( $sick->end_date ) );
 		}
 		return null;
 	}
@@ -362,7 +362,7 @@ class Dolly_Requests {
 			return $clean;
 		}
 		if ( ! self::lock( $user_id ) ) {
-			return new WP_Error( 'dolly_busy', 'Un\'altra richiesta è in corso di invio. Riprova.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_busy', __( 'Un\'altra richiesta è in corso di invio. Riprova.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		try {
 			$conflict = self::find_conflict( $user_id, $clean );
@@ -372,7 +372,7 @@ class Dolly_Requests {
 			if ( 'straordinario' === $clean['type'] ) {
 				$dup = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Dolly_Install::t( 'requests' ) . " WHERE user_id = %d AND type = 'straordinario' AND status IN ('pending','approved') AND " . self::EFFECTIVE_ROW . ' AND start_date = %s LIMIT 1', $user_id, $clean['start_date'] ) ); // phpcs:ignore
 				if ( $dup ) {
-					return new WP_Error( 'dolly_conflict', 'Esiste già una richiesta di straordinario per questa data. Modificala invece di crearne una nuova.', array( 'status' => 409 ) );
+					return new WP_Error( 'dolly_conflict', __( 'Esiste già una richiesta di straordinario per questa data. Modificala invece di crearne una nuova.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 				}
 			}
 			$now = Dolly_Time::now_utc();
@@ -399,17 +399,17 @@ class Dolly_Requests {
 		$r = self::get( $id );
 		if ( $admin_approved ) {
 			$titles = array(
-				'ferie'         => 'Ferie autorizzate dall\'amministratore',
-				'permesso'      => 'Permesso autorizzato dall\'amministratore',
-				'straordinario' => 'Straordinario autorizzato',
-				'donazione'     => 'Donazione sangue autorizzata dall\'amministratore',
-				'correzione'    => 'Correzione registrata dall\'amministratore',
+				'ferie'         => __( 'Ferie autorizzate dall\'amministratore', 'dolly-employee-management' ),
+				'permesso'      => __( 'Permesso autorizzato dall\'amministratore', 'dolly-employee-management' ),
+				'straordinario' => __( 'Straordinario autorizzato', 'dolly-employee-management' ),
+				'donazione'     => __( 'Donazione sangue autorizzata dall\'amministratore', 'dolly-employee-management' ),
+				'correzione'    => __( 'Correzione registrata dall\'amministratore', 'dolly-employee-management' ),
 			);
 			Dolly_Audit::log( 'request_created_admin', 'request', $id, $user_id, $row['decision_note'], null, self::format( $r ) );
 			self::after_approval( $r );
-			Dolly_Notifications::notify_user( $user_id, 'request_decided', $titles[ $r->type ] ?? 'Richiesta autorizzata', self::summary( $r ) . ( $row['decision_note'] ? "\nNota: " . $row['decision_note'] : '' ), 'richieste' );
+			Dolly_Notifications::notify_user( $user_id, 'request_decided', fn () => array( $titles[ $r->type ] ?? __( 'Richiesta autorizzata', 'dolly-employee-management' ), self::summary( $r ) . ( $row['decision_note'] ? __( "\nNota: ", 'dolly-employee-management' ) . $row['decision_note'] : '' ) ), null, 'richieste' );
 		} else {
-			Dolly_Notifications::notify_admins( 'request_submitted', 'Nuova richiesta da ' . Dolly_Employees::display_name( $user_id ), self::summary( $r ), 'dolly-requests', 'request-' . $id );
+			Dolly_Notifications::notify_admins( 'request_submitted', fn () => array( __( 'Nuova richiesta da ', 'dolly-employee-management' ) . Dolly_Employees::display_name( $user_id ), self::summary( $r ) ), null, 'dolly-requests', 'request-' . $id );
 		}
 		return self::format( $r );
 	}
@@ -421,7 +421,7 @@ class Dolly_Requests {
 		global $wpdb;
 		$r = self::get( $id );
 		if ( ! $r || (int) $r->user_id !== (int) $user_id ) {
-			return new WP_Error( 'dolly_not_found', 'Richiesta non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Richiesta non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$data['type'] = $r->type;
 		$clean        = self::clean( $user_id, $data );
@@ -434,11 +434,11 @@ class Dolly_Requests {
 			$clean['hours_code'] = self::leave_code_of( $r );
 		}
 		if ( ! self::lock( $user_id ) ) {
-			return new WP_Error( 'dolly_busy', 'Operazione in corso. Riprova.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_busy', __( 'Operazione in corso. Riprova.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		try {
 			if ( 'pending' === $r->status && 'cancel' === $r->amend_action ) {
-				return new WP_Error( 'dolly_invalid_state', 'Una richiesta di annullamento non si modifica: eliminala e, se serve, inviane una nuova.', array( 'status' => 409 ) );
+				return new WP_Error( 'dolly_invalid_state', __( 'Una richiesta di annullamento non si modifica: eliminala e, se serve, inviane una nuova.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 			}
 			if ( 'pending' === $r->status ) {
 				$exclude = array( (int) $r->id );
@@ -454,10 +454,10 @@ class Dolly_Requests {
 				return self::format( self::get( $id ) );
 			}
 			if ( 'approved' !== $r->status || 'cancel' === $r->amend_action || 'correzione' === $r->type ) {
-				return new WP_Error( 'dolly_invalid_state', 'Solo le richieste in attesa o approvate possono essere modificate.', array( 'status' => 409 ) );
+				return new WP_Error( 'dolly_invalid_state', __( 'Solo le richieste in attesa o approvate possono essere modificate.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 			}
 			if ( self::pending_amendment( (int) $r->id ) ) {
-				return new WP_Error( 'dolly_conflict', 'Esiste già una modifica o un annullamento in attesa per questa richiesta.', array( 'status' => 409 ) );
+				return new WP_Error( 'dolly_conflict', __( 'Esiste già una modifica o un annullamento in attesa per questa richiesta.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 			}
 			$conflict = self::find_conflict( $user_id, $clean, array( (int) $r->id ) );
 			if ( $conflict ) {
@@ -484,7 +484,7 @@ class Dolly_Requests {
 			self::unlock( $user_id );
 		}
 		$n = self::get( $new_id );
-		Dolly_Notifications::notify_admins( 'request_submitted', 'Richiesta di modifica da ' . Dolly_Employees::display_name( $user_id ), self::summary( $n ), 'dolly-requests', 'request-' . $new_id );
+		Dolly_Notifications::notify_admins( 'request_submitted', fn () => array( __( 'Richiesta di modifica da ', 'dolly-employee-management' ) . Dolly_Employees::display_name( $user_id ), self::summary( $n ) ), null, 'dolly-requests', 'request-' . $new_id );
 		return self::format( $n );
 	}
 
@@ -496,25 +496,25 @@ class Dolly_Requests {
 		global $wpdb;
 		$r = self::get( $id );
 		if ( ! $r || (int) $r->user_id !== (int) $user_id ) {
-			return new WP_Error( 'dolly_not_found', 'Richiesta non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Richiesta non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$t = Dolly_Install::t( 'requests' );
 		if ( 'turno' === $r->type ) {
-			return new WP_Error( 'dolly_invalid_state', 'I turni a chiamata vengono approvati dall\'amministratore: per correggerli invia una richiesta di correzione timbratura.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'I turni a chiamata vengono approvati dall\'amministratore: per correggerli invia una richiesta di correzione timbratura.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		if ( 'pending' === $r->status ) {
 			$wpdb->update( $t, array( 'status' => 'cancelled', 'updated_at' => Dolly_Time::now_utc() ), array( 'id' => $id, 'status' => 'pending' ) );
 			return self::format( self::get( $id ) );
 		}
 		if ( 'approved' !== $r->status || 'cancel' === $r->amend_action || 'correzione' === $r->type ) {
-			return new WP_Error( 'dolly_invalid_state', 'Questa richiesta non può essere annullata.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'Questa richiesta non può essere annullata.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		if ( ! self::lock( $user_id ) ) {
-			return new WP_Error( 'dolly_busy', 'Operazione in corso. Riprova.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_busy', __( 'Operazione in corso. Riprova.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		try {
 			if ( self::pending_amendment( (int) $r->id ) ) {
-				return new WP_Error( 'dolly_conflict', 'Esiste già una modifica o un annullamento in attesa per questa richiesta.', array( 'status' => 409 ) );
+				return new WP_Error( 'dolly_conflict', __( 'Esiste già una modifica o un annullamento in attesa per questa richiesta.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 			}
 			$now = Dolly_Time::now_utc();
 			$wpdb->insert(
@@ -546,7 +546,7 @@ class Dolly_Requests {
 			self::unlock( $user_id );
 		}
 		$n = self::get( $new_id );
-		Dolly_Notifications::notify_admins( 'request_submitted', 'Richiesta di annullamento da ' . Dolly_Employees::display_name( $user_id ), self::summary( $n ), 'dolly-requests', 'request-' . $new_id );
+		Dolly_Notifications::notify_admins( 'request_submitted', fn () => array( __( 'Richiesta di annullamento da ', 'dolly-employee-management' ) . Dolly_Employees::display_name( $user_id ), self::summary( $n ) ), null, 'dolly-requests', 'request-' . $new_id );
 		return self::format( $n );
 	}
 
@@ -557,19 +557,19 @@ class Dolly_Requests {
 		global $wpdb;
 		$r = self::get( $id );
 		if ( ! $r ) {
-			return new WP_Error( 'dolly_not_found', 'Richiesta non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Richiesta non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( 'pending' !== $r->status ) {
-			return new WP_Error( 'dolly_invalid_state', 'La richiesta è già stata gestita.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'La richiesta è già stata gestita.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		if ( ! in_array( $decision, array( 'approve', 'reject' ), true ) ) {
-			return new WP_Error( 'dolly_invalid', 'Decisione non valida.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Decisione non valida.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$note = sanitize_textarea_field( $note );
 		$t    = Dolly_Install::t( 'requests' );
 		$uid  = (int) $r->user_id;
 		if ( ! self::lock( $uid ) ) {
-			return new WP_Error( 'dolly_busy', 'Operazione in corso. Riprova.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_busy', __( 'Operazione in corso. Riprova.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		try {
 			$now = Dolly_Time::now_utc();
@@ -581,11 +581,11 @@ class Dolly_Requests {
 					}
 					$conflict = self::find_conflict( $uid, (array) $r, $exclude );
 					if ( $conflict ) {
-						return new WP_Error( 'dolly_conflict', 'Impossibile approvare: ' . $conflict, array( 'status' => 409 ) );
+						return new WP_Error( 'dolly_conflict', __( 'Impossibile approvare: ', 'dolly-employee-management' ) . $conflict, array( 'status' => 409 ) );
 					}
 				}
 				if ( 'correzione' === $r->type && ! $r->amend_action ) {
-					$applied = Dolly_Attendance::correct( $uid, $r->start_date, $r->correction_action, Dolly_Time::hm( $r->start_time ), 'Richiesta di correzione del dipendente: ' . $r->notes . ( $note ? ' — ' . $note : '' ), 0, (int) $r->id );
+					$applied = Dolly_Attendance::correct( $uid, $r->start_date, $r->correction_action, Dolly_Time::hm( $r->start_time ), __( 'Richiesta di correzione del dipendente: ', 'dolly-employee-management' ) . $r->notes . ( $note ? ' — ' . $note : '' ), 0, (int) $r->id );
 					if ( is_wp_error( $applied ) ) {
 						return $applied;
 					}
@@ -620,9 +620,7 @@ class Dolly_Requests {
 		}
 		Dolly_Notifications::notify_user(
 			$uid,
-			'request_decided',
-			'approve' === $decision ? 'Richiesta approvata' : 'Richiesta respinta',
-			self::summary( $after ) . ( $note ? "\nNota: " . $note : '' ),
+			'request_decided', fn () => array( 'approve' === $decision ? __( 'Richiesta approvata', 'dolly-employee-management' ) : __( 'Richiesta respinta', 'dolly-employee-management' ), self::summary( $after ) . ( $note ? __( "\nNota: ", 'dolly-employee-management' ) . $note : '' ) ), null,
 			'richieste'
 		);
 		return self::format( $after );
@@ -634,7 +632,7 @@ class Dolly_Requests {
 			// The approved overtime limit moved (also when an authorisation is cancelled): re-evaluate the day.
 			Dolly_Anomalies::evaluate_exit( (int) $r->user_id, $r->start_date, 'cancel' !== $r->amend_action );
 		} elseif ( 'cancel' !== $r->amend_action && in_array( $r->type, array( 'ferie', 'permesso', 'donazione' ), true ) ) {
-			Dolly_Anomalies::resolve_absence( (int) $r->user_id, $r->start_date, $r->end_date, 'justified', 'Giustificata: ' . self::summary( $r ) . '.' );
+			Dolly_Anomalies::resolve_absence( (int) $r->user_id, $r->start_date, $r->end_date, 'justified', __( 'Giustificata: ', 'dolly-employee-management' ) . self::summary( $r ) . '.' );
 		}
 		if ( Dolly_Donations::TYPE === $r->type ) {
 			if ( 'cancel' === $r->amend_action ) {
@@ -660,21 +658,21 @@ class Dolly_Requests {
 		global $wpdb;
 		$r = self::get( $id );
 		if ( ! $r ) {
-			return new WP_Error( 'dolly_not_found', 'Richiesta non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Richiesta non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( 'approved' !== $r->status || ( $r->amend_action && 'modify' !== $r->amend_action ) || ! in_array( $r->type, array( 'ferie', 'permesso', 'donazione' ), true ) ) {
-			return new WP_Error( 'dolly_invalid_state', 'Si possono revocare solo ferie, permessi e donazioni approvati.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'Si possono revocare solo ferie, permessi e donazioni approvati.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		$note = sanitize_textarea_field( $note );
 		if ( '' === $note ) {
-			return new WP_Error( 'dolly_invalid', 'Indica il motivo della revoca.', array( 'status' => 400, 'fields' => array( 'note' => 'Indica il motivo della revoca.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Indica il motivo della revoca.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'note' => __( 'Indica il motivo della revoca.', 'dolly-employee-management' ) ) ) );
 		}
 		$t   = Dolly_Install::t( 'requests' );
 		$uid = (int) $r->user_id;
 		$now = Dolly_Time::now_utc();
-		$ok  = $wpdb->update( $t, array( 'status' => 'cancelled', 'decided_by' => get_current_user_id(), 'decided_at' => $now, 'decision_note' => 'Revocata dal datore di lavoro: ' . $note, 'updated_at' => $now ), array( 'id' => $id, 'status' => 'approved' ) );
+		$ok  = $wpdb->update( $t, array( 'status' => 'cancelled', 'decided_by' => get_current_user_id(), 'decided_at' => $now, 'decision_note' => __( 'Revocata dal datore di lavoro: ', 'dolly-employee-management' ) . $note, 'updated_at' => $now ), array( 'id' => $id, 'status' => 'approved' ) );
 		if ( ! $ok ) {
-			return new WP_Error( 'dolly_invalid_state', 'La richiesta è già stata gestita.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'La richiesta è già stata gestita.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		// A modification or cancellation still waiting for a decision has nothing left to change.
 		$wpdb->query( $wpdb->prepare( "UPDATE $t SET status = 'cancelled', updated_at = %s WHERE parent_id = %d AND status = 'pending'", $now, $id ) ); // phpcs:ignore
@@ -684,7 +682,7 @@ class Dolly_Requests {
 		Dolly_Hours::touch( $uid, $r->start_date, $r->end_date );
 		$after = self::get( $id );
 		Dolly_Audit::log( 'request_revoked', 'request', $id, $uid, $note, array( 'status' => 'approved' ), array( 'status' => 'cancelled', 'summary' => self::summary( $after ) ) );
-		Dolly_Notifications::notify_user( $uid, 'request_decided', 'Richiesta revocata', self::summary( $after ) . "\nMotivo: " . $note, 'richieste' );
+		Dolly_Notifications::notify_user( $uid, 'request_decided', fn () => array( __( 'Richiesta revocata', 'dolly-employee-management' ), self::summary( $after ) . __( "\nMotivo: ", 'dolly-employee-management' ) . $note ), null, 'richieste' );
 		return self::format( $after );
 	}
 
@@ -718,7 +716,7 @@ class Dolly_Requests {
 		$now = Dolly_Time::now_utc();
 		if ( ! isset( $p['entrata'], $p['uscita'] ) ) {
 			if ( $row && 'pending' === $row->status ) {
-				$wpdb->update( $t, array( 'status' => 'cancelled', 'decision_note' => 'Turno non più completo (timbrature modificate).', 'updated_at' => $now ), array( 'id' => (int) $row->id ) );
+				$wpdb->update( $t, array( 'status' => 'cancelled', 'decision_note' => __( 'Turno non più completo (timbrature modificate).', 'dolly-employee-management' ), 'updated_at' => $now ), array( 'id' => (int) $row->id ) );
 			}
 			return;
 		}
@@ -727,8 +725,8 @@ class Dolly_Requests {
 		$worked    = Dolly_Attendance::compute( $date, $p, $plan )['worked'];
 		$threshold = (int) Dolly_Settings::get( 'oncall_threshold' );
 		$auto      = Dolly_Settings::get( 'oncall_auto' ) && $worked <= $threshold;
-		$notes     = sprintf( 'Turno a chiamata %s–%s: %s ore lavorate.', $in, $out, Dolly_Time::min_to_hm( $worked ) );
-		$auto_note = sprintf( 'Approvato automaticamente: turno entro %s ore.', Dolly_Time::min_to_hm( $threshold ) );
+		$notes     = sprintf( __( 'Turno a chiamata %s–%s: %s ore lavorate.', 'dolly-employee-management' ), $in, $out, Dolly_Time::min_to_hm( $worked ) );
+		$auto_note = sprintf( __( 'Approvato automaticamente: turno entro %s ore.', 'dolly-employee-management' ), Dolly_Time::min_to_hm( $threshold ) );
 
 		if ( $row ) {
 			if ( Dolly_Time::hm( $row->start_time ) === $in && Dolly_Time::hm( $row->end_time ) === $out ) {
@@ -766,7 +764,7 @@ class Dolly_Requests {
 		if ( $auto ) {
 			Dolly_Audit::log( 'oncall_auto_approved', 'request', $id, $user_id, $auto_note, null, array( 'shift' => $in . '–' . $out, 'worked' => Dolly_Time::min_to_hm( $worked ) ), 0 );
 		} else {
-			Dolly_Notifications::notify_admins( 'oncall_pending', 'Turno a chiamata da approvare: ' . Dolly_Employees::display_name( $user_id ), Dolly_Time::fmt_date( $date ) . ': ' . $notes, 'dolly-requests', 'oncall-' . $id );
+			Dolly_Notifications::notify_admins( 'oncall_pending', fn () => array( __( 'Turno a chiamata da approvare: ', 'dolly-employee-management' ) . Dolly_Employees::display_name( $user_id ), Dolly_Time::fmt_date( $date ) . ': ' . $notes ), null, 'dolly-requests', 'oncall-' . $id );
 		}
 	}
 
@@ -802,7 +800,7 @@ class Dolly_Requests {
 		$now = Dolly_Time::now_utc();
 		if ( '' === $exit_hm ) {
 			if ( $auto ) {
-				$wpdb->update( $t, array( 'status' => 'cancelled', 'decision_note' => 'Non più necessaria: uscita entro il limite dello straordinario approvato.', 'updated_at' => $now ), array( 'id' => (int) $auto->id, 'status' => 'pending' ) );
+				$wpdb->update( $t, array( 'status' => 'cancelled', 'decision_note' => __( 'Non più necessaria: uscita entro il limite dello straordinario approvato.', 'dolly-employee-management' ), 'updated_at' => $now ), array( 'id' => (int) $auto->id, 'status' => 'pending' ) );
 			}
 			return;
 		}
@@ -855,8 +853,8 @@ class Dolly_Requests {
 		}
 		$name = Dolly_Employees::display_name( $user_id );
 		$body = sprintf( '%s: uscita alle %s, %s di straordinario (oltre il limite automatico di %s).', Dolly_Time::fmt_date( $date ), $exit_hm, Dolly_Time::min_to_hm( $over ), Dolly_Time::min_to_hm( $cap ) );
-		Dolly_Notifications::notify_admins( 'overtime_pending', 'Straordinario da approvare: ' . $name, $body, 'dolly-requests', 'overtime-' . $id );
-		Dolly_Notifications::notify_user( $user_id, 'overtime_pending', 'Straordinario in attesa di approvazione', $body . "\nLa parte oltre il limite sarà conteggiata dopo l'approvazione dell'amministratore.", 'richieste', 'overtime-' . $id );
+		Dolly_Notifications::notify_admins( 'overtime_pending', fn () => array( __( 'Straordinario da approvare: ', 'dolly-employee-management' ) . $name, $body ), null, 'dolly-requests', 'overtime-' . $id );
+		Dolly_Notifications::notify_user( $user_id, 'overtime_pending', fn () => array( __( 'Straordinario in attesa di approvazione', 'dolly-employee-management' ), $body . __( "\nLa parte oltre il limite sarà conteggiata dopo l'approvazione dell'amministratore.", 'dolly-employee-management' ) ), null, 'richieste', 'overtime-' . $id );
 	}
 
 	/* ---------- Effective data used by attendance, calendars and reports ---------- */

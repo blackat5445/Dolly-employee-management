@@ -17,10 +17,10 @@ class Dolly_REST {
 	public static function can_employee() {
 		$uid = get_current_user_id();
 		if ( ! $uid || ! current_user_can( 'dolly_employee' ) ) {
-			return new WP_Error( 'dolly_forbidden', 'Accesso riservato ai dipendenti.', array( 'status' => rest_authorization_required_code() ) );
+			return new WP_Error( 'dolly_forbidden', __( 'Accesso riservato ai dipendenti.', 'dolly-employee-management' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 		if ( ! Dolly_Employees::is_active( $uid ) ) {
-			return new WP_Error( 'dolly_inactive', 'Account disattivato.', array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_inactive', __( 'Account disattivato.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		return true;
 	}
@@ -28,14 +28,14 @@ class Dolly_REST {
 	public static function can_workplace() {
 		$uid = get_current_user_id();
 		if ( ! $uid || ! current_user_can( 'dolly_workplace' ) || ! Dolly_Employees::is_active( $uid ) ) {
-			return new WP_Error( 'dolly_forbidden', 'Accesso riservato agli account sede.', array( 'status' => rest_authorization_required_code() ) );
+			return new WP_Error( 'dolly_forbidden', __( 'Accesso riservato agli account sede.', 'dolly-employee-management' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 		return true;
 	}
 
 	public static function can_admin() {
 		if ( ! current_user_can( 'dolly_manage' ) ) {
-			return new WP_Error( 'dolly_forbidden', 'Accesso riservato agli amministratori.', array( 'status' => rest_authorization_required_code() ) );
+			return new WP_Error( 'dolly_forbidden', __( 'Accesso riservato agli amministratori.', 'dolly-employee-management' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 		return true;
 	}
@@ -60,6 +60,7 @@ class Dolly_REST {
 			array( '/me', 'GET', 'me', $emp ),
 			array( '/me/profile', 'POST', 'update_profile', $emp ),
 			array( '/me/password', 'POST', 'change_password', $emp ),
+			array( '/me/language', 'POST', 'set_language', 'is_user_logged_in' ),
 			array( '/me/push', 'POST', 'push_subscribe', $emp ),
 			array( '/me/push', 'DELETE', 'push_unsubscribe', $emp ),
 			array( '/me/push/test', 'POST', 'push_test', $emp ),
@@ -184,6 +185,11 @@ class Dolly_REST {
 		$e['open_anomalies'] = Dolly_Anomalies::count_open( array( $uid ) );
 		$e['popups']         = Dolly_Notifications::popups( $uid );
 		$e['tour_done']      = (bool) get_user_meta( $uid, 'dolly_tour_done', true );
+		$e['language']       = array(
+			'choice'    => Dolly_I18n::user_choice( $uid ),
+			'available' => Dolly_I18n::available(),
+			'default'   => Dolly_I18n::available()[ Dolly_I18n::default_locale() ] ?? Dolly_I18n::default_locale(),
+		);
 		$e['settings'] = array(
 			'verification'       => Dolly_Settings::verification(),
 			'bluetooth'          => Dolly_Bluetooth::client_config(),
@@ -202,10 +208,19 @@ class Dolly_REST {
 		return Dolly_Employees::update_profile( get_current_user_id(), self::body( $req ) );
 	}
 
+	/** Own language: '' = plugin default. */
+	public static function set_language( WP_REST_Request $req ) {
+		$loc = (string) ( self::body( $req )['locale'] ?? '' );
+		if ( ! Dolly_I18n::set_user_choice( get_current_user_id(), $loc ) ) {
+			return new WP_Error( 'dolly_invalid', __( 'Lingua non disponibile.', 'dolly-employee-management' ), array( 'status' => 400 ) );
+		}
+		return array( 'locale' => Dolly_I18n::user_choice( get_current_user_id() ) );
+	}
+
 	public static function change_password( WP_REST_Request $req ) {
 		$b = self::body( $req );
 		$r = Dolly_Employees::change_password( get_current_user_id(), $b['current_password'] ?? '', $b['new_password'] ?? '' );
-		return is_wp_error( $r ) ? $r : array( 'ok' => true, 'message' => 'Password aggiornata.' );
+		return is_wp_error( $r ) ? $r : array( 'ok' => true, 'message' => __( 'Password aggiornata.', 'dolly-employee-management' ) );
 	}
 
 	public static function push_subscribe( WP_REST_Request $req ) {
@@ -271,7 +286,7 @@ class Dolly_REST {
 		$year  = (int) ( $req->get_param( 'year' ) ? $req->get_param( 'year' ) : $now->format( 'Y' ) );
 		$month = (int) ( $req->get_param( 'month' ) ? $req->get_param( 'month' ) : $now->format( 'n' ) );
 		if ( $year < 2000 || $year > 2100 || $month < 1 || $month > 12 ) {
-			return new WP_Error( 'dolly_invalid', 'Mese o anno non valido.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Mese o anno non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		return array( $year, $month );
 	}
@@ -288,7 +303,7 @@ class Dolly_REST {
 		$from = substr( (string) $req->get_param( 'start' ), 0, 10 );
 		$to   = substr( (string) $req->get_param( 'end' ), 0, 10 );
 		if ( ! Dolly_Time::is_date( $from ) || ! Dolly_Time::is_date( $to ) || $to < $from || ( strtotime( $to ) - strtotime( $from ) ) > 62 * DAY_IN_SECONDS ) {
-			return new WP_Error( 'dolly_invalid', 'Intervallo non valido.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Intervallo non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		return array( $from, $to );
 	}
@@ -319,7 +334,7 @@ class Dolly_REST {
 	 */
 	private static function overtime_managed_by_admin( $type ) {
 		if ( 'straordinario' === $type ) {
-			return new WP_Error( 'dolly_invalid_type', 'Gli straordinari non si richiedono: vengono calcolati automaticamente dalle timbrature e, oltre il limite o nei giorni di riposo, autorizzati dall\'amministratore.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid_type', __( 'Gli straordinari non si richiedono: vengono calcolati automaticamente dalle timbrature e, oltre il limite o nei giorni di riposo, autorizzati dall\'amministratore.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		return null;
 	}
@@ -390,7 +405,7 @@ class Dolly_REST {
 	public static function workplace_challenge() {
 		$w = Dolly_Workplaces::by_account( get_current_user_id() );
 		if ( ! $w ) {
-			return new WP_Error( 'dolly_no_workplace', 'Questo account non è collegato a una sede attiva.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_no_workplace', __( 'Questo account non è collegato a una sede attiva.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$c = Dolly_Verification::challenge( (int) $w->id );
 		$response = new WP_REST_Response(
@@ -456,7 +471,7 @@ class Dolly_REST {
 
 	public static function admin_employee_get( WP_REST_Request $req ) {
 		if ( ! Dolly_Employees::is_employee( (int) $req['id'] ) ) {
-			return new WP_Error( 'dolly_not_found', 'Dipendente non trovato.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$e = Dolly_Employees::format( (int) $req['id'], true );
 		$e['audit']          = Dolly_Audit::query( array( 'user_id' => (int) $req['id'], 'per_page' => 10 ) )['items'];
@@ -476,7 +491,7 @@ class Dolly_REST {
 	public static function admin_employee_password( WP_REST_Request $req ) {
 		$b = self::body( $req );
 		$r = Dolly_Employees::admin_set_password( (int) $req['id'], $b['password'] ?? '' );
-		return is_wp_error( $r ) ? $r : array( 'ok' => true, 'message' => 'Password aggiornata. Le sessioni attive del dipendente sono state chiuse.' );
+		return is_wp_error( $r ) ? $r : array( 'ok' => true, 'message' => __( 'Password aggiornata. Le sessioni attive del dipendente sono state chiuse.', 'dolly-employee-management' ) );
 	}
 
 	public static function admin_exception_create( WP_REST_Request $req ) {
@@ -548,7 +563,7 @@ class Dolly_REST {
 		$b['type'] = 'straordinario';
 		$uid       = (int) ( $b['user_id'] ?? 0 );
 		if ( ! Dolly_Employees::is_employee( $uid ) ) {
-			return new WP_Error( 'dolly_invalid', 'Seleziona un dipendente.', array( 'status' => 400, 'fields' => array( 'user_id' => 'Seleziona un dipendente.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Seleziona un dipendente.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'user_id' => __( 'Seleziona un dipendente.', 'dolly-employee-management' ) ) ) );
 		}
 		return Dolly_Requests::create( $uid, $b, true );
 	}
@@ -562,7 +577,7 @@ class Dolly_REST {
 		$uid  = (int) ( $b['user_id'] ?? 0 );
 		$type = (string) ( $b['type'] ?? '' );
 		if ( ! Dolly_Employees::is_employee( $uid ) ) {
-			return new WP_Error( 'dolly_invalid', 'Seleziona un dipendente.', array( 'status' => 400, 'fields' => array( 'user_id' => 'Seleziona un dipendente.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Seleziona un dipendente.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'user_id' => __( 'Seleziona un dipendente.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( isset( Dolly_Sickness::KINDS[ $type ] ) ) {
 			$b['kind'] = $type;
@@ -570,7 +585,7 @@ class Dolly_REST {
 			return Dolly_Sickness::report( $uid, $b, true );
 		}
 		if ( ! in_array( $type, array( 'ferie', 'permesso', 'straordinario', 'donazione' ), true ) ) {
-			return new WP_Error( 'dolly_invalid', 'Tipo di autorizzazione non valido.', array( 'status' => 400, 'fields' => array( 'type' => 'Seleziona il tipo.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Tipo di autorizzazione non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'type' => __( 'Seleziona il tipo.', 'dolly-employee-management' ) ) ) );
 		}
 		return Dolly_Requests::create( $uid, $b, true );
 	}
@@ -602,7 +617,7 @@ class Dolly_REST {
 	public static function admin_attendance( WP_REST_Request $req ) {
 		$uid = (int) $req->get_param( 'user_id' );
 		if ( ! Dolly_Employees::is_employee( $uid ) ) {
-			return new WP_Error( 'dolly_invalid', 'Seleziona un dipendente.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Seleziona un dipendente.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$ym = self::year_month( $req );
 		if ( is_wp_error( $ym ) ) {
@@ -618,7 +633,7 @@ class Dolly_REST {
 		$uid  = (int) $req->get_param( 'user_id' );
 		$date = (string) $req->get_param( 'date' );
 		if ( ! Dolly_Employees::is_employee( $uid ) || ! Dolly_Time::is_date( $date ) ) {
-			return new WP_Error( 'dolly_invalid', 'Parametri non validi.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Parametri non validi.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$d               = Dolly_Attendance::day_detail( $uid, $date );
 		$d['workplaces'] = array_map( array( 'Dolly_Workplaces', 'format' ), Dolly_Workplaces::for_user( $uid, $date ) );
@@ -662,7 +677,7 @@ class Dolly_REST {
 	public static function admin_closure_get( WP_REST_Request $req ) {
 		$date = (string) $req->get_param( 'date' );
 		if ( ! Dolly_Time::is_date( $date ) ) {
-			return new WP_Error( 'dolly_invalid', 'Data non valida.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Data non valida.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		return Dolly_Closures::day( $date );
 	}
@@ -692,7 +707,7 @@ class Dolly_REST {
 	}
 
 	public static function admin_export_employees() {
-		Dolly_Reports::send_download( Dolly_Reports::employees_csv(), 'Dipendenti_' . sanitize_file_name( Dolly_Appearance::brand() ) . '_' . Dolly_Time::now_local()->format( 'd-m-Y' ) . '.csv', 'text/csv; charset=UTF-8' );
+		Dolly_Reports::send_download( Dolly_Reports::employees_csv(), __( 'Dipendenti_', 'dolly-employee-management' ) . sanitize_file_name( Dolly_Appearance::brand() ) . '_' . Dolly_Time::now_local()->format( 'd-m-Y' ) . '.csv', 'text/csv; charset=UTF-8' );
 	}
 
 	public static function admin_export_attendance( WP_REST_Request $req ) {
@@ -706,7 +721,7 @@ class Dolly_REST {
 		if ( is_wp_error( $path ) ) {
 			return $path;
 		}
-		Dolly_Reports::send_download( $path, 'Presenze_' . Dolly_Time::MONTHS[ $ym[1] ] . '_' . $ym[0] . '.zip', 'application/zip', true );
+		Dolly_Reports::send_download( $path, __( 'Presenze_', 'dolly-employee-management' ) . Dolly_I18n::t( Dolly_Time::MONTHS[ $ym[1] ] ) . '_' . $ym[0] . '.zip', 'application/zip', true );
 	}
 
 	/** Monthly attendance sheet (Excel): one file with all the employees of the company. */
@@ -733,7 +748,7 @@ class Dolly_REST {
 		if ( ! $users ) {
 			$users = Dolly_Employees::active_ids();
 		}
-		Dolly_Reports::send_download( Dolly_Hours::summary_csv( $users, $ym[0], $ym[1] ), 'Riepilogo_ore_' . Dolly_Time::MONTHS[ $ym[1] ] . '_' . $ym[0] . '.csv', 'text/csv; charset=utf-8' );
+		Dolly_Reports::send_download( Dolly_Hours::summary_csv( $users, $ym[0], $ym[1] ), __( 'Riepilogo_ore_', 'dolly-employee-management' ) . Dolly_I18n::t( Dolly_Time::MONTHS[ $ym[1] ] ) . '_' . $ym[0] . '.csv', 'text/csv; charset=utf-8' );
 	}
 
 	public static function admin_settings_get() {
@@ -742,12 +757,15 @@ class Dolly_REST {
 		$admins = get_users( array( 'capability' => 'dolly_manage' ) );
 		return array(
 			'settings'          => $s,
-			'verification_methods' => Dolly_Settings::VERIFICATION_METHODS,
-			'certificate_modes' => Dolly_Settings::CERTIFICATE_MODES,
-			'events'            => Dolly_Settings::EVENTS,
-			'employee_events'   => Dolly_Settings::EMPLOYEE_EVENTS,
-			'hours_codes'       => Dolly_Hours::CODES,
-			'admin_events'      => Dolly_Settings::ADMIN_EVENTS,
+			'verification_methods' => Dolly_I18n::labels( Dolly_Settings::VERIFICATION_METHODS ),
+			'languages'         => Dolly_I18n::available(),
+			'site_language'     => Dolly_I18n::available()[ Dolly_I18n::closest( get_locale() ) ] ?? get_locale(),
+			'my_locale'         => Dolly_I18n::user_choice( get_current_user_id() ),
+			'certificate_modes' => Dolly_I18n::labels( Dolly_Settings::CERTIFICATE_MODES ),
+			'events'            => Dolly_I18n::labels( Dolly_Settings::EVENTS ),
+			'employee_events'   => Dolly_I18n::labels( Dolly_Settings::EMPLOYEE_EVENTS ),
+			'hours_codes'       => Dolly_I18n::labels( Dolly_Hours::CODES ),
+			'admin_events'      => Dolly_I18n::labels( Dolly_Settings::ADMIN_EVENTS ),
 			'admins'           => array_map( function ( $u ) {
 				return array( 'id' => (int) $u->ID, 'name' => Dolly_Employees::display_name( $u->ID ), 'email' => $u->user_email );
 			}, $admins ),
@@ -771,7 +789,7 @@ class Dolly_REST {
 	public static function admin_workplace_bluetooth( WP_REST_Request $req ) {
 		$id = (int) $req['id'];
 		if ( ! Dolly_Workplaces::get( $id ) ) {
-			return new WP_Error( 'dolly_not_found', 'Sede non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Sede non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		return Dolly_Bluetooth::admin_info( $id );
 	}
@@ -779,7 +797,7 @@ class Dolly_REST {
 	public static function admin_workplace_bluetooth_update( WP_REST_Request $req ) {
 		$id = (int) $req['id'];
 		if ( ! Dolly_Workplaces::get( $id ) ) {
-			return new WP_Error( 'dolly_not_found', 'Sede non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Sede non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$b = self::body( $req );
 		if ( ! empty( $b['regenerate'] ) ) {
@@ -804,7 +822,7 @@ class Dolly_REST {
 			'contrast'   => Dolly_Appearance::contrast_report( $a ),
 			'css'        => Dolly_Appearance::css( $a, 'admin' ),
 			'auto'       => array(
-				'app_name'             => Dolly_Appearance::brand() . ' · ' . $a['portal_subtitle'],
+				'app_name'             => Dolly_Appearance::brand() . ' · ' . Dolly_Appearance::get( 'portal_subtitle' ),
 				'email_subject_prefix' => '[' . Dolly_Appearance::brand() . ']',
 				'email_signature'      => '— ' . Dolly_Appearance::app_name(),
 			),
@@ -838,7 +856,7 @@ class Dolly_REST {
 	public static function cron( WP_REST_Request $req ) {
 		$key = (string) $req->get_param( 'key' );
 		if ( '' === $key || ! hash_equals( Dolly_Settings::cron_key(), $key ) ) {
-			return new WP_Error( 'dolly_forbidden', 'Chiave non valida.', array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_forbidden', __( 'Chiave non valida.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		return Dolly_Cron::tick( 'system-cron' );
 	}

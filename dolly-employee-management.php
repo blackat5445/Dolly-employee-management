@@ -9,6 +9,7 @@
  * Author:            Kasra Falahati
  * Author URI:        https://github.com/blackat5445
  * Text Domain:       dolly-employee-management
+ * Domain Path:       /languages
  * License:           MIT
  * License URI:       https://opensource.org/licenses/MIT
  *
@@ -28,6 +29,7 @@ require_once DOLLY_DIR . 'includes/class-dolly-time.php';
 require_once DOLLY_DIR . 'includes/class-dolly-holidays.php';
 require_once DOLLY_DIR . 'includes/class-dolly-settings.php';
 require_once DOLLY_DIR . 'includes/class-dolly-appearance.php';
+require_once DOLLY_DIR . 'includes/class-dolly-i18n.php';
 require_once DOLLY_DIR . 'includes/class-dolly-install.php';
 require_once DOLLY_DIR . 'includes/class-dolly-audit.php';
 require_once DOLLY_DIR . 'includes/class-dolly-workplaces.php';
@@ -60,6 +62,7 @@ require_once DOLLY_DIR . 'includes/class-dolly-admin.php';
 register_activation_hook( __FILE__, array( 'Dolly_Install', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'Dolly_Install', 'deactivate' ) );
 
+add_action( 'plugins_loaded', array( 'Dolly_I18n', 'init' ) );
 add_action( 'plugins_loaded', array( 'Dolly_Install', 'maybe_upgrade' ) );
 add_action( 'plugins_loaded', array( 'Dolly_Cron', 'init' ) );
 add_action( 'plugins_loaded', array( 'Dolly_Auth', 'init' ) );

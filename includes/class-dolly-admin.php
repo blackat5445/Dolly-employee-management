@@ -51,7 +51,7 @@ class Dolly_Admin {
 		$title         = Dolly_Appearance::get( 'admin_title' );
 		self::$hooks[] = add_menu_page( $title, esc_html( $title ) . $badge, 'dolly_manage', 'dolly-dashboard', array( __CLASS__, 'render' ), 'dashicons-groups', 3 );
 		foreach ( self::PAGES as $slug => $p ) {
-			self::$hooks[] = add_submenu_page( 'dolly-dashboard', $p[0] . ' · ' . $title, $p[0], 'dolly_manage', $slug, array( __CLASS__, 'render' ) );
+			self::$hooks[] = add_submenu_page( 'dolly-dashboard', Dolly_I18n::t( $p[0] ) . ' · ' . $title, Dolly_I18n::t( $p[0] ), 'dolly_manage', $slug, array( __CLASS__, 'render' ) );
 		}
 	}
 
@@ -101,8 +101,8 @@ class Dolly_Admin {
 					'pages'      => $pages,
 					'workplaces' => array_map( array( 'Dolly_Workplaces', 'format' ), Dolly_Workplaces::all() ),
 					'today'      => Dolly_Time::today(),
-					'months'     => array_values( Dolly_Time::MONTHS ),
-					'weekdays'   => array_values( Dolly_Time::WEEKDAYS ),
+					'months'     => array_values( Dolly_I18n::labels( Dolly_Time::MONTHS ) ),
+					'weekdays'   => array_values( Dolly_I18n::labels( Dolly_Time::WEEKDAYS ) ),
 					'defaultRadius' => (int) Dolly_Settings::get( 'default_radius' ),
 					'lateTolerance' => (int) Dolly_Settings::get( 'late_tolerance' ),
 					'holidayIncrease' => (int) Dolly_Settings::get( 'holiday_increase' ),
@@ -117,16 +117,16 @@ class Dolly_Admin {
 		if ( ! current_user_can( 'dolly_manage' ) || ! $page ) {
 			wp_die( esc_html__( 'Non autorizzato.', 'dolly-employee-management' ) );
 		}
-		$title = self::PAGES[ $page ][0];
+		$title = Dolly_I18n::t( self::PAGES[ $page ][0] );
 		?>
 		<div class="wrap dolly-wrap">
 			<div class="dolly-app dolly-admin" id="dolly-admin-app" data-page="<?php echo esc_attr( self::PAGES[ $page ][1] ); ?>">
 				<header class="dolly-admin__header">
-					<button type="button" class="dolly-btn dolly-btn--ghost dolly-btn--icon dolly-admin__menu-toggle" id="dolly-menu-toggle" aria-controls="adminmenumain" aria-pressed="false" aria-label="Nascondi il menu laterale" title="Nascondi il menu laterale"><i data-lucide="panel-left-close" aria-hidden="true"></i></button>
+					<button type="button" class="dolly-btn dolly-btn--ghost dolly-btn--icon dolly-admin__menu-toggle" id="dolly-menu-toggle" aria-controls="adminmenumain" aria-pressed="false" aria-label="<?php esc_attr_e( 'Nascondi il menu laterale', 'dolly-employee-management' ); ?>" title="<?php esc_attr_e( 'Nascondi il menu laterale', 'dolly-employee-management' ); ?>"><i data-lucide="panel-left-close" aria-hidden="true"></i></button>
 					<div class="dolly-admin__brand"><?php Dolly_Frontend::brand( Dolly_Appearance::get( 'admin_title' ), true ); ?></div>
 					<h1 class="dolly-admin__title"><?php echo esc_html( $title ); ?></h1>
 				</header>
-				<nav class="dolly-admin__nav" aria-label="<?php echo esc_attr( 'Sezioni ' . Dolly_Appearance::get( 'admin_title' ) ); ?>">
+				<nav class="dolly-admin__nav" aria-label="<?php echo esc_attr( __( 'Sezioni ', 'dolly-employee-management' ) . Dolly_Appearance::get( 'admin_title' ) ); ?>">
 					<?php
 					$icons = array(
 						'dolly-dashboard'    => 'layout-dashboard',
@@ -149,15 +149,15 @@ class Dolly_Admin {
 							esc_url( admin_url( 'admin.php?page=' . $slug ) ),
 							$slug === $page ? ' aria-current="page"' : '',
 							esc_attr( $icons[ $slug ] ),
-							esc_html( $p[0] )
+							esc_html( Dolly_I18n::t( $p[0] ) )
 						);
 					}
 					?>
 				</nav>
 				<main class="dolly-admin__main" id="dolly-admin-main" tabindex="-1">
-					<div class="dolly-loading"><span class="dolly-spinner" aria-hidden="true"></span><span>Caricamento…</span></div>
+					<div class="dolly-loading"><span class="dolly-spinner" aria-hidden="true"></span><span><?php esc_html_e( 'Caricamento…', 'dolly-employee-management' ); ?></span></div>
 				</main>
-				<noscript><div class="dolly-alert dolly-alert--error">Per usare il pannello è necessario JavaScript.</div></noscript>
+				<noscript><div class="dolly-alert dolly-alert--error"><?php esc_html_e( 'Per usare il pannello è necessario JavaScript.', 'dolly-employee-management' ); ?></div></noscript>
 			</div>
 		</div>
 		<?php

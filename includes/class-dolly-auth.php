@@ -26,7 +26,7 @@ class Dolly_Auth {
 	/** Deactivated accounts cannot sign in. */
 	public static function block_inactive( $user ) {
 		if ( $user instanceof WP_User && self::is_portal_user( $user ) && ! Dolly_Employees::is_active( $user->ID ) ) {
-			return new WP_Error( 'dolly_inactive', 'Account disattivato. Contatta l\'amministratore.' );
+			return new WP_Error( 'dolly_inactive', __( 'Account disattivato. Contatta l\'amministratore.', 'dolly-employee-management' ) );
 		}
 		return $user;
 	}

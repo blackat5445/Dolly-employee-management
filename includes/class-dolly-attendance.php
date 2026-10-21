@@ -64,13 +64,13 @@ class Dolly_Attendance {
 		return array(
 			'id'           => (int) $p->id,
 			'action'       => $p->action,
-			'label'        => self::ACTIONS[ $p->action ] ?? $p->action,
+			'label'        => Dolly_I18n::t( self::ACTIONS[ $p->action ] ?? $p->action ),
 			'time'         => Dolly_Time::utc_to_local( $p->punched_at, 'H:i' ),
 			'at'           => Dolly_Time::iso( $p->punched_at ),
 			'workplace_id' => $p->workplace_id ? (int) $p->workplace_id : null,
 			'workplace'    => $w ? $w->name : '',
 			'method'       => $p->method,
-			'method_label' => self::METHODS[ $p->method ] ?? $p->method,
+			'method_label' => Dolly_I18n::t( self::METHODS[ $p->method ] ?? $p->method ),
 			'source'       => $p->source,
 		);
 	}
@@ -105,21 +105,21 @@ class Dolly_Attendance {
 	 */
 	public static function blocked_reason( $user_id, $date, array $plan ) {
 		if ( ! Dolly_Employees::is_active( $user_id ) ) {
-			return 'Account disattivato.';
+			return __( 'Account disattivato.', 'dolly-employee-management' );
 		}
 		if ( ! Dolly_Workplaces::ids_for_user( $user_id, $date ) ) {
-			return 'Nessuna sede assegnata. Contatta l\'amministratore.';
+			return __( 'Nessuna sede assegnata. Contatta l\'amministratore.', 'dolly-employee-management' );
 		}
 		if ( ! $plan['eligible'] ) {
-			return 'Oggi è un giorno di riposo. Per lavorare serve un\'autorizzazione allo straordinario dell\'amministratore.';
+			return __( 'Oggi è un giorno di riposo. Per lavorare serve un\'autorizzazione allo straordinario dell\'amministratore.', 'dolly-employee-management' );
 		}
 		$sick = Dolly_Sickness::covers( $user_id, $date );
 		if ( $sick ) {
-			return 'infortunio' === ( $sick->kind ?? '' ) ? 'Risulti in infortunio per oggi.' : 'Risulti in malattia per oggi.';
+			return 'infortunio' === ( $sick->kind ?? '' ) ? __( 'Risulti in infortunio per oggi.', 'dolly-employee-management' ) : __( 'Risulti in malattia per oggi.', 'dolly-employee-management' );
 		}
 		$leave = Dolly_Requests::full_day_leave( $user_id, $date );
 		if ( $leave ) {
-			return Dolly_Donations::TYPE === $leave->type ? 'Oggi risulti assente per donazione sangue.' : 'Risulti in ferie per oggi.';
+			return Dolly_Donations::TYPE === $leave->type ? __( 'Oggi risulti assente per donazione sangue.', 'dolly-employee-management' ) : __( 'Risulti in ferie per oggi.', 'dolly-employee-management' );
 		}
 		return null;
 	}
@@ -185,10 +185,10 @@ class Dolly_Attendance {
 		$action = (string) ( $input['action'] ?? '' );
 		$key    = (string) ( $input['request_key'] ?? '' );
 		if ( ! isset( self::ACTIONS[ $action ] ) ) {
-			return new WP_Error( 'dolly_invalid_action', 'Azione non valida.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid_action', __( 'Azione non valida.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( ! preg_match( '/^[A-Za-z0-9-]{8,64}$/', $key ) ) {
-			return new WP_Error( 'dolly_invalid', 'Richiesta non valida. Aggiorna la pagina.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Richiesta non valida. Aggiorna la pagina.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$t = Dolly_Install::t( 'punches' );
 
@@ -196,18 +196,18 @@ class Dolly_Attendance {
 		$existing = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE request_key = %s", $key ) ); // phpcs:ignore
 		if ( $existing ) {
 			if ( (int) $existing->user_id !== (int) $user_id ) {
-				return new WP_Error( 'dolly_invalid', 'Richiesta non valida.', array( 'status' => 400 ) );
+				return new WP_Error( 'dolly_invalid', __( 'Richiesta non valida.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 			}
 			return array(
 				'duplicate' => true,
-				'message'   => sprintf( '%s già registrata alle %s.', self::ACTIONS[ $existing->action ], Dolly_Time::utc_to_local( $existing->punched_at, 'H:i' ) ),
+				'message'   => sprintf( __( '%s già registrata alle %s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $existing->action ] ), Dolly_Time::utc_to_local( $existing->punched_at, 'H:i' ) ),
 				'state'     => self::state( $user_id ),
 			);
 		}
 
 		$lock = $wpdb->prefix . 'dolly_punch_' . (int) $user_id;
 		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return new WP_Error( 'dolly_busy', 'Un\'altra timbratura è in corso. Attendi qualche secondo.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_busy', __( 'Un\'altra timbratura è in corso. Attendi qualche secondo.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		try {
 			$date    = Dolly_Time::today();
@@ -222,11 +222,11 @@ class Dolly_Attendance {
 			$next = self::next_actions( $punches, $plan );
 			if ( $action !== $next['primary'] && $action !== $next['secondary'] ) {
 				if ( isset( $punches[ $action ] ) ) {
-					$msg = sprintf( '%s già registrata alle %s.', self::ACTIONS[ $action ], Dolly_Time::utc_to_local( $punches[ $action ]->punched_at, 'H:i' ) );
+					$msg = sprintf( __( '%s già registrata alle %s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ), Dolly_Time::utc_to_local( $punches[ $action ]->punched_at, 'H:i' ) );
 				} elseif ( $next['completed'] ) {
-					$msg = 'La giornata è già chiusa con l\'uscita.';
+					$msg = __( 'La giornata è già chiusa con l\'uscita.', 'dolly-employee-management' );
 				} else {
-					$msg = sprintf( 'Operazione non consentita: la prossima azione è "%s".', self::ACTIONS[ $next['primary'] ] );
+					$msg = sprintf( __( 'Operazione non consentita: la prossima azione è "%s".', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $next['primary'] ] ) );
 				}
 				return new WP_Error( 'dolly_invalid_transition', $msg, array( 'status' => 409, 'state' => self::state( $user_id ) ) );
 			}
@@ -260,7 +260,7 @@ class Dolly_Attendance {
 			$wpdb->suppress_errors( $suppress );
 			if ( ! $ok ) {
 				// Unique constraints caught a concurrent duplicate.
-				return new WP_Error( 'dolly_duplicate', sprintf( '%s già registrata.', self::ACTIONS[ $action ] ), array( 'status' => 409, 'state' => self::state( $user_id ) ) );
+				return new WP_Error( 'dolly_duplicate', sprintf( __( '%s già registrata.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ) ), array( 'status' => 409, 'state' => self::state( $user_id ) ) );
 			}
 			$punch_id = (int) $wpdb->insert_id;
 			if ( isset( $verified['exception'] ) ) {
@@ -271,7 +271,7 @@ class Dolly_Attendance {
 		}
 
 		if ( 'entrata' === $action ) {
-			Dolly_Anomalies::resolve_absence( $user_id, $date, $date, 'entry_recorded', 'Entrata registrata alle ' . Dolly_Time::utc_to_local( $row['punched_at'], 'H:i' ) . '.' );
+			Dolly_Anomalies::resolve_absence( $user_id, $date, $date, 'entry_recorded', __( 'Entrata registrata alle ', 'dolly-employee-management' ) . Dolly_Time::utc_to_local( $row['punched_at'], 'H:i' ) . '.' );
 		}
 		if ( 'uscita' === $action ) {
 			Dolly_Anomalies::evaluate_exit( $user_id, $date );
@@ -282,7 +282,7 @@ class Dolly_Attendance {
 		$w = Dolly_Workplaces::get( (int) $verified['workplace_id'] );
 		return array(
 			'duplicate' => false,
-			'message'   => sprintf( '%s registrata alle %s%s.', self::ACTIONS[ $action ], Dolly_Time::utc_to_local( $row['punched_at'], 'H:i' ), $w ? ' presso ' . $w->name : '' ),
+			'message'   => sprintf( __( '%s registrata alle %s%s.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $action ] ), Dolly_Time::utc_to_local( $row['punched_at'], 'H:i' ), $w ? __( ' presso ', 'dolly-employee-management' ) . $w->name : '' ),
 			'state'     => self::state( $user_id ),
 		);
 	}
@@ -320,7 +320,7 @@ class Dolly_Attendance {
 			}
 			$kind = 'ble' === $t['method'] ? 'ble' : 'qrpin';
 			if ( ! in_array( $kind, $methods, true ) ) {
-				return new WP_Error( 'dolly_method_not_allowed', 'Questo metodo di verifica non è attivo. Usa uno dei metodi indicati nell\'app.', array( 'status' => 400 ) );
+				return new WP_Error( 'dolly_method_not_allowed', __( 'Questo metodo di verifica non è attivo. Usa uno dei metodi indicati nell\'app.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 			}
 			if ( ! $v['require_gps'] ) {
 				return $t;
@@ -332,11 +332,11 @@ class Dolly_Attendance {
 			}
 			$w = Dolly_Workplaces::get( $t['workplace_id'] );
 			if ( null === $w->lat || null === $w->lng ) {
-				return new WP_Error( 'dolly_gps_no_workplace', 'La sede non ha coordinate configurate.', array( 'status' => 400 ) );
+				return new WP_Error( 'dolly_gps_no_workplace', __( 'La sede non ha coordinate configurate.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 			}
 			$d = Dolly_Workplaces::distance( $g['lat'], $g['lng'], (float) $w->lat, (float) $w->lng );
 			if ( $d > (int) $w->radius_m ) {
-				return new WP_Error( 'dolly_gps_out_of_range', sprintf( 'La tua posizione non corrisponde alla sede %s (circa %d m).', $w->name, (int) round( $d ) ), array( 'status' => 403 ) );
+				return new WP_Error( 'dolly_gps_out_of_range', sprintf( __( 'La tua posizione non corrisponde alla sede %s (circa %d m).', 'dolly-employee-management' ), $w->name, (int) round( $d ) ), array( 'status' => 403 ) );
 			}
 			return array_merge(
 				$g,
@@ -349,22 +349,22 @@ class Dolly_Attendance {
 			);
 		}
 		if ( $v['require_gps'] ) {
-			return new WP_Error( 'dolly_need_qrpin', 'Sono richiesti la posizione GPS e un codice della sede (' . self::code_methods_label( $methods ) . ').', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_need_qrpin', __( 'Sono richiesti la posizione GPS e un codice della sede (', 'dolly-employee-management' ) . self::code_methods_label( $methods ) . ').', array( 'status' => 400 ) );
 		}
 		if ( $has_gps && in_array( 'gps', $methods, true ) ) {
 			return Dolly_Verification::verify_gps( $user_id, $input['gps'] );
 		}
 		if ( ! in_array( 'gps', $methods, true ) ) {
-			return new WP_Error( 'dolly_need_qrpin', 'Verifica la presenza con ' . self::code_methods_label( $methods ) . '.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_need_qrpin', __( 'Verifica la presenza con ', 'dolly-employee-management' ) . self::code_methods_label( $methods ) . '.', array( 'status' => 400 ) );
 		}
-		return new WP_Error( 'dolly_need_verification', 'Verifica la presenza: ' . implode( ', ', array_intersect_key( Dolly_Settings::VERIFICATION_METHODS, array_flip( $methods ) ) ) . '.', array( 'status' => 400 ) );
+		return new WP_Error( 'dolly_need_verification', __( 'Verifica la presenza: ', 'dolly-employee-management' ) . implode( ', ', Dolly_I18n::labels( array_intersect_key( Dolly_Settings::VERIFICATION_METHODS, array_flip( $methods ) ) ) ) . '.', array( 'status' => 400 ) );
 	}
 
 	/** "QR o PIN", "Bluetooth" or "QR, PIN o Bluetooth" for the allowed code methods. */
 	private static function code_methods_label( $methods ) {
 		$qr  = in_array( 'qrpin', $methods, true );
 		$ble = in_array( 'ble', $methods, true );
-		return $qr && $ble ? 'QR, PIN o Bluetooth' : ( $ble ? 'Bluetooth' : 'QR o PIN' );
+		return $qr && $ble ? __( 'QR, PIN o Bluetooth', 'dolly-employee-management' ) : ( $ble ? 'Bluetooth' : __( 'QR o PIN', 'dolly-employee-management' ) );
 	}
 
 	/**
@@ -375,36 +375,36 @@ class Dolly_Attendance {
 	public static function correct( $user_id, $date, $action, $time, $reason, $workplace_id = 0, $request_id = 0 ) {
 		global $wpdb;
 		if ( ! Dolly_Employees::is_employee( $user_id ) ) {
-			return new WP_Error( 'dolly_not_found', 'Dipendente non trovato.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Dipendente non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( ! Dolly_Time::is_date( $date ) || $date > Dolly_Time::today() ) {
-			return new WP_Error( 'dolly_invalid', 'Data non valida (non sono ammesse date future).', array( 'status' => 400, 'fields' => array( 'date' => 'Data non valida.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Data non valida (non sono ammesse date future).', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'date' => __( 'Data non valida.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( ! isset( self::ACTIONS[ $action ] ) ) {
-			return new WP_Error( 'dolly_invalid', 'Azione non valida.', array( 'status' => 400, 'fields' => array( 'action' => 'Azione non valida.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Azione non valida.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'action' => __( 'Azione non valida.', 'dolly-employee-management' ) ) ) );
 		}
 		$reason = sanitize_textarea_field( $reason );
 		if ( '' === $reason ) {
-			return new WP_Error( 'dolly_invalid', 'Indica il motivo della correzione.', array( 'status' => 400, 'fields' => array( 'reason' => 'Indica il motivo.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Indica il motivo della correzione.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'reason' => __( 'Indica il motivo.', 'dolly-employee-management' ) ) ) );
 		}
 		$remove = ( null === $time || '' === $time );
 		if ( ! $remove && ! Dolly_Time::is_time( $time ) ) {
-			return new WP_Error( 'dolly_invalid', 'Orario non valido.', array( 'status' => 400, 'fields' => array( 'time' => 'Orario non valido.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Orario non valido.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'time' => __( 'Orario non valido.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( ! $remove && $date === Dolly_Time::today() && Dolly_Time::hm_to_min( $time ) > Dolly_Time::hm_to_min( Dolly_Time::now_hm() ) ) {
-			return new WP_Error( 'dolly_invalid', 'Non puoi inserire un orario futuro.', array( 'status' => 400, 'fields' => array( 'time' => 'Orario futuro.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Non puoi inserire un orario futuro.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'time' => __( 'Orario futuro.', 'dolly-employee-management' ) ) ) );
 		}
 
 		$t    = Dolly_Install::t( 'punches' );
 		$lock = $wpdb->prefix . 'dolly_punch_' . (int) $user_id;
 		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
-			return new WP_Error( 'dolly_busy', 'Operazione in corso, riprova.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_busy', __( 'Operazione in corso, riprova.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		try {
 			$punches = self::punches_for( $user_id, $date );
 			$old     = $punches[ $action ] ?? null;
 			if ( $remove && ! $old ) {
-				return new WP_Error( 'dolly_invalid', 'Non c\'è nessuna timbratura da annullare.', array( 'status' => 400, 'fields' => array( 'action' => 'Timbratura assente.' ) ) );
+				return new WP_Error( 'dolly_invalid', __( 'Non c\'è nessuna timbratura da annullare.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'action' => __( 'Timbratura assente.', 'dolly-employee-management' ) ) ) );
 			}
 			// Removing a punch must not leave later punches without their predecessor.
 			if ( $remove ) {
@@ -414,7 +414,7 @@ class Dolly_Attendance {
 				);
 				foreach ( $dependents[ $action ] ?? array() as $later ) {
 					if ( isset( $punches[ $later ] ) ) {
-						return new WP_Error( 'dolly_invalid', sprintf( 'Annulla prima la timbratura "%s", che dipende da questa.', self::ACTIONS[ $later ] ), array( 'status' => 400, 'fields' => array( 'action' => 'Esistono timbrature successive.' ) ) );
+						return new WP_Error( 'dolly_invalid', sprintf( __( 'Annulla prima la timbratura "%s", che dipende da questa.', 'dolly-employee-management' ), Dolly_I18n::t( self::ACTIONS[ $later ] ) ), array( 'status' => 400, 'fields' => array( 'action' => __( 'Esistono timbrature successive.', 'dolly-employee-management' ) ) ) );
 					}
 				}
 			}
@@ -431,16 +431,16 @@ class Dolly_Attendance {
 				foreach ( $order as $a ) {
 					if ( isset( $times[ $a ] ) ) {
 						if ( $times[ $a ] < $prev ) {
-							return new WP_Error( 'dolly_invalid', 'Gli orari devono rispettare l\'ordine Entrata → Inizio pausa → Fine pausa → Uscita.', array( 'status' => 400, 'fields' => array( 'time' => 'Orario fuori sequenza.' ) ) );
+							return new WP_Error( 'dolly_invalid', __( 'Gli orari devono rispettare l\'ordine Entrata → Inizio pausa → Fine pausa → Uscita.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'time' => __( 'Orario fuori sequenza.', 'dolly-employee-management' ) ) ) );
 						}
 						$prev = $times[ $a ];
 					}
 				}
 				if ( 'entrata' !== $action && ! isset( $times['entrata'] ) ) {
-					return new WP_Error( 'dolly_invalid', 'Inserisci prima l\'entrata.', array( 'status' => 400, 'fields' => array( 'action' => 'Manca l\'entrata.' ) ) );
+					return new WP_Error( 'dolly_invalid', __( 'Inserisci prima l\'entrata.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'action' => __( 'Manca l\'entrata.', 'dolly-employee-management' ) ) ) );
 				}
 				if ( 'fine_pausa' === $action && ! isset( $times['inizio_pausa'] ) ) {
-					return new WP_Error( 'dolly_invalid', 'Inserisci prima l\'inizio pausa.', array( 'status' => 400, 'fields' => array( 'action' => 'Manca l\'inizio pausa.' ) ) );
+					return new WP_Error( 'dolly_invalid', __( 'Inserisci prima l\'inizio pausa.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'action' => __( 'Manca l\'inizio pausa.', 'dolly-employee-management' ) ) ) );
 				}
 			}
 
@@ -490,7 +490,7 @@ class Dolly_Attendance {
 		$before = $old ? array( 'action' => $action, 'time' => Dolly_Time::utc_to_local( $old->punched_at, 'H:i' ), 'method' => $old->method ) : null;
 		$after  = $remove ? null : array( 'action' => $action, 'time' => $time, 'method' => 'correction' );
 		$verb   = $remove ? 'punch_removed' : ( $old ? 'punch_corrected' : 'punch_added' );
-		$reason_full = $request_id ? $reason . ' (richiesta #' . (int) $request_id . ')' : $reason;
+		$reason_full = $request_id ? $reason . __( ' (richiesta #', 'dolly-employee-management' ) . (int) $request_id . ')' : $reason;
 		Dolly_Audit::log( $verb, 'punch', $new_id ? $new_id : ( $old ? (int) $old->id : 0 ), $user_id, $reason_full, array_merge( array( 'date' => Dolly_Time::fmt_date( $date ) ), (array) $before ), $after ? array_merge( array( 'date' => Dolly_Time::fmt_date( $date ) ), $after ) : null );
 
 		if ( 'uscita' === $action && ! $remove ) {

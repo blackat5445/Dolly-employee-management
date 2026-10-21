@@ -80,6 +80,8 @@ class Dolly_Settings {
 		// "events": employee notifications; "admin_events": administrator notifications.
 		$events = self::all_on( self::EVENTS );
 		return array(
+			// Language of the portal, emails and administration: "auto" follows the site language.
+			'language'                 => 'auto',
 			'verification_methods'     => array( 'gps', 'qrpin' ),
 			// On: GPS is checked as well, together with a workplace code (QR/PIN or Bluetooth).
 			'verification_require_gps' => false,
@@ -168,15 +170,18 @@ class Dolly_Settings {
 		if ( isset( $input['verification_methods'] ) && is_array( $input['verification_methods'] ) ) {
 			$methods = array_values( array_intersect( array_keys( self::VERIFICATION_METHODS ), $input['verification_methods'] ) );
 			if ( ! $methods ) {
-				return new WP_Error( 'dolly_invalid', 'Scegli almeno un metodo di verifica.', array( 'status' => 400, 'fields' => array( 'verification_methods' => 'Scegli almeno un metodo di verifica.' ) ) );
+				return new WP_Error( 'dolly_invalid', __( 'Scegli almeno un metodo di verifica.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'verification_methods' => __( 'Scegli almeno un metodo di verifica.', 'dolly-employee-management' ) ) ) );
 			}
 			$new['verification_methods'] = $methods;
+		}
+		if ( isset( $input['language'] ) && ( 'auto' === $input['language'] || Dolly_I18n::is_available( $input['language'] ) ) ) {
+			$new['language'] = $input['language'];
 		}
 		if ( isset( $input['verification_require_gps'] ) ) {
 			$new['verification_require_gps'] = (bool) $input['verification_require_gps'];
 		}
 		if ( $new['verification_require_gps'] && ! array_intersect( self::CODE_METHODS, $new['verification_methods'] ) ) {
-			return new WP_Error( 'dolly_invalid', 'Con il GPS sempre richiesto serve anche QR/PIN o Bluetooth.', array( 'status' => 400, 'fields' => array( 'verification_require_gps' => 'Attiva anche QR/PIN o Bluetooth, oppure disattiva questa opzione.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Con il GPS sempre richiesto serve anche QR/PIN o Bluetooth.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'verification_require_gps' => __( 'Attiva anche QR/PIN o Bluetooth, oppure disattiva questa opzione.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( isset( $input['default_radius'] ) ) {
 			$new['default_radius'] = max( 10, min( 5000, (int) $input['default_radius'] ) );

@@ -8,7 +8,7 @@
 (function (window, document) {
 	'use strict';
 
-	var DOLLY = window.DOLLY, h = DOLLY.h, CFG = DOLLY.config;
+	var DOLLY = window.DOLLY, h = DOLLY.h, CFG = DOLLY.config, __ = DOLLY.__;
 	var root = document.getElementById('dolly-workplace-app');
 	if (!root) { return; }
 
@@ -22,26 +22,26 @@
 	function build() {
 		el.status = h('span', { class: 'dolly-wp__status', role: 'status', 'aria-live': 'polite' });
 		el.ble = h('span', { hidden: true });
-		el.name = h('h1', { class: 'dolly-wp__name', text: 'Sede' });
-		el.qr = h('div', { class: 'dolly-wp__qr', role: 'img', 'aria-label': 'Codice QR presenze' });
+		el.name = h('h1', { class: 'dolly-wp__name', text: __('Sede') });
+		el.qr = h('div', { class: 'dolly-wp__qr', role: 'img', 'aria-label': __('Codice QR presenze') });
 		el.pin = h('div', { class: 'dolly-wp__pin', 'aria-live': 'off' });
 		el.fill = h('div', { class: 'dolly-wp__bar-fill', style: 'width:100%' });
 		el.secs = h('div', { class: 'dolly-wp__secs' });
 		el.left = h('div', {}, [
 			el.name,
-			h('p', { class: 'dolly-wp__help', text: 'Per timbrare: accedi al portale dal tuo telefono e scansiona il QR, oppure inserisci il PIN.' }),
+			h('p', { class: 'dolly-wp__help', text: __('Per timbrare: accedi al portale dal tuo telefono e scansiona il QR, oppure inserisci il PIN.') }),
 			h('div', { class: 'dolly-wp__pin-label', text: 'PIN' }),
 			el.pin,
 			h('div', { class: 'dolly-wp__countdown' }, [
-				h('div', { class: 'dolly-wp__bar-track', role: 'progressbar', 'aria-label': 'Tempo alla rotazione del codice', 'aria-valuemin': 0, 'aria-valuemax': 15 }, el.fill),
+				h('div', { class: 'dolly-wp__bar-track', role: 'progressbar', 'aria-label': __('Tempo alla rotazione del codice'), 'aria-valuemin': 0, 'aria-valuemax': 15 }, el.fill),
 				el.secs
 			])
 		]);
 		el.panel = h('div', { class: 'dolly-wp__panel' }, [el.left, el.qr]);
 		el.unavailable = h('div', { class: 'dolly-wp__panel', hidden: true }, h('div', { class: 'dolly-wp__unavailable', style: 'grid-column:1/-1' }, [
 			DOLLY.icon('wifi-off'),
-			h('h1', { class: 'dolly-wp__name', text: 'Codici non disponibili' }),
-			h('p', { class: 'dolly-wp__help', text: 'Impossibile ottenere codici aggiornati dal server. Nuovo tentativo in corso… Se il problema persiste, controlla la connessione di questo dispositivo.' })
+			h('h1', { class: 'dolly-wp__name', text: __('Codici non disponibili') }),
+			h('p', { class: 'dolly-wp__help', text: __('Impossibile ottenere codici aggiornati dal server. Nuovo tentativo in corso… Se il problema persiste, controlla la connessione di questo dispositivo.') })
 		]));
 		DOLLY.render(root, [
 			h('header', { class: 'dolly-wp__bar' }, [
@@ -49,18 +49,18 @@
 					DOLLY.brandMark(true),
 					CFG.displaySub ? h('span', { class: 'dolly-brand__sub', text: CFG.displaySub }) : null
 				]),
-				h('div', { class: 'dolly-btn-row' }, [el.ble, el.status, DOLLY.button('Esci', { href: CFG.logoutUrl, icon: 'log-out' })])
+				h('div', { class: 'dolly-btn-row' }, [el.ble, el.status, DOLLY.button(__('Esci'), { href: CFG.logoutUrl, icon: 'log-out' })])
 			]),
 			h('main', { class: 'dolly-wp__main' }, [el.panel, el.unavailable])
 		]);
-		setStatus(false, 'Connessione…');
+		setStatus(false, __('Connessione…'));
 	}
 
 	var online = false;
 	function setStatus(isOnline, text) {
 		online = isOnline;
 		el.status.className = 'dolly-wp__status ' + (isOnline ? 'is-online' : 'is-offline');
-		DOLLY.render(el.status, [DOLLY.icon(isOnline ? 'wifi' : 'wifi-off'), h('span', { text: text || (isOnline ? 'Connesso' : 'Non connesso') })]);
+		DOLLY.render(el.status, [DOLLY.icon(isOnline ? 'wifi' : 'wifi-off'), h('span', { text: text || (isOnline ? __('Connesso') : __('Non connesso')) })]);
 	}
 
 	function now() { return Date.now() + offset; }
@@ -79,9 +79,9 @@
 			setStatus(true);
 			bleUpdate(c);
 		}, function (err) {
-			setStatus(false, err.status === 0 ? 'Non connesso' : 'Errore');
+			setStatus(false, err.status === 0 ? __('Non connesso') : __('Errore'));
 			if (err.status === 401 || err.status === 403) {
-				DOLLY.render(el.unavailable.firstChild, [DOLLY.icon('log-in'), h('h1', { class: 'dolly-wp__name', text: 'Sessione scaduta' }), h('p', { class: 'dolly-wp__help', text: err.message }), DOLLY.button('Accedi di nuovo', { href: CFG.logoutUrl, variant: 'primary', icon: 'log-in' })]);
+				DOLLY.render(el.unavailable.firstChild, [DOLLY.icon('log-in'), h('h1', { class: 'dolly-wp__name', text: __('Sessione scaduta') }), h('p', { class: 'dolly-wp__help', text: err.message }), DOLLY.button(__('Accedi di nuovo'), { href: CFG.logoutUrl, variant: 'primary', icon: 'log-in' })]);
 			}
 			if (!current || current.expires_at <= now() / 1000) { unavailable(); }
 			clearTimeout(retryTimer);
@@ -97,7 +97,7 @@
 		var qr = window.qrcode(0, 'M');
 		qr.addData(c.qr_payload);
 		qr.make();
-		el.qr.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 2, scalable: true, alt: 'Codice QR presenze ' + c.workplace.name });
+		el.qr.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 2, scalable: true, alt: __('Codice QR presenze ') + c.workplace.name });
 		el.panel.hidden = false;
 		el.unavailable.hidden = true;
 	}
@@ -119,7 +119,7 @@
 				var pct = Math.max(0, Math.min(100, left / current.period * 100));
 				el.fill.style.width = pct + '%';
 				el.fill.parentNode.setAttribute('aria-valuenow', Math.ceil(left));
-				el.secs.textContent = 'Nuovo codice tra ' + Math.ceil(left) + ' s';
+				el.secs.textContent = __('Nuovo codice tra ') + Math.ceil(left) + ' s';
 			}
 		}
 		if (lastOk && online && Date.now() - lastOk > 20000) { setStatus(false); }
@@ -141,8 +141,8 @@
 
 	function bleRender(connected, text) {
 		DOLLY.render(el.ble, connected
-			? h('span', { class: 'dolly-wp__status is-online' }, [DOLLY.icon('bluetooth-connected'), h('span', { text: text || 'Bluetooth collegato' })])
-			: DOLLY.button(text || 'Collega il Bluetooth', { icon: 'bluetooth', onClick: blePick }));
+			? h('span', { class: 'dolly-wp__status is-online' }, [DOLLY.icon('bluetooth-connected'), h('span', { text: text || __('Bluetooth collegato') })])
+			: DOLLY.button(text || __('Collega il Bluetooth'), { icon: 'bluetooth', onClick: blePick }));
 	}
 
 	// Value written into the device: "<workplace>:<code>:<seconds of validity>".
@@ -157,7 +157,7 @@
 	function blePick() {
 		// The browser shows its own list; the choice is remembered for this site.
 		navigator.bluetooth.requestDevice({ filters: [{ services: [BLE.service] }] }).then(bleConnect, function (err) {
-			if (err && err.name !== 'NotFoundError') { bleRender(false, 'Bluetooth non disponibile'); }
+			if (err && err.name !== 'NotFoundError') { bleRender(false, __('Bluetooth non disponibile')); }
 		});
 	}
 
@@ -167,7 +167,7 @@
 			device.addEventListener('gattserverdisconnected', bleLost);
 		}
 		ble.busy = true;
-		bleRender(true, 'Collegamento…');
+		bleRender(true, __('Collegamento…'));
 		return device.gatt.connect().then(function (server) {
 			return server.getPrimaryService(BLE.service);
 		}).then(function (service) {
@@ -184,7 +184,7 @@
 
 	function bleLost() {
 		ble.push = null; ble.sent = '';
-		bleRender(false, ble.device ? 'Bluetooth scollegato · ricollega' : null);
+		bleRender(false, ble.device ? __('Bluetooth scollegato · ricollega') : null);
 		// Out of range or restarted: try again every 10 seconds while the page is open.
 		clearTimeout(ble.retry);
 		if (ble.device) { ble.retry = setTimeout(function () { if (!ble.push && !ble.busy) { bleConnect(ble.device); } }, 10000); }

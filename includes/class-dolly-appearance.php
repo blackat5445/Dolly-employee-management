@@ -132,9 +132,19 @@ class Dolly_Appearance {
 		return array_merge( self::defaults(), array_intersect_key( $saved, self::defaults() ) );
 	}
 
+	/** Texts that are translated while they still have their default (Italian) value. */
+	const DEFAULT_TEXTS = array( 'admin_title', 'portal_subtitle', 'display_subtitle', 'login_title', 'login_text' );
+
+	/** Value for display: default texts are shown in the user's language. */
 	public static function get( $key ) {
 		$all = self::all();
-		return isset( $all[ $key ] ) ? $all[ $key ] : null;
+		if ( ! isset( $all[ $key ] ) ) {
+			return null;
+		}
+		if ( in_array( $key, self::DEFAULT_TEXTS, true ) && self::defaults()[ $key ] === $all[ $key ] ) {
+			return Dolly_I18n::t( $all[ $key ] );
+		}
+		return $all[ $key ];
 	}
 
 	/**
@@ -161,7 +171,7 @@ class Dolly_Appearance {
 			}
 			$v = trim( sanitize_text_field( (string) $input[ $k ] ) );
 			if ( $rule[1] && '' === $v ) {
-				$errors[ $k ] = 'Campo obbligatorio.';
+				$errors[ $k ] = __( 'Campo obbligatorio.', 'dolly-employee-management' );
 				continue;
 			}
 			$new[ $k ] = mb_substr( $v, 0, $rule[0] );
@@ -174,7 +184,7 @@ class Dolly_Appearance {
 		if ( isset( $input['email_from_email'] ) ) {
 			$v = trim( (string) $input['email_from_email'] );
 			if ( '' !== $v && ! is_email( $v ) ) {
-				$errors['email_from_email'] = 'Indirizzo email non valido.';
+				$errors['email_from_email'] = __( 'Indirizzo email non valido.', 'dolly-employee-management' );
 			} else {
 				$new['email_from_email'] = '' === $v ? '' : sanitize_email( $v );
 			}
@@ -186,7 +196,7 @@ class Dolly_Appearance {
 			}
 			$hex = self::hex( $input[ $k ] );
 			if ( ! $hex ) {
-				$errors[ $k ] = 'Colore non valido: usa il formato #RRGGBB.';
+				$errors[ $k ] = __( 'Colore non valido: usa il formato #RRGGBB.', 'dolly-employee-management' );
 				continue;
 			}
 			$new[ $k ] = $hex;
@@ -223,7 +233,7 @@ class Dolly_Appearance {
 			}
 			$id = absint( $input[ $k ] );
 			if ( $id && ! wp_attachment_is_image( $id ) ) {
-				$errors[ $k ] = 'Scegli un\'immagine dalla libreria media.';
+				$errors[ $k ] = __( 'Scegli un\'immagine dalla libreria media.', 'dolly-employee-management' );
 				continue;
 			}
 			$new[ $k ] = $id;
@@ -236,13 +246,13 @@ class Dolly_Appearance {
 		if ( isset( $input['font_url'] ) ) {
 			$v = trim( (string) $input['font_url'] );
 			if ( '' !== $v && ( 0 !== strpos( $v, 'https://' ) || ! wp_http_validate_url( $v ) ) ) {
-				$errors['font_url'] = 'Indirizzo non valido: deve iniziare con https://.';
+				$errors['font_url'] = __( 'Indirizzo non valido: deve iniziare con https://.', 'dolly-employee-management' );
 			} else {
 				$new['font_url'] = esc_url_raw( $v );
 			}
 		}
 		if ( 'custom' === $new['font_family'] && '' === $new['font_custom'] && ! isset( $errors['font_custom'] ) && isset( $input['font_family'] ) ) {
-			$errors['font_custom'] = 'Indica il nome del carattere (es. "Inter", sans-serif).';
+			$errors['font_custom'] = __( 'Indica il nome del carattere (es. "Inter", sans-serif).', 'dolly-employee-management' );
 		}
 		if ( isset( $input['custom_css'] ) ) {
 			$new['custom_css'] = self::clean_css( (string) $input['custom_css'] );
@@ -255,7 +265,7 @@ class Dolly_Appearance {
 		$current          = self::all();
 		list( $new, $err ) = self::sanitize( $input, $current );
 		if ( $err ) {
-			return new WP_Error( 'dolly_invalid', 'Controlla i campi evidenziati.', array( 'status' => 400, 'fields' => $err ) );
+			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $err ) );
 		}
 		update_option( self::OPTION, $new, false );
 		self::audit( $current, $new );
@@ -611,18 +621,18 @@ class Dolly_Appearance {
 		$labels = function ( $list ) {
 			$out = array();
 			foreach ( $list as $k => $v ) {
-				$out[ $k ] = is_array( $v ) ? $v[0] : $v;
+				$out[ $k ] = Dolly_I18n::t( is_array( $v ) ? $v[0] : $v );
 			}
 			return $out;
 		};
 		return array(
-			'schemes'         => self::SCHEMES,
+			'schemes'         => $labels( self::SCHEMES ),
 			'fonts'           => $labels( self::FONTS ),
 			'text_sizes'      => $labels( self::TEXT_SIZES ),
 			'heading_weights' => self::HEADING_WEIGHTS,
-			'button_shapes'   => self::BUTTON_SHAPES,
-			'shadows'         => self::SHADOWS,
-			'densities'       => self::DENSITIES,
+			'button_shapes'   => $labels( self::BUTTON_SHAPES ),
+			'shadows'         => $labels( self::SHADOWS ),
+			'densities'       => $labels( self::DENSITIES ),
 		);
 	}
 }

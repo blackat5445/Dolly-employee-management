@@ -165,7 +165,7 @@ class Dolly_Hours {
 			if ( ! empty( $codes[ $code ] ) ) {
 				$out[] = array(
 					'code'    => $code,
-					'label'   => $label,
+					'label'   => Dolly_I18n::t( $label ),
 					'minutes' => (int) $codes[ $code ],
 					'hm'      => Dolly_Time::min_to_hm( (int) $codes[ $code ] ),
 				);
@@ -333,13 +333,13 @@ class Dolly_Hours {
 			$names[ $uid ] = Dolly_Employees::sort_name( $uid );
 		}
 		asort( $names, SORT_FLAG_CASE | SORT_STRING );
-		$head = array( 'Dipendente', 'Mese', 'Ore previste' );
+		$head = array( __( 'Dipendente', 'dolly-employee-management' ), __( 'Mese', 'dolly-employee-management' ), __( 'Ore previste', 'dolly-employee-management' ) );
 		foreach ( self::CODES as $code => $label ) {
-			$head[] = $code . ' - ' . $label;
+			$head[] = $code . ' - ' . Dolly_I18n::t( $label );
 		}
 		$rows = array();
 		foreach ( $names as $uid => $name ) {
-			$row = array( $name, Dolly_Time::MONTHS[ (int) $month ] . ' ' . (int) $year, Dolly_Time::min_to_hm( $planned[ $uid ] ) );
+			$row = array( $name, Dolly_I18n::t( Dolly_Time::MONTHS[ (int) $month ] ) . ' ' . (int) $year, Dolly_Time::min_to_hm( $planned[ $uid ] ) );
 			foreach ( self::CODES as $code => $label ) {
 				$min   = $totals[ $uid ][ $code ] ?? 0;
 				$row[] = $min ? Dolly_Time::min_to_hm( $min ) : '';

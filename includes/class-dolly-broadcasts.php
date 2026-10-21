@@ -45,13 +45,13 @@ class Dolly_Broadcasts {
 			'message'          => $b->message,
 			'all'              => $all,
 			'recipient_ids'    => $ids,
-			'recipients_label' => $all ? 'Tutti i dipendenti' : ( count( $ids ) . ' dipendent' . ( 1 === count( $ids ) ? 'e' : 'i' ) . ( $names ? ': ' . implode( ', ', $names ) . ( count( $ids ) > 5 ? '…' : '' ) : '' ) ),
+			'recipients_label' => $all ? __( 'Tutti i dipendenti', 'dolly-employee-management' ) : ( sprintf( 1 === count( $ids ) ? __( '%d dipendente', 'dolly-employee-management' ) : __( '%d dipendenti', 'dolly-employee-management' ), count( $ids ) ) . ( $names ? ': ' . implode( ', ', $names ) . ( count( $ids ) > 5 ? '…' : '' ) : '' ) ),
 			'email'            => (bool) $b->send_email,
 			'portal'           => (bool) $b->send_portal,
 			'popup'            => ! empty( $b->show_popup ),
 			'send_at'          => Dolly_Time::iso( $b->send_at ),
 			'status'           => $b->status,
-			'status_label'     => self::STATUSES[ $b->status ] ?? $b->status,
+			'status_label'     => Dolly_I18n::t( self::STATUSES[ $b->status ] ?? $b->status ),
 			'sent_at'          => Dolly_Time::iso( $b->sent_at ),
 			'recipient_count'  => (int) $b->recipient_count,
 			'source'           => $b->source,
@@ -72,14 +72,14 @@ class Dolly_Broadcasts {
 		$title   = mb_substr( sanitize_text_field( $data['title'] ?? '' ), 0, 190 );
 		$message = sanitize_textarea_field( $data['message'] ?? '' );
 		if ( '' === trim( $message ) ) {
-			$errors['message'] = 'Scrivi il messaggio.';
+			$errors['message'] = __( 'Scrivi il messaggio.', 'dolly-employee-management' );
 		}
 		$email  = ! empty( $data['email'] );
 		$popup  = ! empty( $data['popup'] );
 		// A pop-up message is also kept among the in-app notifications.
 		$portal = ! empty( $data['portal'] ) || $popup;
 		if ( ! $email && ! $portal ) {
-			$errors['channels'] = 'Scegli almeno un canale: email e/o notifica nell\'app.';
+			$errors['channels'] = __( 'Scegli almeno un canale: email e/o notifica nell\'app.', 'dolly-employee-management' );
 		}
 		$all = ! empty( $data['all'] );
 		$ids = array();
@@ -91,7 +91,7 @@ class Dolly_Broadcasts {
 			}
 			$ids = array_values( array_unique( $ids ) );
 			if ( ! $ids ) {
-				$errors['recipients'] = 'Seleziona almeno un dipendente.';
+				$errors['recipients'] = __( 'Seleziona almeno un dipendente.', 'dolly-employee-management' );
 			}
 		}
 		$now = Dolly_Time::now_utc();
@@ -101,23 +101,23 @@ class Dolly_Broadcasts {
 			$d = (string) ( $data['send_date'] ?? '' );
 			$h = (string) ( $data['send_time'] ?? '' );
 			if ( ! Dolly_Time::is_date( $d ) ) {
-				$errors['send_date'] = 'Data di invio non valida.';
+				$errors['send_date'] = __( 'Data di invio non valida.', 'dolly-employee-management' );
 			}
 			if ( ! Dolly_Time::is_time( $h ) ) {
-				$errors['send_time'] = 'Orario di invio non valido.';
+				$errors['send_time'] = __( 'Orario di invio non valido.', 'dolly-employee-management' );
 			}
 			$send_at = empty( $errors['send_date'] ) && empty( $errors['send_time'] ) ? Dolly_Time::local_to_utc( $d, $h ) : $now;
 			if ( empty( $errors['send_date'] ) && empty( $errors['send_time'] ) && Dolly_Time::utc_ts( $send_at ) < time() - 60 ) {
-				$errors['send_time'] = 'Scegli una data e un orario futuri, oppure "Invia ora".';
+				$errors['send_time'] = __( 'Scegli una data e un orario futuri, oppure "Invia ora".', 'dolly-employee-management' );
 			}
 		}
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', 'Controlla i campi evidenziati.', array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		$wpdb->insert(
 			Dolly_Install::t( 'broadcasts' ),
 			array(
-				'title'       => '' !== $title ? $title : 'Comunicazione dall\'amministrazione',
+				'title'       => '' !== $title ? $title : __( 'Comunicazione dall\'amministrazione', 'dolly-employee-management' ),
 				'message'     => $message,
 				'recipients'  => wp_json_encode( $all ? array( 'all' => true ) : array( 'ids' => $ids ) ),
 				'send_email'  => $email ? 1 : 0,
@@ -143,7 +143,7 @@ class Dolly_Broadcasts {
 		global $wpdb;
 		$ok = $wpdb->update( Dolly_Install::t( 'broadcasts' ), array( 'status' => 'cancelled' ), array( 'id' => (int) $id, 'status' => 'scheduled' ) );
 		if ( ! $ok ) {
-			return new WP_Error( 'dolly_invalid_state', 'Il messaggio è già stato inviato o annullato.', array( 'status' => 409 ) );
+			return new WP_Error( 'dolly_invalid_state', __( 'Il messaggio è già stato inviato o annullato.', 'dolly-employee-management' ), array( 'status' => 409 ) );
 		}
 		Dolly_Audit::log( 'broadcast_cancelled', 'broadcast', (int) $id );
 		return self::format( self::get( $id ) );

@@ -55,24 +55,25 @@ class Dolly_Holidays {
 		if ( $year < self::MIN_YEAR || $year > self::MAX_YEAR ) {
 			return array();
 		}
-		if ( isset( $cache[ $year ] ) ) {
-			return $cache[ $year ];
+		$key = $year . '|' . Dolly_I18n::locale();
+		if ( isset( $cache[ $key ] ) ) {
+			return $cache[ $key ];
 		}
 		$out = array();
 		foreach ( self::FIXED as $md => $name ) {
-			$out[ $year . '-' . $md ] = $name;
+			$out[ $year . '-' . $md ] = Dolly_I18n::t( $name );
 		}
 		// San Francesco d'Assisi, national holiday again from 2026.
 		if ( $year >= 2026 ) {
-			$out[ $year . '-10-04' ] = 'San Francesco d\'Assisi';
+			$out[ $year . '-10-04' ] = __( 'San Francesco d\'Assisi', 'dolly-employee-management' );
 		}
 		$easter = self::easter( $year );
 		// Easter can coincide with a fixed holiday (e.g. 25/04/2038): both names are kept.
-		foreach ( array( $easter => 'Pasqua', Dolly_Time::add_days( $easter, 1 ) => 'Lunedì dell\'Angelo' ) as $d => $name ) {
+		foreach ( array( $easter => __( 'Pasqua', 'dolly-employee-management' ), Dolly_Time::add_days( $easter, 1 ) => __( 'Lunedì dell\'Angelo', 'dolly-employee-management' ) ) as $d => $name ) {
 			$out[ $d ] = isset( $out[ $d ] ) ? $out[ $d ] . ' · ' . $name : $name;
 		}
 		ksort( $out );
-		$cache[ $year ] = $out;
+		$cache[ $key ] = $out;
 		return $out;
 	}
 

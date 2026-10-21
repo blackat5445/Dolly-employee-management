@@ -48,6 +48,10 @@ class Dolly_Notifications {
 		if ( ! $user_id ) {
 			return;
 		}
+		if ( $title instanceof Closure ) {
+			// Title and body are built in the recipient's language: fn () => array( title, body ).
+			list( $title, $body ) = Dolly_I18n::as_user( $user_id, $title );
+		}
 		$link = self::link_for( $user_id, $section );
 		if ( $portal || $popup ) {
 			$push = Dolly_Push::has_subscription( $user_id );
@@ -71,7 +75,13 @@ class Dolly_Notifications {
 		if ( $email ) {
 			$u = get_userdata( $user_id );
 			if ( $u && is_email( $u->user_email ) ) {
-				self::queue_email( $user_id, $event, $u->user_email, $title, $body, $link, $dedupe ? $event . '|' . $user_id . '|' . $dedupe : null );
+				// Footer and subject prefix in the recipient's language too.
+				Dolly_I18n::as_user(
+					$user_id,
+					function () use ( $user_id, $event, $u, $title, $body, $link, $dedupe ) {
+						self::queue_email( $user_id, $event, $u->user_email, $title, $body, $link, $dedupe ? $event . '|' . $user_id . '|' . $dedupe : null );
+					}
+				);
 				Dolly_Push::request_flush();
 			}
 		}
@@ -95,7 +105,7 @@ class Dolly_Notifications {
 		global $wpdb;
 		$t = Dolly_Install::t( 'notifications' );
 		$r = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d AND user_id = %d", $id, $user_id ) ); // phpcs:ignore
-		return $r ? self::format_row( $r ) : new WP_Error( 'dolly_not_found', 'Notifica non trovata.', array( 'status' => 404 ) );
+		return $r ? self::format_row( $r ) : new WP_Error( 'dolly_not_found', __( 'Notifica non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 	}
 
 	/** Unread messages to show in a pop-up when the employee opens the portal (oldest first). */
@@ -109,18 +119,18 @@ class Dolly_Notifications {
 	public static function test_email( $user_id ) {
 		$u = get_userdata( $user_id );
 		if ( ! $u || ! is_email( $u->user_email ) ) {
-			return new WP_Error( 'dolly_invalid', 'Il tuo account non ha un indirizzo email valido.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Il tuo account non ha un indirizzo email valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		self::$last_mail_error = '';
 		add_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
 		add_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
-		$ok = wp_mail( $u->user_email, Dolly_Appearance::email_subject( 'Email di prova' ), "Se ricevi questo messaggio, l'invio delle email del portale funziona.\n\n" . Dolly_Appearance::email_signature(), self::mail_headers() );
+		$ok = wp_mail( $u->user_email, Dolly_Appearance::email_subject( __( 'Email di prova', 'dolly-employee-management' ) ), __( "Se ricevi questo messaggio, l'invio delle email del portale funziona.\n\n", 'dolly-employee-management' ) . Dolly_Appearance::email_signature(), self::mail_headers() );
 		remove_filter( 'wp_mail_from_name', array( 'Dolly_Appearance', 'from_name_filter' ) );
 		remove_action( 'wp_mail_failed', array( __CLASS__, 'capture_error' ) );
 		return array(
 			'ok'      => (bool) $ok,
 			'to'      => $u->user_email,
-			'message' => $ok ? 'Email inviata a ' . $u->user_email . '. Se non arriva, controlla lo spam e la configurazione SMTP.' : 'Invio non riuscito: ' . ( self::$last_mail_error ? self::$last_mail_error : 'wp_mail ha restituito false (server di posta non configurato?)' ),
+			'message' => $ok ? __( 'Email inviata a ', 'dolly-employee-management' ) . $u->user_email . __( '. Se non arriva, controlla lo spam e la configurazione SMTP.', 'dolly-employee-management' ) : __( 'Invio non riuscito: ', 'dolly-employee-management' ) . ( self::$last_mail_error ? self::$last_mail_error : __( 'wp_mail ha restituito false (server di posta non configurato?)', 'dolly-employee-management' ) ),
 		);
 	}
 
@@ -148,7 +158,7 @@ class Dolly_Notifications {
 
 	private static function queue_email( $user_id, $event, $to, $title, $body, $link, $dedupe ) {
 		global $wpdb;
-		$text  = $body . "\n\n" . 'Apri: ' . $link . "\n\n" . Dolly_Appearance::email_signature();
+		$text  = $body . "\n\n" . __( 'Apri: ', 'dolly-employee-management' ) . $link . "\n\n" . Dolly_Appearance::email_signature();
 		$now   = Dolly_Time::now_utc();
 		$sql   = $wpdb->prepare(
 			'INSERT IGNORE INTO ' . Dolly_Install::t( 'email_queue' ) . ' (user_id, event, dedupe_key, to_email, subject, body, status, attempts, next_attempt_at, created_at) VALUES (%d, %s, ' . ( $dedupe ? '%s' : 'NULL' ) . ", %s, %s, %s, 'pending', 0, %s, %s)", // phpcs:ignore

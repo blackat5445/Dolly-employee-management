@@ -9,6 +9,22 @@
 	var CFG = window.DOLLY_CONFIG || {};
 	var DOLLY = window.DOLLY = window.DOLLY || {};
 	DOLLY.config = CFG;
+
+	/**
+	 * Texts are written in Italian; languages/dolly-employee-management-<locale>.js provides
+	 * window.DOLLY_I18N = { "Italian text": "translation" } for the user's language.
+	 */
+	var I18N = window.DOLLY_I18N || {};
+	function __(text) { return Object.prototype.hasOwnProperty.call(I18N, text) ? I18N[text] : text; }
+	DOLLY.__ = __;
+	/** "%s" placeholders filled in order, for sentences whose word order changes between languages. */
+	DOLLY.sprintf = function (text) {
+		var args = arguments, i = 1;
+		return String(text).replace(/%s/g, function () { return i < args.length ? args[i++] : ''; });
+	};
+	DOLLY.lang = CFG.lang || 'it';
+	/** Locale for Intl date and number formats ("it-IT", "en-US"…). */
+	DOLLY.intlLocale = (CFG.locale || 'it_IT').replace('_', '-');
 	/** Brand name set in Gestione Dipendenti › Aspetto. */
 	var BRAND = CFG.brand || 'Dolly';
 	DOLLY.brandName = BRAND;
@@ -138,13 +154,13 @@
 				var json = null;
 				try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
 				if (!res.ok) {
-					var err = new Error((json && json.message) || 'Operazione non riuscita (errore ' + res.status + ').');
+					var err = new Error((json && json.message) || __('Operazione non riuscita (errore ') + res.status + ').');
 					err.status = res.status;
 					err.code = json && json.code;
 					err.data = json && json.data;
 					err.fields = (json && json.data && json.data.fields) || null;
 					if (res.status === 401 || (json && json.code === 'rest_cookie_invalid_nonce')) {
-						err.message = 'Sessione scaduta. Ricarica la pagina ed effettua di nuovo l\'accesso.';
+						err.message = __('Sessione scaduta. Ricarica la pagina ed effettua di nuovo l\'accesso.');
 					}
 					throw err;
 				}
@@ -152,7 +168,7 @@
 			});
 		}, function (e) {
 			clearTimeout(timeout);
-			var err = new Error(e && e.name === 'AbortError' ? 'Il server non risponde. Controlla la connessione e riprova.' : 'Connessione assente. Controlla la rete e riprova.');
+			var err = new Error(e && e.name === 'AbortError' ? __('Il server non risponde. Controlla la connessione e riprova.') : __('Connessione assente. Controlla la rete e riprova.'));
 			err.status = 0;
 			err.code = 'network';
 			throw err;
@@ -165,7 +181,7 @@
 
 	var TZ = CFG.timezone || 'Europe/Rome';
 	function parts(date) {
-		var f = new Intl.DateTimeFormat('it-IT', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', weekday: 'long' });
+		var f = new Intl.DateTimeFormat(DOLLY.intlLocale, { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', weekday: 'long' });
 		var o = {};
 		f.formatToParts(date).forEach(function (p) { o[p.type] = p.value; });
 		return o;
@@ -193,7 +209,7 @@
 		today: function () { var o = parts(new Date()); return o.year + '-' + o.month + '-' + o.day; },
 		longDate: function (ymd) {
 			var d = new Date(ymd + 'T12:00:00Z');
-			return new Intl.DateTimeFormat('it-IT', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+			return new Intl.DateTimeFormat(DOLLY.intlLocale, { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
 		},
 		bytes: function (n) { return n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
 	};
@@ -209,9 +225,9 @@
 		return rem === 1;
 	};
 
-	DOLLY.MONTHS = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
-	DOLLY.WEEKDAYS_SHORT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
-	DOLLY.WEEKDAYS = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+	DOLLY.MONTHS = [__('Gennaio'), __('Febbraio'), __('Marzo'), __('Aprile'), __('Maggio'), __('Giugno'), __('Luglio'), __('Agosto'), __('Settembre'), __('Ottobre'), __('Novembre'), __('Dicembre')];
+	DOLLY.WEEKDAYS_SHORT = [__('Lun'), __('Mar'), __('Mer'), __('Gio'), __('Ven'), __('Sab'), __('Dom')];
+	DOLLY.WEEKDAYS = [__('Lunedì'), __('Martedì'), __('Mercoledì'), __('Giovedì'), __('Venerdì'), __('Sabato'), __('Domenica')];
 
 	/** Random idempotency key for punches and other retry-safe mutations. */
 	DOLLY.requestKey = function () {
@@ -240,7 +256,7 @@
 		var t = h('div', { class: 'dolly-toast dolly-toast--' + (type || 'info'), role: type === 'error' ? 'alert' : null }, [
 			DOLLY.icon(icon),
 			h('span', { text: message }),
-			h('button', { type: 'button', 'aria-label': 'Chiudi notifica', onclick: function () { t.remove(); } }, DOLLY.icon('x'))
+			h('button', { type: 'button', 'aria-label': __('Chiudi notifica'), onclick: function () { t.remove(); } }, DOLLY.icon('x'))
 		]);
 		box.appendChild(t);
 		DOLLY.icons();
@@ -259,7 +275,7 @@
 		var dlg = h('div', { class: 'dolly-dialog' + (opts.wide ? ' dolly-dialog--wide' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId, tabindex: '-1' }, [
 			h('div', { class: 'dolly-dialog__head' }, [
 				h('h2', { id: titleId, text: opts.title }),
-				h('button', { type: 'button', class: 'dolly-btn dolly-btn--ghost dolly-btn--icon', 'aria-label': 'Chiudi', onclick: function () { close(); } }, DOLLY.icon('x'))
+				h('button', { type: 'button', class: 'dolly-btn dolly-btn--ghost dolly-btn--icon', 'aria-label': __('Chiudi'), onclick: function () { close(); } }, DOLLY.icon('x'))
 			]),
 			body,
 			foot
@@ -307,8 +323,8 @@
 				body: h('p', { text: message }),
 				onClose: function () { if (!done) { resolve(false); } },
 				actions: [
-					{ label: 'Annulla', onClick: function (close) { close(); } },
-					{ label: confirmLabel || 'Conferma', variant: variant || 'primary', onClick: function (close) { done = true; resolve(true); close(); } }
+					{ label: __('Annulla'), onClick: function (close) { close(); } },
+					{ label: confirmLabel || __('Conferma'), variant: variant || 'primary', onClick: function (close) { done = true; resolve(true); close(); } }
 				]
 			});
 		});
@@ -376,7 +392,7 @@
 	};
 
 	DOLLY.loading = function (label) {
-		return h('div', { class: 'dolly-loading', role: 'status' }, [h('span', { class: 'dolly-spinner', 'aria-hidden': 'true' }), h('span', { text: label || 'Caricamento…' })]);
+		return h('div', { class: 'dolly-loading', role: 'status' }, [h('span', { class: 'dolly-spinner', 'aria-hidden': 'true' }), h('span', { text: label || __('Caricamento…') })]);
 	};
 
 	DOLLY.empty = function (title, text, icon) {
@@ -384,7 +400,7 @@
 	};
 
 	DOLLY.errorState = function (err, retry) {
-		return DOLLY.alert(err && err.message ? err.message : 'Si è verificato un errore.', 'error', retry ? h('div', { style: 'margin-top:8px' }, DOLLY.button('Riprova', { icon: 'refresh-cw', size: 'sm', onClick: retry })) : null);
+		return DOLLY.alert(err && err.message ? err.message : __('Si è verificato un errore.'), 'error', retry ? h('div', { style: 'margin-top:8px' }, DOLLY.button(__('Riprova'), { icon: 'refresh-cw', size: 'sm', onClick: retry })) : null);
 	};
 
 	/**
@@ -410,10 +426,10 @@
 		}
 		// Password fields: full width, with the show/hide button inside the field.
 		var control = o.type === 'password'
-			? h('div', { class: 'dolly-password' }, [input, h('button', { type: 'button', class: 'dolly-password__toggle', dataset: { togglePassword: id }, 'aria-label': 'Mostra password', 'aria-pressed': 'false' }, DOLLY.icon('eye'))])
+			? h('div', { class: 'dolly-password' }, [input, h('button', { type: 'button', class: 'dolly-password__toggle', dataset: { togglePassword: id }, 'aria-label': __('Mostra password'), 'aria-pressed': 'false' }, DOLLY.icon('eye'))])
 			: input;
 		var wrap = h('div', { class: 'dolly-field' + (o.full ? ' dolly-field--full' : ''), dataset: { name: o.name || '' } }, [
-			h('label', { class: 'dolly-label', for: id }, [o.label, o.optional ? h('span', { class: 'dolly-optional', text: ' (facoltativo)' }) : null]),
+			h('label', { class: 'dolly-label', for: id }, [o.label, o.optional ? h('span', { class: 'dolly-optional', text: __(' (facoltativo)') }) : null]),
 			control,
 			o.help ? h('span', { class: 'dolly-help', id: helpId, text: o.help }) : null,
 			h('span', { class: 'dolly-error', id: errId, hidden: true })
@@ -428,7 +444,7 @@
 	 */
 	DOLLY.switchControl = function (o) {
 		var id = DOLLY.uid('sw');
-		var state = h('span', { class: 'dolly-switch__state', 'aria-hidden': 'true', text: o.checked ? 'Sì' : 'No' });
+		var state = h('span', { class: 'dolly-switch__state', 'aria-hidden': 'true', text: o.checked ? __('Sì') : __('No') });
 		var btn = h('button', { type: 'button', class: 'dolly-switch', role: 'switch', id: id, 'aria-checked': o.checked ? 'true' : 'false', dataset: { name: o.name || '' }, disabled: o.disabled || null, 'aria-describedby': o.description ? id + '-d' : null }, [
 			h('span', { class: 'dolly-switch__track', 'aria-hidden': 'true' }, h('span', { class: 'dolly-switch__thumb' })),
 			h('span', { class: 'dolly-switch__label', text: o.label }),
@@ -437,11 +453,11 @@
 		btn.addEventListener('click', function () {
 			var v = btn.getAttribute('aria-checked') !== 'true';
 			btn.setAttribute('aria-checked', v ? 'true' : 'false');
-			state.textContent = v ? 'Sì' : 'No';
+			state.textContent = v ? __('Sì') : __('No');
 			if (o.onChange) { o.onChange(v); }
 		});
 		btn.isOn = function () { return btn.getAttribute('aria-checked') === 'true'; };
-		btn.setOn = function (v) { btn.setAttribute('aria-checked', v ? 'true' : 'false'); state.textContent = v ? 'Sì' : 'No'; };
+		btn.setOn = function (v) { btn.setAttribute('aria-checked', v ? 'true' : 'false'); state.textContent = v ? __('Sì') : __('No'); };
 		var wrap = h('div', { class: 'dolly-field dolly-field--switch', dataset: { name: o.name || '' } }, [btn, o.description ? h('span', { class: 'dolly-help', id: id + '-d', text: o.description }) : null, h('span', { class: 'dolly-error', hidden: true })]);
 		wrap.control = btn;
 		return wrap;
@@ -537,11 +553,11 @@
 	DOLLY.table = function (columns, rows, o) {
 		o = o || {};
 		if (!rows || !rows.length) {
-			var e = o.empty || ['Nessun elemento', ''];
+			var e = o.empty || [__('Nessun elemento'), ''];
 			return DOLLY.empty(e[0], e[1], e[2]);
 		}
 		var thead = h('thead', {}, h('tr', {}, columns.map(function (c) {
-			return h('th', { scope: 'col', class: (c.num ? 'num ' : '') + (c.cls || '') }, c.label ? c.label : h('span', { class: 'dolly-sr-only', text: c.srLabel || 'Azioni' }));
+			return h('th', { scope: 'col', class: (c.num ? 'num ' : '') + (c.cls || '') }, c.label ? c.label : h('span', { class: 'dolly-sr-only', text: c.srLabel || __('Azioni') }));
 		})));
 		var tbody = h('tbody', {}, rows.map(function (r) {
 			return h('tr', { class: o.rowClass ? o.rowClass(r) : null }, columns.map(function (c) {
@@ -556,13 +572,13 @@
 	/** Pagination controls for {page, pages, total}. */
 	DOLLY.pagination = function (data, onPage, label) {
 		if (!data || data.pages <= 1) {
-			return data && data.total ? h('div', { class: 'dolly-pagination' }, h('span', { class: 'dolly-pagination__info', text: data.total + ' elementi' })) : null;
+			return data && data.total ? h('div', { class: 'dolly-pagination' }, h('span', { class: 'dolly-pagination__info', text: data.total + __(' elementi') })) : null;
 		}
-		return h('nav', { class: 'dolly-pagination', 'aria-label': 'Paginazione ' + (label || '') }, [
-			h('span', { class: 'dolly-pagination__info', text: 'Pagina ' + data.page + ' di ' + data.pages + ' · ' + data.total + ' elementi' }),
+		return h('nav', { class: 'dolly-pagination', 'aria-label': __('Paginazione ') + (label || '') }, [
+			h('span', { class: 'dolly-pagination__info', text: __('Pagina ') + data.page + __(' di ') + data.pages + ' · ' + data.total + __(' elementi') }),
 			h('div', { class: 'dolly-pagination__btns' }, [
-				DOLLY.button('Pagina precedente', { icon: 'chevron-left', iconOnly: true, size: null, disabled: data.page <= 1, onClick: function () { onPage(data.page - 1); } }),
-				DOLLY.button('Pagina successiva', { icon: 'chevron-right', iconOnly: true, disabled: data.page >= data.pages, onClick: function () { onPage(data.page + 1); } })
+				DOLLY.button(__('Pagina precedente'), { icon: 'chevron-left', iconOnly: true, size: null, disabled: data.page <= 1, onClick: function () { onPage(data.page - 1); } }),
+				DOLLY.button(__('Pagina successiva'), { icon: 'chevron-right', iconOnly: true, disabled: data.page >= data.pages, onClick: function () { onPage(data.page + 1); } })
 			])
 		]);
 	};
@@ -621,8 +637,8 @@
 	/* icon) opens the popover. On touch screens the keyboard is not shown. */
 	/* ------------------------------------------------------------------ */
 
-	var MONTH_NAMES = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
-	var WEEKDAYS = ['Lu', 'Ma', 'Me', 'Gi', 'Ve', 'Sa', 'Do'];
+	var MONTH_NAMES = [__('Gennaio'), __('Febbraio'), __('Marzo'), __('Aprile'), __('Maggio'), __('Giugno'), __('Luglio'), __('Agosto'), __('Settembre'), __('Ottobre'), __('Novembre'), __('Dicembre')];
+	var WEEKDAYS = [__('Lu'), __('Ma'), __('Me'), __('Gi'), __('Ve'), __('Sa'), __('Do')];
 	var openPicker = null;
 	var pad2 = function (n) { return ('0' + n).slice(-2); };
 	var isoOf = function (y, m, d) { return y + '-' + pad2(m) + '-' + pad2(d); };
@@ -723,22 +739,22 @@
 		var sel = f.iso();
 		var cursor = sel || today;
 		var grid, monthSel, yearSel;
-		var api = popover(f, 'Calendario', function (pop, a) {
+		var api = popover(f, __('Calendario'), function (pop, a) {
 			var y0 = Math.min(1930, +cursor.slice(0, 4)), y1 = Math.max(2100, +cursor.slice(0, 4));
 			var years = [];
 			for (var y = y0; y <= y1; y++) { years.push(h('option', { value: y, text: y })); }
-			monthSel = h('select', { class: 'dolly-picker__select', 'aria-label': 'Mese' }, MONTH_NAMES.map(function (n, i) { return h('option', { value: i + 1, text: n }); }));
-			yearSel = h('select', { class: 'dolly-picker__select', 'aria-label': 'Anno' }, years);
+			monthSel = h('select', { class: 'dolly-picker__select', 'aria-label': __('Mese') }, MONTH_NAMES.map(function (n, i) { return h('option', { value: i + 1, text: n }); }));
+			yearSel = h('select', { class: 'dolly-picker__select', 'aria-label': __('Anno') }, years);
 			var nav = function (n, lbl, ic) { return h('button', { type: 'button', class: 'dolly-picker__nav', 'aria-label': lbl, onclick: function () { cursor = addMonths(cursor, n); render(); } }, DOLLY.icon(ic)); };
 			monthSel.addEventListener('change', function () { cursor = clampDay(cursor.slice(0, 5) + pad2(+monthSel.value) + cursor.slice(7)); render(); });
 			yearSel.addEventListener('change', function () { cursor = clampDay(yearSel.value + cursor.slice(4)); render(); });
-			grid = h('div', { class: 'dolly-cal__grid', role: 'grid', 'aria-label': 'Giorni del mese' });
+			grid = h('div', { class: 'dolly-cal__grid', role: 'grid', 'aria-label': __('Giorni del mese') });
 			grid.addEventListener('keydown', onGridKey);
-			var foot = [h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm', onclick: function () { pick(today); } }, 'Oggi')];
-			if (!f.input.required) { foot.push(h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm', onclick: function () { f.input.value = ''; fire(f.input); a.close(true); } }, 'Cancella')); }
-			foot.push(h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm dolly-btn--ghost', onclick: function () { a.close(true); } }, 'Chiudi'));
+			var foot = [h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm', onclick: function () { pick(today); } }, __('Oggi'))];
+			if (!f.input.required) { foot.push(h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm', onclick: function () { f.input.value = ''; fire(f.input); a.close(true); } }, __('Cancella'))); }
+			foot.push(h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm dolly-btn--ghost', onclick: function () { a.close(true); } }, __('Chiudi')));
 			DOLLY.append(pop, [
-				h('div', { class: 'dolly-picker__head' }, [nav(-1, 'Mese precedente', 'chevron-left'), monthSel, yearSel, nav(1, 'Mese successivo', 'chevron-right')]),
+				h('div', { class: 'dolly-picker__head' }, [nav(-1, __('Mese precedente'), 'chevron-left'), monthSel, yearSel, nav(1, __('Mese successivo'), 'chevron-right')]),
 				h('div', { class: 'dolly-cal__week', 'aria-hidden': 'true' }, WEEKDAYS.map(function (d) { return h('span', { text: d }); })),
 				grid,
 				h('div', { class: 'dolly-picker__foot' }, foot)
@@ -770,7 +786,7 @@
 					type: 'button', role: 'gridcell',
 					class: 'dolly-cal__day' + (other ? ' is-other' : '') + (iso === today ? ' is-today' : '') + (iso === sel ? ' is-selected' : ''),
 					tabindex: iso === cursor ? '0' : '-1', 'aria-selected': iso === sel ? 'true' : 'false',
-					'aria-label': DOLLY.fmt.longDate(iso) + (iso === today ? ' (oggi)' : ''),
+					'aria-label': DOLLY.fmt.longDate(iso) + (iso === today ? __(' (oggi)') : ''),
 					dataset: { iso: iso }, text: String(+iso.slice(8))
 				}));
 			}
@@ -809,9 +825,9 @@
 		var st = { h: +cur.slice(0, 2), m: +cur.slice(3, 5), stage: 'h' };
 		var SIZE = 232, C = SIZE / 2, R_OUT = 92, R_IN = 60;
 		var face, hand, hSeg, mSeg, marks;
-		var api = popover(f, 'Orologio', function (pop, a) {
+		var api = popover(f, __('Orologio'), function (pop, a) {
 			var seg = function (kind) {
-				var b = h('button', { type: 'button', class: 'dolly-clock-pick__seg', role: 'spinbutton', 'aria-label': kind === 'h' ? 'Ore' : 'Minuti', 'aria-valuemin': 0, 'aria-valuemax': kind === 'h' ? 23 : 59 });
+				var b = h('button', { type: 'button', class: 'dolly-clock-pick__seg', role: 'spinbutton', 'aria-label': kind === 'h' ? __('Ore') : __('Minuti'), 'aria-valuemin': 0, 'aria-valuemax': kind === 'h' ? 23 : 59 });
 				b.addEventListener('click', function () { st.stage = kind; render(); });
 				b.addEventListener('keydown', function (e) {
 					var d = { ArrowUp: 1, ArrowDown: -1, PageUp: 5, PageDown: -5 }[e.key];
@@ -831,12 +847,12 @@
 			face.addEventListener('pointercancel', function () { dragging = false; });
 			DOLLY.append(pop, [
 				h('div', { class: 'dolly-clock-pick__head' }, [hSeg, h('span', { class: 'dolly-clock-pick__colon', text: ':' }), mSeg]),
-				h('p', { class: 'dolly-clock-pick__hint', text: 'Tocca o trascina sul quadrante' }),
+				h('p', { class: 'dolly-clock-pick__hint', text: __('Tocca o trascina sul quadrante') }),
 				face,
 				h('div', { class: 'dolly-picker__foot' }, [
-					h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm', onclick: function () { var p = DOLLY.fmt.nowParts ? DOLLY.fmt.nowParts() : null; st.h = p ? +p.hour : new Date().getHours(); st.m = p ? +p.minute : new Date().getMinutes(); render(); } }, 'Adesso'),
-					!f.input.required ? h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm', onclick: function () { f.input.value = ''; fire(f.input); a.close(true); } }, 'Cancella') : null,
-					h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm dolly-btn--ghost', onclick: function () { a.close(true); } }, 'Annulla'),
+					h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm', onclick: function () { var p = DOLLY.fmt.nowParts ? DOLLY.fmt.nowParts() : null; st.h = p ? +p.hour : new Date().getHours(); st.m = p ? +p.minute : new Date().getMinutes(); render(); } }, __('Adesso')),
+					!f.input.required ? h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm', onclick: function () { f.input.value = ''; fire(f.input); a.close(true); } }, __('Cancella')) : null,
+					h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm dolly-btn--ghost', onclick: function () { a.close(true); } }, __('Annulla')),
 					h('button', { type: 'button', class: 'dolly-btn dolly-btn--sm dolly-btn--primary', onclick: ok }, 'OK')
 				])
 			]);
@@ -895,20 +911,20 @@
 
 	/** Date field in GG/MM/AAAA with a calendar. value/ .iso() use Y-m-d. */
 	DOLLY.dateField = function (o) {
-		var f = DOLLY.field(Object.assign({}, o, { type: 'text', value: o.value ? DOLLY.fmt.date(o.value) : '', help: o.help || 'GG/MM/AAAA · tocca per aprire il calendario', attrs: Object.assign({ inputmode: 'numeric', placeholder: 'GG/MM/AAAA', maxlength: 10, autocomplete: 'off' }, o.attrs || {}) }));
+		var f = DOLLY.field(Object.assign({}, o, { type: 'text', value: o.value ? DOLLY.fmt.date(o.value) : '', help: o.help || __('GG/MM/AAAA · tocca per aprire il calendario'), attrs: Object.assign({ inputmode: 'numeric', placeholder: 'GG/MM/AAAA', maxlength: 10, autocomplete: 'off' }, o.attrs || {}) }));
 		autoFormat(f.input, '/', [2, 2, 4]);
 		f.iso = function () { return DOLLY.parseDate(f.input.value); };
 		f.setIso = function (v) { f.input.value = v ? DOLLY.fmt.date(v) : ''; };
-		attachPicker(f, 'calendar-days', 'Apri il calendario', function (focus) { openCalendar(f, focus); });
+		attachPicker(f, 'calendar-days', __('Apri il calendario'), function (focus) { openCalendar(f, focus); });
 		return f;
 	};
 
 	/** Time field in 24-hour HH:MM with a clock. */
 	DOLLY.timeField = function (o) {
-		var f = DOLLY.field(Object.assign({}, o, { type: 'text', value: o.value || '', help: o.help || 'Formato 24 ore HH:MM · tocca per aprire l\'orologio', attrs: Object.assign({ inputmode: 'numeric', placeholder: 'HH:MM', maxlength: 5, autocomplete: 'off' }, o.attrs || {}) }));
+		var f = DOLLY.field(Object.assign({}, o, { type: 'text', value: o.value || '', help: o.help || __('Formato 24 ore HH:MM · tocca per aprire l\'orologio'), attrs: Object.assign({ inputmode: 'numeric', placeholder: 'HH:MM', maxlength: 5, autocomplete: 'off' }, o.attrs || {}) }));
 		autoFormat(f.input, ':', [2, 2]);
 		f.hm = function () { return DOLLY.parseTime(f.input.value); };
-		attachPicker(f, 'clock', 'Apri l\'orologio', function (focus) { openClock(f, focus); });
+		attachPicker(f, 'clock', __('Apri l\'orologio'), function (focus) { openClock(f, focus); });
 		return f;
 	};
 	/** Closes an open calendar/clock (e.g. before re-rendering a form). */
@@ -923,12 +939,12 @@
 		Object.keys(spec).forEach(function (k) {
 			var s = spec[k], f = s[0], raw = f.input.value.trim();
 			if (!raw) {
-				if (s[2]) { errors[k] = 'Campo obbligatorio.'; }
+				if (s[2]) { errors[k] = __('Campo obbligatorio.'); }
 				values[k] = '';
 				return;
 			}
 			var v = s[1] === 'date' ? f.iso() : f.hm();
-			if (!v) { errors[k] = s[1] === 'date' ? 'Data non valida (GG/MM/AAAA).' : 'Orario non valido (HH:MM).'; }
+			if (!v) { errors[k] = s[1] === 'date' ? __('Data non valida (GG/MM/AAAA).') : __('Orario non valido (HH:MM).'); }
 			values[k] = v || '';
 		});
 		return { values: values, errors: errors };
@@ -941,7 +957,7 @@
 		return DOLLY.badge(label || status, m[0], m[1]);
 	};
 	DOLLY.anomalyBadge = function (a) {
-		if (a.status === 'resolved') { return DOLLY.badge('Risolta', 'green', 'circle-check'); }
+		if (a.status === 'resolved') { return DOLLY.badge(__('Risolta'), 'green', 'circle-check'); }
 		return DOLLY.badge(a.type_label, 'red', a.type === 'missing_certificate' ? 'file-text' : 'triangle-alert');
 	};
 	DOLLY.certBadge = function (status, label) {
@@ -951,12 +967,12 @@
 	};
 	DOLLY.dayStatusBadge = function (s) {
 		var map = {
-			completo: ['Completo', 'green', 'circle-check'], in_corso: ['In corso', 'blue', 'clock'], incompleto: ['Incompleto', 'amber', 'clock-alert'],
-			assente: ['Assente', 'red', 'user-x'], ferie: ['Ferie', 'blue', 'sun'], malattia: ['Malattia', 'red', 'stethoscope'],
-			infortunio: ['Infortunio', 'red', 'bandage'], donazione: ['Donazione sangue', 'blue', 'droplet'], festivo: ['Festivo', 'neutral', 'party-popper'],
-			chiusura: ['Chiusura collettiva', 'neutral', 'calendar-off'], chiusura_festiva: ['Chiusura per festività', 'neutral', 'party-popper'],
-			nessun_turno: ['Nessun turno', 'neutral', 'phone-call'],
-			riposo: ['Riposo', 'neutral', 'moon'], previsto: ['Previsto', 'neutral', 'calendar']
+			completo: [__('Completo'), 'green', 'circle-check'], in_corso: [__('In corso'), 'blue', 'clock'], incompleto: [__('Incompleto'), 'amber', 'clock-alert'],
+			assente: [__('Assente'), 'red', 'user-x'], ferie: [__('Ferie'), 'blue', 'sun'], malattia: [__('Malattia'), 'red', 'stethoscope'],
+			infortunio: [__('Infortunio'), 'red', 'bandage'], donazione: [__('Donazione sangue'), 'blue', 'droplet'], festivo: [__('Festivo'), 'neutral', 'party-popper'],
+			chiusura: [__('Chiusura collettiva'), 'neutral', 'calendar-off'], chiusura_festiva: [__('Chiusura per festività'), 'neutral', 'party-popper'],
+			nessun_turno: [__('Nessun turno'), 'neutral', 'phone-call'],
+			riposo: [__('Riposo'), 'neutral', 'moon'], previsto: [__('Previsto'), 'neutral', 'calendar']
 		};
 		var m = map[s] || [s, 'neutral', 'info'];
 		return DOLLY.badge(m[0], m[1], m[2]);
@@ -981,8 +997,8 @@
 	DOLLY.hoursSummary = function (data) {
 		if (!data.hours_totals || !data.hours_totals.length) { return null; }
 		return h('div', { style: 'margin-top:16px' }, [
-			h('h3', { text: 'Riepilogo ore · ' + data.month_label, style: 'margin:0 0 4px' }),
-			h('p', { class: 'dolly-small dolly-muted', style: 'margin:0 0 8px', text: 'Ore previste dall\'orario: ' + data.planned_total + '. Ore per giustificativo' + (data.provisional ? ' (provvisorie)' : '') + ':' }),
+			h('h3', { text: __('Riepilogo ore · ') + data.month_label, style: 'margin:0 0 4px' }),
+			h('p', { class: 'dolly-small dolly-muted', style: 'margin:0 0 8px', text: __('Ore previste dall\'orario: ') + data.planned_total + __('. Ore per giustificativo') + (data.provisional ? __(' (provvisorie)') : '') + ':' }),
 			h('ul', { class: 'dolly-hours-summary' }, data.hours_totals.map(function (c) {
 				return h('li', {}, [h('span', {}, [h('b', { text: c.code }), ' · ' + c.label]), h('em', { text: c.hm })]);
 			}))
@@ -997,33 +1013,33 @@
 		if (!counted) { return '—'; }
 		return h('span', {}, [
 			counted,
-			real ? h('div', { class: 'dolly-small dolly-muted', text: 'timbrata ' + real }) : null,
-			lateMin ? h('div', {}, DOLLY.badge('Ritardo ' + lateMin + ' min', 'amber', 'clock-alert')) : null
+			real ? h('div', { class: 'dolly-small dolly-muted', text: __('timbrata ') + real }) : null,
+			lateMin ? h('div', {}, DOLLY.badge(__('Ritardo ') + lateMin + __(' min'), 'amber', 'clock-alert')) : null
 		]);
 	};
 
 	/** Monthly attendance "Ore" cell, with the approval state of on-call shifts. */
 	DOLLY.hoursCell = function (r) {
-		if (!r.worked) { return r.provisional ? DOLLY.badge('Provvisorio', 'amber') : '—'; }
+		if (!r.worked) { return r.provisional ? DOLLY.badge(__('Provvisorio'), 'amber') : '—'; }
 		var b = null;
-		if (r.oncall_status === 'pending') { b = DOLLY.badge('Turno da approvare', 'amber', 'hourglass'); }
-		else if (r.oncall_status === 'rejected') { b = DOLLY.badge('Turno non approvato', 'neutral', 'ban'); }
-		else if (r.oncall_status === 'approved') { b = DOLLY.badge('Turno approvato', 'green', 'circle-check'); }
-		else if (r.provisional) { b = DOLLY.badge('Provvisorio', 'amber'); }
+		if (r.oncall_status === 'pending') { b = DOLLY.badge(__('Turno da approvare'), 'amber', 'hourglass'); }
+		else if (r.oncall_status === 'rejected') { b = DOLLY.badge(__('Turno non approvato'), 'neutral', 'ban'); }
+		else if (r.oncall_status === 'approved') { b = DOLLY.badge(__('Turno approvato'), 'green', 'circle-check'); }
+		else if (r.provisional) { b = DOLLY.badge(__('Provvisorio'), 'amber'); }
 		// Closure / holiday days: how the hours count.
 		var kind = null;
-		if (r.festive) { kind = DOLLY.badge('Festive ' + r.festive + ' · +' + r.holiday_increase + '%', 'blue', 'party-popper'); }
-		else if (r.closure_type === 'collective') { kind = DOLLY.badge('Ore ordinarie (chiusura)', 'neutral', 'calendar-off'); }
+		if (r.festive) { kind = DOLLY.badge(__('Festive ') + r.festive + ' · +' + r.holiday_increase + '%', 'blue', 'party-popper'); }
+		else if (r.closure_type === 'collective') { kind = DOLLY.badge(__('Ore ordinarie (chiusura)'), 'neutral', 'calendar-off'); }
 		return h('span', {}, [r.worked, b ? h('div', {}, b) : null, kind ? h('div', {}, kind) : null]);
 	};
 
 	/** Footer text of the monthly attendance: totals of overtime, holiday hours and pending shifts. */
 	DOLLY.monthTotals = function (d) {
 		var parts = [];
-		if (d.total_extra && d.total_extra !== '0:00') { parts.push('Straordinario approvato: ' + d.total_extra); }
-		if (d.total_over && d.total_over !== '0:00') { parts.push('oltre il limite: ' + d.total_over); }
-		if (d.total_festive) { parts.push('ore festive: ' + d.total_festive + ' (maggiorazione ' + d.holiday_increase + '%)'); }
-		if (d.total_oncall_pending) { parts.push('turni da approvare: ' + d.total_oncall_pending); }
+		if (d.total_extra && d.total_extra !== '0:00') { parts.push(__('Straordinario approvato: ') + d.total_extra); }
+		if (d.total_over && d.total_over !== '0:00') { parts.push(__('oltre il limite: ') + d.total_over); }
+		if (d.total_festive) { parts.push(__('ore festive: ') + d.total_festive + __(' (maggiorazione ') + d.holiday_increase + '%)'); }
+		if (d.total_oncall_pending) { parts.push(__('turni da approvare: ') + d.total_oncall_pending); }
 		return parts.join(' · ');
 	};
 
@@ -1033,8 +1049,8 @@
 		if (r.extra || r.extra_label) { parts.push(h('div', { text: (r.extra ? r.extra : '') + (r.extra_label ? (r.extra ? ' · ' : '') + r.extra_label : '') })); }
 		if (r.extra_over) {
 			parts.push(r.extra_over_status === 'pending'
-				? DOLLY.badge(r.extra_over + ' da approvare', 'amber', 'hourglass')
-				: DOLLY.badge(r.extra_over + ' non approvato', 'neutral', 'ban'));
+				? DOLLY.badge(r.extra_over + __(' da approvare'), 'amber', 'hourglass')
+				: DOLLY.badge(r.extra_over + __(' non approvato'), 'neutral', 'ban'));
 		}
 		return parts.length ? h('div', {}, parts) : '—';
 	};
@@ -1101,13 +1117,13 @@
 	/** What to do when Google Play Protect stops the installation ("App non sicura bloccata"). */
 	function playProtectHelp() {
 		return h('div', { class: 'dolly-install__protect' }, DOLLY.alert(null, 'warning', [
-			h('strong', { text: 'Compare «App non sicura bloccata»?' }),
-			h('p', { text: 'È un avviso di Google Play Protect che può comparire con alcuni browser, ad esempio Samsung Internet. Il portale ' + BRAND + ' è sicuro: per completare l\'installazione' }),
+			h('strong', { text: __('Compare «App non sicura bloccata»?') }),
+			h('p', { text: DOLLY.sprintf(__('È un avviso di Google Play Protect che può comparire con alcuni browser, ad esempio Samsung Internet. Il portale %s è sicuro: per completare l\'installazione'), BRAND) }),
 			h('ol', {}, [
-				h('li', {}, ['tocca ', b('Altri dettagli'), ';']),
-				h('li', {}, ['tocca ', b('Installa comunque'), '.'])
+				h('li', {}, [__('tocca '), b(__('Altri dettagli')), ';']),
+				h('li', {}, [__('tocca '), b(__('Installa comunque')), '.'])
 			]),
-			h('p', { class: 'dolly-help', text: 'Non toccare «Ok»: chiude l\'avviso senza installare l\'app.' })
+			h('p', { class: 'dolly-help', text: __('Non toccare «Ok»: chiude l\'avviso senza installare l\'app.') })
 		]));
 	}
 
@@ -1128,7 +1144,7 @@
 		}
 		var panel = h('div');
 		var tab = dev.android ? 'android' : 'ios';
-		var installBtn = DOLLY.button('Installa l\'app', { variant: 'primary', icon: 'download', block: true, onClick: function () {
+		var installBtn = DOLLY.button(__('Installa l\'app'), { variant: 'primary', icon: 'download', block: true, onClick: function () {
 			if (!DOLLY.installPrompt) { return; }
 			DOLLY.installPrompt.prompt();
 			DOLLY.installPrompt.userChoice.then(function () { DOLLY.installPrompt = null; renderPanel(); });
@@ -1139,21 +1155,21 @@
 				nodes = [
 					phoneSketch('ios'),
 					steps([
-						['share', [dev.iosOtherBrowser ? 'Tocca il pulsante ' : 'In Safari tocca il pulsante ', b('Condividi'), dev.iosOtherBrowser ? ' (in alto a destra, accanto all\'indirizzo).' : ' nella barra in basso (su iPad in alto).']],
-						['square-plus', ['Scorri il menu e tocca ', b('Aggiungi alla schermata Home'), '.']],
-						['circle-check', ['Tocca ', b('Aggiungi'), ' in alto a destra.']],
-						['smartphone', ['Chiudi il browser e apri ', b(BRAND), ' dall\'icona sulla schermata Home: lì potrai accedere.']]
+						['share', [dev.iosOtherBrowser ? __('Tocca il pulsante ') : __('In Safari tocca il pulsante '), b(__('Condividi')), dev.iosOtherBrowser ? __(' (in alto a destra, accanto all\'indirizzo).') : __(' nella barra in basso (su iPad in alto).')]],
+						['square-plus', [__('Scorri il menu e tocca '), b(__('Aggiungi alla schermata Home')), '.']],
+						['circle-check', [__('Tocca '), b(__('Aggiungi')), __(' in alto a destra.')]],
+						['smartphone', [__('Chiudi il browser e apri '), b(BRAND), __(' dall\'icona sulla schermata Home: lì potrai accedere.')]]
 					])
 				];
 			} else {
 				nodes = [
-					DOLLY.installPrompt ? h('div', { class: 'dolly-install__quick' }, [installBtn, h('p', { class: 'dolly-help', text: 'Oppure segui i passaggi qui sotto.' })]) : null,
+					DOLLY.installPrompt ? h('div', { class: 'dolly-install__quick' }, [installBtn, h('p', { class: 'dolly-help', text: __('Oppure segui i passaggi qui sotto.') })]) : null,
 					phoneSketch('android'),
 					steps([
-						['ellipsis-vertical', ['In Chrome tocca il menu ', b('⋮'), ' in alto a destra.']],
-						['square-plus', ['Tocca ', b('Installa app'), ' oppure ', b('Aggiungi a schermata Home'), '.']],
-						['circle-check', ['Conferma con ', b('Installa'), '.']],
-						['smartphone', ['Apri ', b(BRAND), ' dall\'icona sulla schermata Home: lì potrai accedere.']]
+						['ellipsis-vertical', [__('In Chrome tocca il menu '), b('⋮'), __(' in alto a destra.')]],
+						['square-plus', [__('Tocca '), b(__('Installa app')), __(' oppure '), b(__('Aggiungi a schermata Home')), '.']],
+						['circle-check', [__('Conferma con '), b(__('Installa')), '.']],
+						['smartphone', [__('Apri '), b(BRAND), __(' dall\'icona sulla schermata Home: lì potrai accedere.')]]
 					]),
 					playProtectHelp()
 				];
@@ -1164,19 +1180,19 @@
 		function renderTabs() {
 			DOLLY.render(tabs, DOLLY.tabs([{ id: 'ios', label: 'iPhone', icon: 'smartphone' }, { id: 'android', label: 'Android', icon: 'smartphone' }], tab, function (t) { tab = t; renderTabs(); renderPanel(); }));
 		}
-		var copyBtn = DOLLY.button('Copia l\'indirizzo', { size: 'sm', icon: 'copy', onClick: function () {
-			(navigator.clipboard ? navigator.clipboard.writeText(window.location.href) : Promise.reject()).then(function () { DOLLY.toast('Indirizzo copiato: incollalo in ' + (dev.ios ? 'Safari' : 'Chrome') + '.', 'success'); }, function () { DOLLY.toast(window.location.href, 'info'); });
+		var copyBtn = DOLLY.button(__('Copia l\'indirizzo'), { size: 'sm', icon: 'copy', onClick: function () {
+			(navigator.clipboard ? navigator.clipboard.writeText(window.location.href) : Promise.reject()).then(function () { DOLLY.toast(__('Indirizzo copiato: incollalo in ') + (dev.ios ? 'Safari' : 'Chrome') + '.', 'success'); }, function () { DOLLY.toast(window.location.href, 'info'); });
 		} });
-		var done = h('div', { hidden: true }, DOLLY.alert('App installata! Chiudi il browser e apri ' + BRAND + ' dall\'icona sulla schermata Home per accedere.', 'success'));
+		var done = h('div', { hidden: true }, DOLLY.alert(__('App installata! Chiudi il browser e apri ') + BRAND + __(' dall\'icona sulla schermata Home per accedere.'), 'success'));
 		var gate = h('div', { class: 'dolly-install' }, [
-			h('h1', { class: 'dolly-auth__title', text: 'Installa l\'app ' + BRAND }),
-			h('p', { class: 'dolly-muted', text: 'Prima di accedere aggiungi il portale alla schermata Home del telefono: lo aprirai come un\'app e riceverai le notifiche.' }),
-			dev.inApp ? DOLLY.alert('Stai usando il browser di un\'altra app: apri questa pagina in ' + (dev.ios ? 'Safari' : 'Chrome') + ' per installarla.', 'warning', h('div', { style: 'margin-top:8px' }, copyBtn)) : null,
-			dev.samsung && !dev.inApp ? DOLLY.alert('Stai usando Samsung Internet: con questo browser il telefono può bloccare l\'installazione. Apri questa pagina in Chrome e installa l\'app da lì.', 'warning', h('div', { class: 'dolly-install__actions' }, [
-				DOLLY.button('Apri in Chrome', { variant: 'primary', size: 'sm', icon: 'external-link', href: chromeIntent() }), copyBtn
+			h('h1', { class: 'dolly-auth__title', text: __('Installa l\'app ') + BRAND }),
+			h('p', { class: 'dolly-muted', text: __('Prima di accedere aggiungi il portale alla schermata Home del telefono: lo aprirai come un\'app e riceverai le notifiche.') }),
+			dev.inApp ? DOLLY.alert(__('Stai usando il browser di un\'altra app: apri questa pagina in ') + (dev.ios ? 'Safari' : 'Chrome') + __(' per installarla.'), 'warning', h('div', { style: 'margin-top:8px' }, copyBtn)) : null,
+			dev.samsung && !dev.inApp ? DOLLY.alert(__('Stai usando Samsung Internet: con questo browser il telefono può bloccare l\'installazione. Apri questa pagina in Chrome e installa l\'app da lì.'), 'warning', h('div', { class: 'dolly-install__actions' }, [
+				DOLLY.button(__('Apri in Chrome'), { variant: 'primary', size: 'sm', icon: 'external-link', href: chromeIntent() }), copyBtn
 			])) : null,
 			done, tabs, panel,
-			h('p', { class: 'dolly-help', style: 'margin-top:16px', text: 'Hai già installato l\'app? Aprila dall\'icona ' + BRAND + ' sulla schermata Home.' })
+			h('p', { class: 'dolly-help', style: 'margin-top:16px', text: __('Hai già installato l\'app? Aprila dall\'icona ') + BRAND + __(' sulla schermata Home.') })
 		]);
 		document.addEventListener('dolly:installable', renderPanel);
 		document.addEventListener('dolly:installed', function () { done.hidden = false; renderPanel(); });
@@ -1300,13 +1316,13 @@
 					return new Promise(function (resolve) {
 						cur = step;
 						resolveFn = resolve;
-						var next = step.mode === 'click' ? null : DOLLY.button(step.next || 'Avanti', { variant: 'primary', icon: step.nextIcon || 'arrow-right', onClick: function () { finish('next'); } });
-						var skip = step.noSkip ? null : DOLLY.button('Salta il tutorial', { variant: 'ghost', size: 'sm', onClick: function () { finish('skip'); } });
+						var next = step.mode === 'click' ? null : DOLLY.button(step.next || __('Avanti'), { variant: 'primary', icon: step.nextIcon || 'arrow-right', onClick: function () { finish('next'); } });
+						var skip = step.noSkip ? null : DOLLY.button(__('Salta il tutorial'), { variant: 'ghost', size: 'sm', onClick: function () { finish('skip'); } });
 						DOLLY.render(bubble, [
 							step.progress ? h('div', { class: 'dolly-coach__progress', text: step.progress }) : null,
 							step.title ? h('h3', { class: 'dolly-coach__title', text: step.title }) : null,
 							h('div', { class: 'dolly-coach__text' }, step.text),
-							step.mode === 'click' ? h('p', { class: 'dolly-coach__hint' }, [DOLLY.icon('pointer'), step.hint || 'Tocca l\'elemento evidenziato']) : null,
+							step.mode === 'click' ? h('p', { class: 'dolly-coach__hint' }, [DOLLY.icon('pointer'), step.hint || __('Tocca l\'elemento evidenziato')]) : null,
 							h('div', { class: 'dolly-coach__actions' }, [skip, h('span', { class: 'dolly-coach__spacer' }), next])
 						]);
 						root.hidden = false;
@@ -1339,7 +1355,7 @@
 			var show = input.type === 'password';
 			input.type = show ? 'text' : 'password';
 			t.setAttribute('aria-pressed', show ? 'true' : 'false');
-			t.setAttribute('aria-label', show ? 'Nascondi password' : 'Mostra password');
+			t.setAttribute('aria-label', show ? __('Nascondi password') : __('Mostra password'));
 			return;
 		}
 		var sw = e.target.closest && e.target.closest('.dolly-switch[data-switch-input]');

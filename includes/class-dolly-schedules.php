@@ -97,7 +97,7 @@ class Dolly_Schedules {
 	}
 
 	private static function times_label( $t ) {
-		return $t['start'] . '–' . $t['end'] . ( $t['lunch_start'] ? ' (pausa ' . $t['lunch_start'] . '–' . $t['lunch_end'] . ')' : '' );
+		return $t['start'] . '–' . $t['end'] . ( $t['lunch_start'] ? __( ' (pausa ', 'dolly-employee-management' ) . $t['lunch_start'] . '–' . $t['lunch_end'] . ')' : '' );
 	}
 
 	/** One-line description: "Lun Mar Mer · 08:00–16:30 (pausa …)" or one entry per day. */
@@ -106,7 +106,7 @@ class Dolly_Schedules {
 			return '';
 		}
 		if ( self::is_on_call( $s ) ) {
-			return 'Contratto a chiamata (nessun orario fisso)';
+			return __( 'Contratto a chiamata (nessun orario fisso)', 'dolly-employee-management' );
 		}
 		$days = self::weekdays( $s );
 		if ( ! $days ) {
@@ -115,13 +115,13 @@ class Dolly_Schedules {
 		if ( ! self::is_per_day( $s ) ) {
 			$names = array();
 			foreach ( $days as $d ) {
-				$names[] = self::SHORT_DAYS[ $d ];
+				$names[] = Dolly_I18n::t( self::SHORT_DAYS[ $d ] );
 			}
 			return implode( ' ', $names ) . ' · ' . self::times_label( self::times_for( $s, $days[0] ) );
 		}
 		$parts = array();
 		foreach ( $days as $d ) {
-			$parts[] = self::SHORT_DAYS[ $d ] . ' ' . self::times_label( self::times_for( $s, $d ) );
+			$parts[] = Dolly_I18n::t( self::SHORT_DAYS[ $d ] ) . ' ' . self::times_label( self::times_for( $s, $d ) );
 		}
 		return implode( ' · ', $parts );
 	}
@@ -150,7 +150,7 @@ class Dolly_Schedules {
 			'days'             => (object) $times,
 			'on_call'          => self::is_on_call( $s ),
 			'employment_type'  => $s->employment_type,
-			'employment_label' => self::TYPES[ $s->employment_type ] ?? $s->employment_type,
+			'employment_label' => Dolly_I18n::t( self::TYPES[ $s->employment_type ] ?? $s->employment_type ),
 			'summary'          => self::summary( $s ),
 		);
 	}
@@ -164,13 +164,13 @@ class Dolly_Schedules {
 		$start  = (string) ( $d['start_time'] ?? '' );
 		$end    = (string) ( $d['end_time'] ?? '' );
 		if ( ! Dolly_Time::is_time( $start ) ) {
-			$errors[ $prefix . 'start_time' ] = 'Orario di inizio non valido.';
+			$errors[ $prefix . 'start_time' ] = __( 'Orario di inizio non valido.', 'dolly-employee-management' );
 		}
 		if ( ! Dolly_Time::is_time( $end ) ) {
-			$errors[ $prefix . 'end_time' ] = 'Orario di fine non valido.';
+			$errors[ $prefix . 'end_time' ] = __( 'Orario di fine non valido.', 'dolly-employee-management' );
 		}
 		if ( count( $errors ) === $before && Dolly_Time::hm_to_min( $end ) <= Dolly_Time::hm_to_min( $start ) ) {
-			$errors[ $prefix . 'end_time' ] = 'La fine deve essere successiva all\'inizio (turni notturni non previsti).';
+			$errors[ $prefix . 'end_time' ] = __( 'La fine deve essere successiva all\'inizio (turni notturni non previsti).', 'dolly-employee-management' );
 		}
 		$ls = null;
 		$le = null;
@@ -178,10 +178,10 @@ class Dolly_Schedules {
 			$ls = (string) ( $d['lunch_start'] ?? '' );
 			$le = (string) ( $d['lunch_end'] ?? '' );
 			if ( ! Dolly_Time::is_time( $ls ) ) {
-				$errors[ $prefix . 'lunch_start' ] = 'Inizio pausa non valido.';
+				$errors[ $prefix . 'lunch_start' ] = __( 'Inizio pausa non valido.', 'dolly-employee-management' );
 			}
 			if ( ! Dolly_Time::is_time( $le ) ) {
-				$errors[ $prefix . 'lunch_end' ] = 'Fine pausa non valida.';
+				$errors[ $prefix . 'lunch_end' ] = __( 'Fine pausa non valida.', 'dolly-employee-management' );
 			}
 			if ( count( $errors ) === $before ) {
 				$s = Dolly_Time::hm_to_min( $start );
@@ -189,9 +189,9 @@ class Dolly_Schedules {
 				$a = Dolly_Time::hm_to_min( $ls );
 				$b = Dolly_Time::hm_to_min( $le );
 				if ( $b <= $a ) {
-					$errors[ $prefix . 'lunch_end' ] = 'La fine pausa deve essere successiva all\'inizio pausa.';
+					$errors[ $prefix . 'lunch_end' ] = __( 'La fine pausa deve essere successiva all\'inizio pausa.', 'dolly-employee-management' );
 				} elseif ( $a <= $s || $b >= $e ) {
-					$errors[ $prefix . 'lunch_start' ] = 'La pausa deve essere compresa nell\'orario di lavoro.';
+					$errors[ $prefix . 'lunch_start' ] = __( 'La pausa deve essere compresa nell\'orario di lavoro.', 'dolly-employee-management' );
 				}
 			}
 		}
@@ -217,7 +217,7 @@ class Dolly_Schedules {
 		$errors = array();
 		$type   = $data['employment_type'] ?? 'full_time';
 		if ( ! isset( self::TYPES[ $type ] ) ) {
-			return new WP_Error( 'dolly_invalid', 'Controlla i campi dell\'orario.', array( 'status' => 400, 'fields' => array( 'employment_type' => 'Tipo di contratto non valido.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi dell\'orario.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'employment_type' => __( 'Tipo di contratto non valido.', 'dolly-employee-management' ) ) ) );
 		}
 		if ( 'on_call' === $type ) {
 			return array(
@@ -245,10 +245,10 @@ class Dolly_Schedules {
 			}
 			ksort( $days );
 			if ( ! $days && ! $errors ) {
-				$errors['weekdays'] = 'Attiva almeno un giorno lavorativo.';
+				$errors['weekdays'] = __( 'Attiva almeno un giorno lavorativo.', 'dolly-employee-management' );
 			}
 			if ( $errors ) {
-				return new WP_Error( 'dolly_invalid', 'Controlla i campi dell\'orario.', array( 'status' => 400, 'fields' => $errors ) );
+				return new WP_Error( 'dolly_invalid', __( 'Controlla i campi dell\'orario.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 			}
 			$first = reset( $days );
 			return array(
@@ -267,11 +267,11 @@ class Dolly_Schedules {
 		} ) ) );
 		sort( $weekdays );
 		if ( ! $weekdays ) {
-			$errors['weekdays'] = 'Seleziona almeno un giorno lavorativo.';
+			$errors['weekdays'] = __( 'Seleziona almeno un giorno lavorativo.', 'dolly-employee-management' );
 		}
 		$t = self::clean_times( $data, '', $errors );
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', 'Controlla i campi dell\'orario.', array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi dell\'orario.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 		return array(
 			'weekdays'        => implode( ',', $weekdays ),

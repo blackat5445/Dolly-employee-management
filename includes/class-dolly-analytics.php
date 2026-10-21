@@ -120,7 +120,7 @@ class Dolly_Analytics {
 	/** Attendance row of every employee on a date (same columns as the monthly attendance). */
 	public static function day( $date, $workplace_id = 0 ) {
 		if ( ! Dolly_Time::is_date( $date ) || $date > Dolly_Time::today() ) {
-			return new WP_Error( 'dolly_invalid', 'Scegli una data fino a oggi.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Scegli una data fino a oggi.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 120 ); // phpcs:ignore
@@ -145,7 +145,7 @@ class Dolly_Analytics {
 		return array(
 			'date'         => $date,
 			'date_label'   => Dolly_Time::fmt_date( $date ),
-			'weekday'      => Dolly_Time::WEEKDAYS[ Dolly_Time::weekday( $date ) ],
+			'weekday'      => Dolly_I18n::t( Dolly_Time::WEEKDAYS[ Dolly_Time::weekday( $date ) ] ),
 			'holiday'      => (string) Dolly_Holidays::name( $date ),
 			'is_today'     => Dolly_Time::today() === $date,
 			'rows'         => $rows,
@@ -166,13 +166,13 @@ class Dolly_Analytics {
 		for ( $i = 0; $i < $days; $i++ ) {
 			if ( 'day' === $unit ) {
 				$key   = $d;
-				$label = self::SHORT_WEEKDAYS[ Dolly_Time::weekday( $d ) ] . ' ' . substr( $d, 8, 2 ) . '/' . substr( $d, 5, 2 );
+				$label = Dolly_I18n::t( self::SHORT_WEEKDAYS[ Dolly_Time::weekday( $d ) ] ) . ' ' . substr( $d, 8, 2 ) . '/' . substr( $d, 5, 2 );
 			} elseif ( 'week' === $unit ) {
 				$key   = Dolly_Time::add_days( $d, 1 - Dolly_Time::weekday( $d ) );
-				$label = 'Sett. ' . substr( $key, 8, 2 ) . '/' . substr( $key, 5, 2 );
+				$label = __( 'Sett. ', 'dolly-employee-management' ) . substr( $key, 8, 2 ) . '/' . substr( $key, 5, 2 );
 			} else {
 				$key   = substr( $d, 0, 7 );
-				$label = self::SHORT_MONTHS[ (int) substr( $d, 5, 2 ) ] . ' ' . substr( $d, 0, 4 );
+				$label = Dolly_I18n::t( self::SHORT_MONTHS[ (int) substr( $d, 5, 2 ) ] ) . ' ' . substr( $d, 0, 4 );
 			}
 			$map[ $d ]      = $key;
 			$labels[ $key ] = $label;
@@ -200,17 +200,17 @@ class Dolly_Analytics {
 	public static function range( $from, $to, $workplace_id = 0, $user_id = 0, $fresh = false ) {
 		$today = Dolly_Time::today();
 		if ( ! Dolly_Time::is_date( $from ) || ! Dolly_Time::is_date( $to ) || $from > $to ) {
-			return new WP_Error( 'dolly_invalid', 'Periodo non valido.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Periodo non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( $to > $today ) {
-			return new WP_Error( 'dolly_invalid', 'La data finale non può essere successiva a oggi.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'La data finale non può essere successiva a oggi.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$days = (int) round( ( strtotime( $to . ' 12:00:00 UTC' ) - strtotime( $from . ' 12:00:00 UTC' ) ) / DAY_IN_SECONDS ) + 1;
 		if ( $days > self::MAX_DAYS ) {
-			return new WP_Error( 'dolly_invalid', 'Il periodo può durare al massimo ' . self::MAX_DAYS . ' giorni.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Il periodo può durare al massimo ', 'dolly-employee-management' ) . self::MAX_DAYS . __( ' giorni.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( $user_id && ! Dolly_Employees::is_employee( $user_id ) ) {
-			return new WP_Error( 'dolly_invalid', 'Dipendente non valido.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Dipendente non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 300 ); // phpcs:ignore
@@ -332,13 +332,13 @@ class Dolly_Analytics {
 
 		$absences = array();
 		foreach ( self::ABSENCE_GROUPS as $label => $codes ) {
-			$absences[] = array( 'label' => $label, 'codes' => implode( ', ', $codes ), 'min' => self::sum_codes( $codes_tot, $codes ) );
+			$absences[] = array( 'label' => Dolly_I18n::t( $label ), 'codes' => implode( ', ', $codes ), 'min' => self::sum_codes( $codes_tot, $codes ) );
 		}
 		$wd_rows = array();
 		foreach ( self::SHORT_WEEKDAYS as $n => $short ) {
 			$wd_rows[] = array(
-				'label'    => Dolly_Time::WEEKDAYS[ $n ],
-				'short'    => $short,
+				'label'    => Dolly_I18n::t( Dolly_Time::WEEKDAYS[ $n ] ),
+				'short'    => Dolly_I18n::t( $short ),
 				'entries'  => $weekday['entries'][ $n ],
 				'late'     => $weekday['late'][ $n ],
 				'late_pct' => self::pct( $weekday['late'][ $n ], $weekday['entries'][ $n ] ),
@@ -385,7 +385,7 @@ class Dolly_Analytics {
 			),
 			'series'     => array( 'labels' => array_values( $labels ) ) + array_map( 'array_values', $series ),
 			'weekday'    => $wd_rows,
-			'late_dist'  => array( 'labels' => array_keys( $late_dist ), 'values' => array_values( $late_dist ) ),
+			'late_dist'  => array( 'labels' => array_map( array( 'Dolly_I18n', 't' ), array_keys( $late_dist ) ), 'values' => array_values( $late_dist ) ),
 			'absences'   => $absences,
 			'codes'      => Dolly_Hours::format_codes( $codes_tot ),
 			'anomalies'  => $anomalies['by_type'],
@@ -411,7 +411,7 @@ class Dolly_Analytics {
 			$out['total'] += $n;
 			$out['by_user'][ (int) $r->user_id ] = ( $out['by_user'][ (int) $r->user_id ] ?? 0 ) + $n;
 			if ( ! isset( $types[ $r->type ] ) ) {
-				$types[ $r->type ] = array( 'type' => $r->type, 'label' => Dolly_Anomalies::TYPES[ $r->type ] ?? $r->type, 'open' => 0, 'resolved' => 0 );
+				$types[ $r->type ] = array( 'type' => $r->type, 'label' => Dolly_I18n::t( Dolly_Anomalies::TYPES[ $r->type ] ?? $r->type ), 'open' => 0, 'resolved' => 0 );
 			}
 			if ( 'open' === $r->status ) {
 				$types[ $r->type ]['open'] += $n;
@@ -439,7 +439,7 @@ class Dolly_Analytics {
 		foreach ( $rows as $r ) {
 			$n = (int) $r->n;
 			if ( ! isset( $types[ $r->type ] ) ) {
-				$types[ $r->type ] = array( 'type' => $r->type, 'label' => Dolly_Requests::TYPES[ $r->type ] ?? $r->type, 'pending' => 0, 'approved' => 0, 'rejected' => 0, 'cancelled' => 0 );
+				$types[ $r->type ] = array( 'type' => $r->type, 'label' => Dolly_I18n::t( Dolly_Requests::TYPES[ $r->type ] ?? $r->type ), 'pending' => 0, 'approved' => 0, 'rejected' => 0, 'cancelled' => 0 );
 			}
 			if ( isset( $types[ $r->type ][ $r->status ] ) ) {
 				$types[ $r->type ][ $r->status ] += $n;

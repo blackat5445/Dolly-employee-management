@@ -5,26 +5,26 @@
 (function (window, document) {
 	'use strict';
 
-	var DOLLY = window.DOLLY, h = DOLLY.h, CFG = DOLLY.config;
+	var DOLLY = window.DOLLY, h = DOLLY.h, CFG = DOLLY.config, __ = DOLLY.__;
 	var root = document.getElementById('dolly-employee-app');
 	if (!root) { return; }
 
 	var ACTIONS = {
-		entrata: { label: 'Entrata', icon: 'log-in', verb: 'Registra entrata' },
-		inizio_pausa: { label: 'Inizio pausa', icon: 'coffee', verb: 'Inizia pausa' },
-		fine_pausa: { label: 'Fine pausa', icon: 'briefcase', verb: 'Termina pausa' },
-		uscita: { label: 'Uscita', icon: 'log-out', verb: 'Registra uscita' }
+		entrata: { label: __('Entrata'), icon: 'log-in', verb: __('Registra entrata') },
+		inizio_pausa: { label: __('Inizio pausa'), icon: 'coffee', verb: __('Inizia pausa') },
+		fine_pausa: { label: __('Fine pausa'), icon: 'briefcase', verb: __('Termina pausa') },
+		uscita: { label: __('Uscita'), icon: 'log-out', verb: __('Registra uscita') }
 	};
 	// Notifications and profile are reached from the header, not from the bottom bar / side menu.
 	var SECTIONS = [
-		{ id: 'dashboard', label: 'Timbratura', icon: 'clock', nav: true },
-		{ id: 'calendario', label: 'Calendario', icon: 'calendar-days', nav: true },
-		{ id: 'richieste', label: 'Richieste', icon: 'inbox', nav: true },
-		{ id: 'malattia', label: 'Malattia', icon: 'stethoscope', nav: true },
-		{ id: 'notifiche', label: 'Notifiche', icon: 'bell' },
-		{ id: 'profilo', label: 'Profilo', icon: 'circle-user' }
+		{ id: 'dashboard', label: __('Timbratura'), icon: 'clock', nav: true },
+		{ id: 'calendario', label: __('Calendario'), icon: 'calendar-days', nav: true },
+		{ id: 'richieste', label: __('Richieste'), icon: 'inbox', nav: true },
+		{ id: 'malattia', label: __('Malattia'), icon: 'stethoscope', nav: true },
+		{ id: 'notifiche', label: __('Notifiche'), icon: 'bell' },
+		{ id: 'profilo', label: __('Profilo'), icon: 'circle-user' }
 	];
-	var SICK_KINDS = { malattia: 'Malattia', infortunio: 'Infortunio' };
+	var SICK_KINDS = { malattia: __('Malattia'), infortunio: __('Infortunio') };
 
 	var state = {
 		me: null,
@@ -45,12 +45,12 @@
 	function shell() {
 		bellCount = h('span', { class: 'dolly-count', hidden: true });
 		topActions = h('div', { class: 'dolly-topbar__actions' }, [
-			h('a', { href: '#notifiche', class: 'dolly-btn dolly-btn--ghost dolly-btn--icon dolly-bell', 'aria-label': 'Notifiche', title: 'Notifiche', dataset: { section: 'notifiche' } }, [DOLLY.icon('bell'), bellCount]),
-			h('a', { href: '#profilo', class: 'dolly-btn dolly-btn--ghost dolly-btn--icon', 'aria-label': 'Profilo', title: 'Profilo', dataset: { section: 'profilo' } }, DOLLY.icon('circle-user')),
-			DOLLY.button('Esci', { href: CFG.logoutUrl, variant: 'ghost', icon: 'log-out', iconOnly: true })
+			h('a', { href: '#notifiche', class: 'dolly-btn dolly-btn--ghost dolly-btn--icon dolly-bell', 'aria-label': __('Notifiche'), title: __('Notifiche'), dataset: { section: 'notifiche' } }, [DOLLY.icon('bell'), bellCount]),
+			h('a', { href: '#profilo', class: 'dolly-btn dolly-btn--ghost dolly-btn--icon', 'aria-label': __('Profilo'), title: __('Profilo'), dataset: { section: 'profilo' } }, DOLLY.icon('circle-user')),
+			DOLLY.button(__('Esci'), { href: CFG.logoutUrl, variant: 'ghost', icon: 'log-out', iconOnly: true })
 		]);
 		var top = h('header', { class: 'dolly-topbar' }, [brand(), topActions]);
-		navEl = h('nav', { class: 'dolly-nav', 'aria-label': 'Sezioni del portale' }, SECTIONS.filter(function (s) { return s.nav; }).map(function (s) {
+		navEl = h('nav', { class: 'dolly-nav', 'aria-label': __('Sezioni del portale') }, SECTIONS.filter(function (s) { return s.nav; }).map(function (s) {
 			return h('a', { class: 'dolly-nav__link', href: '#' + s.id, dataset: { section: s.id } }, [DOLLY.icon(s.icon), h('span', { text: s.label })]);
 		}));
 		main = h('main', { class: 'dolly-main', id: 'dolly-main', tabindex: '-1' });
@@ -69,7 +69,7 @@
 		bellCount.hidden = !state.me.unread;
 		bellCount.textContent = state.me.unread > 99 ? '99+' : state.me.unread;
 		var bell = topActions.querySelector('.dolly-bell');
-		bell.setAttribute('aria-label', 'Notifiche' + (state.me.unread ? ', ' + state.me.unread + ' non lette' : ''));
+		bell.setAttribute('aria-label', __('Notifiche') + (state.me.unread ? ', ' + state.me.unread + __(' non lette') : ''));
 	}
 
 	function route() {
@@ -106,7 +106,7 @@
 
 	function viewDashboard() {
 		clearInterval(refreshTimer);
-		DOLLY.render(main, DOLLY.loading('Caricamento della giornata…'));
+		DOLLY.render(main, DOLLY.loading(__('Caricamento della giornata…')));
 		loadMe().then(renderDashboard, function (err) {
 			DOLLY.render(main, DOLLY.errorState(err, viewDashboard));
 		});
@@ -122,14 +122,14 @@
 			// Tutorial: always show a day not yet started, whatever today's real state is.
 			st = Object.assign({}, st, { primary: 'entrata', secondary: null, completed: false, blocked: null, punches: {}, last: null, exception: null, previous_incomplete: [] });
 		}
-		var blocks = [pageTitle('Ciao ' + (me.first_name || ''))];
+		var blocks = [pageTitle(__('Ciao ') + (me.first_name || ''))];
 
 		if (st.exception && st.exception.active) {
-			blocks.push(DOLLY.alert('Eccezione di verifica attiva fino alle ' + DOLLY.fmt.time(st.exception.expires_at) + ' del ' + DOLLY.fmt.dateTime(st.exception.expires_at).slice(0, 10) + ': posizione e QR/PIN non sono richiesti.', 'info'));
+			blocks.push(DOLLY.alert(__('Eccezione di verifica attiva fino alle ') + DOLLY.fmt.time(st.exception.expires_at) + __(' del ') + DOLLY.fmt.dateTime(st.exception.expires_at).slice(0, 10) + __(': posizione e QR/PIN non sono richiesti.'), 'info'));
 		}
 		if (st.previous_incomplete && st.previous_incomplete.length) {
-			blocks.push(DOLLY.alert('Giornate precedenti senza uscita: ' + st.previous_incomplete.join(', ') + '. Sono segnalate all\'amministratore; puoi inviare una richiesta di correzione.', 'warning',
-				h('div', { style: 'margin-top:8px' }, DOLLY.button('Richiedi correzione', { size: 'sm', icon: 'pencil', onClick: function () { requestDialog({ type: 'correzione' }); } }))));
+			blocks.push(DOLLY.alert(__('Giornate precedenti senza uscita: ') + st.previous_incomplete.join(', ') + '. Sono segnalate all\'amministratore; puoi inviare una richiesta di correzione.', 'warning',
+				h('div', { style: 'margin-top:8px' }, DOLLY.button(__('Richiedi correzione'), { size: 'sm', icon: 'pencil', onClick: function () { requestDialog({ type: 'correzione' }); } }))));
 		}
 
 		// Clock card.
@@ -148,29 +148,29 @@
 		if (st.blocked) {
 			clockChildren.push(DOLLY.alert(st.blocked, 'info'));
 		} else if (st.completed) {
-			clockChildren.push(h('button', { type: 'button', class: 'dolly-clock__btn', disabled: true }, [DOLLY.icon('circle-check'), 'Giornata completata']));
+			clockChildren.push(h('button', { type: 'button', class: 'dolly-clock__btn', disabled: true }, [DOLLY.icon('circle-check'), __('Giornata completata')]));
 		} else if (st.primary) {
 			var a = ACTIONS[st.primary];
 			var btn = h('button', { type: 'button', class: 'dolly-clock__btn dolly-clock__btn--' + st.primary, dataset: { tour: 'clock-btn' } }, [DOLLY.icon(a.icon), a.verb]);
 			btn.addEventListener('click', function () { startPunch(st.primary); });
 			clockChildren.push(btn);
 			if (st.secondary === 'uscita') {
-				clockChildren.push(h('div', { class: 'dolly-clock__secondary' }, DOLLY.button('Uscita definitiva anticipata', { icon: 'log-out', onClick: function () { startPunch('uscita', true); } })));
+				clockChildren.push(h('div', { class: 'dolly-clock__secondary' }, DOLLY.button(__('Uscita definitiva anticipata'), { icon: 'log-out', onClick: function () { startPunch('uscita', true); } })));
 			}
 		}
 		if (st.last) {
-			clockChildren.push(h('div', { class: 'dolly-clock__last' }, [DOLLY.icon('history'), h('span', { text: 'Ultima azione: ' + st.last.label + ' alle ' + st.last.time + (st.last.workplace ? ' · ' + st.last.workplace : '') })]));
+			clockChildren.push(h('div', { class: 'dolly-clock__last' }, [DOLLY.icon('history'), h('span', { text: __('Ultima azione: ') + st.last.label + __(' alle ') + st.last.time + (st.last.workplace ? ' · ' + st.last.workplace : '') })]));
 		}
 
 		// Steps.
 		var steps = (plan.has_lunch && !plan.lunch_auto) || st.punches.inizio_pausa ? ['entrata', 'inizio_pausa', 'fine_pausa', 'uscita'] : ['entrata', 'uscita'];
-		var stepEls = h('div', { class: 'dolly-steps' + (steps.length === 2 ? ' dolly-steps--2' : ''), role: 'list', 'aria-label': 'Timbrature di oggi' }, steps.map(function (k) {
+		var stepEls = h('div', { class: 'dolly-steps' + (steps.length === 2 ? ' dolly-steps--2' : ''), role: 'list', 'aria-label': __('Timbrature di oggi') }, steps.map(function (k) {
 			var p = st.punches[k];
 			var cls = 'dolly-step' + (p ? ' is-done' : '') + (st.primary === k ? ' is-next' : '');
 			return h('div', { class: cls, role: 'listitem' }, [
 				h('div', { class: 'dolly-step__label' }, [DOLLY.icon(ACTIONS[k].icon), ACTIONS[k].label]),
 				h('div', { class: 'dolly-step__time', text: p ? p.time : '—' }),
-				h('span', { class: 'dolly-sr-only', text: p ? 'registrata' : 'da registrare' })
+				h('span', { class: 'dolly-sr-only', text: p ? 'registrata' : __('da registrare') })
 			]);
 		}));
 		clockChildren.push(stepEls);
@@ -178,43 +178,43 @@
 		blocks.push(DOLLY.card(null, null, h('div', { class: 'dolly-clock', dataset: { tour: 'clock' } }, clockChildren), { accent: true }));
 
 		// Today's info.
-		var sched = plan.eligible ? plan.start + '–' + plan.end + (plan.has_lunch ? ' · pausa ' + plan.lunch_start + '–' + plan.lunch_end + (plan.lunch_auto ? ' (conteggiata in automatico, non serve timbrarla)' : '') : ' · senza pausa') : 'Riposo';
-		if (plan.extension_end) { sched += ' · straordinario fino alle ' + plan.extension_end; }
-		if (plan.rest_day_extra) { sched = 'Straordinario in giorno di riposo: ' + sched; }
-		if (plan.on_call) { sched = 'Contratto a chiamata: inizi e termini il turno quando vieni chiamato. Le ore vengono approvate dall\'amministratore.'; }
+		var sched = plan.eligible ? plan.start + '–' + plan.end + (plan.has_lunch ? __(' · pausa ') + plan.lunch_start + '–' + plan.lunch_end + (plan.lunch_auto ? __(' (conteggiata in automatico, non serve timbrarla)') : '') : __(' · senza pausa')) : __('Riposo');
+		if (plan.extension_end) { sched += __(' · straordinario fino alle ') + plan.extension_end; }
+		if (plan.rest_day_extra) { sched = __('Straordinario in giorno di riposo: ') + sched; }
+		if (plan.on_call) { sched = __('Contratto a chiamata: inizi e termini il turno quando vieni chiamato. Le ore vengono approvate dall\'amministratore.'); }
 		if (plan.closure) {
-			sched = plan.closure + ': la tua sede è chiusa e non devi timbrare. ' + (plan.closure_type === 'holiday'
-				? 'Se lavori comunque, le ore di oggi sono festive, con maggiorazione.'
-				: 'Se lavori comunque, le ore di oggi sono conteggiate come ore ordinarie.');
+			sched = plan.closure + __(': la tua sede è chiusa e non devi timbrare. ') + (plan.closure_type === 'holiday'
+				? __('Se lavori comunque, le ore di oggi sono festive, con maggiorazione.')
+				: __('Se lavori comunque, le ore di oggi sono conteggiate come ore ordinarie.'));
 		}
-		blocks.push(DOLLY.card('Oggi', 'calendar-check', h('dl', { class: 'dolly-dl', dataset: { tour: 'today' } }, [
-			plan.holiday ? h('dt', { text: 'Festività' }) : null, plan.holiday ? h('dd', { text: plan.holiday }) : null,
-			h('dt', { text: 'Orario' }), h('dd', { text: sched }),
-			h('dt', { text: 'Sedi' }), h('dd', { text: me.workplaces.map(function (w) { return w.name; }).join(', ') || 'Nessuna' }),
-			h('dt', { text: 'Verifica' }), h('dd', { text: verificationLabel(st.verification) })
+		blocks.push(DOLLY.card(__('Oggi'), 'calendar-check', h('dl', { class: 'dolly-dl', dataset: { tour: 'today' } }, [
+			plan.holiday ? h('dt', { text: __('Festività') }) : null, plan.holiday ? h('dd', { text: plan.holiday }) : null,
+			h('dt', { text: __('Orario') }), h('dd', { text: sched }),
+			h('dt', { text: __('Sedi') }), h('dd', { text: me.workplaces.map(function (w) { return w.name; }).join(', ') || __('Nessuna') }),
+			h('dt', { text: __('Verifica') }), h('dd', { text: verificationLabel(st.verification) })
 		])));
 
 		// Open anomalies.
 		var anomBox = h('div', {}, DOLLY.loading());
-		blocks.push(DOLLY.card('Anomalie aperte', 'triangle-alert', anomBox));
+		blocks.push(DOLLY.card(__('Anomalie aperte'), 'triangle-alert', anomBox));
 		DOLLY.render(main, blocks);
 		DOLLY.api('anomalies', { query: { status: 'open' } }).then(function (res) {
-			DOLLY.render(anomBox, res.items.length ? res.items.map(anomalyItem) : DOLLY.empty('Nessuna anomalia aperta', 'Tutto in ordine.', 'circle-check'));
+			DOLLY.render(anomBox, res.items.length ? res.items.map(anomalyItem) : DOLLY.empty(__('Nessuna anomalia aperta'), __('Tutto in ordine.'), 'circle-check'));
 		}, function (err) { DOLLY.render(anomBox, DOLLY.errorState(err)); });
 
 		if (state.pendingQr) {
 			var code = state.pendingQr; state.pendingQr = null;
 			if (st.primary && !st.blocked) { startPunch(st.primary, false, code); }
-			else { DOLLY.toast(st.blocked || 'Non ci sono timbrature da registrare ora.', 'info'); }
+			else { DOLLY.toast(st.blocked || __('Non ci sono timbrature da registrare ora.'), 'info'); }
 		}
 	}
 
 	/** "Posizione GPS oppure QR/PIN della sede", "Posizione GPS e Bluetooth"… */
 	function verificationLabel(v) {
 		v = v || { methods: ['gps', 'qrpin'], require_gps: false };
-		var names = { gps: 'posizione GPS', qrpin: 'QR/PIN della sede', ble: 'Bluetooth' };
+		var names = { gps: __('posizione GPS'), qrpin: __('QR/PIN della sede'), ble: 'Bluetooth' };
 		var codes = v.methods.filter(function (m) { return m !== 'gps'; }).map(function (m) { return names[m]; });
-		var label = v.require_gps ? 'Posizione GPS e ' + codes.join(' oppure ') : v.methods.map(function (m) { return names[m]; }).join(' oppure ');
+		var label = v.require_gps ? __('Posizione GPS e ') + codes.join(__(' oppure ')) : v.methods.map(function (m) { return names[m]; }).join(__(' oppure '));
 		return label.charAt(0).toUpperCase() + label.slice(1);
 	}
 
@@ -222,12 +222,12 @@
 	var bleSupported = !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
 	function bleUnsupportedMessage() {
 		return /iPhone|iPad|iPod/.test(navigator.userAgent)
-			? 'Su iPhone e iPad Safari non permette ai siti di usare il Bluetooth. Apri il portale con l\'app Bluefy (gratuita su App Store) oppure usa un altro metodo.'
-			: 'Questo browser non permette ai siti di usare il Bluetooth. Apri il portale con Chrome oppure usa un altro metodo.';
+			? __('Su iPhone e iPad Safari non permette ai siti di usare il Bluetooth. Apri il portale con l\'app Bluefy (gratuita su App Store) oppure usa un altro metodo.')
+			: __('Questo browser non permette ai siti di usare il Bluetooth. Apri il portale con Chrome oppure usa un altro metodo.');
 	}
 
 	function anomalyItem(a) {
-		var note = h('div', { class: 'dolly-small dolly-muted', text: a.employee_note ? 'La tua nota: ' + a.employee_note : '' });
+		var note = h('div', { class: 'dolly-small dolly-muted', text: a.employee_note ? __('La tua nota: ') + a.employee_note : '' });
 		// Missing entry or exit: the employee can ask for the punch to be corrected.
 		var fix = { unjustified_absence: 'entrata', missing_exit: 'uscita' }[a.type];
 		return h('div', { class: 'dolly-alert dolly-alert--error', role: 'group' }, [
@@ -238,24 +238,24 @@
 				note,
 				h('div', { class: 'dolly-btn-row', style: 'margin-top:8px' }, [
 					// Medical certificates are uploaded in "Malattia", the blood donation one in "Richieste".
-					a.type === 'missing_certificate' ? DOLLY.button('Carica certificato', { size: 'sm', icon: 'file-up', href: a.related_type === 'request' ? '#richieste' : '#malattia' }) : null,
-					fix ? DOLLY.button('Richiedi correzione timbratura', { size: 'sm', variant: 'primary', icon: 'pencil', onClick: function () { requestDialog({ type: 'correzione', correction_action: fix, start_date: a.work_date }); } }) : null,
-					DOLLY.button(a.employee_note ? 'Modifica nota' : 'Aggiungi nota', { size: 'sm', icon: 'pencil', onClick: function () { anomalyNoteDialog(a); } })
+					a.type === 'missing_certificate' ? DOLLY.button(__('Carica certificato'), { size: 'sm', icon: 'file-up', href: a.related_type === 'request' ? '#richieste' : '#malattia' }) : null,
+					fix ? DOLLY.button(__('Richiedi correzione timbratura'), { size: 'sm', variant: 'primary', icon: 'pencil', onClick: function () { requestDialog({ type: 'correzione', correction_action: fix, start_date: a.work_date }); } }) : null,
+					DOLLY.button(a.employee_note ? __('Modifica nota') : __('Aggiungi nota'), { size: 'sm', icon: 'pencil', onClick: function () { anomalyNoteDialog(a); } })
 				])
 			])
 		]);
 	}
 
 	function anomalyNoteDialog(a) {
-		var f = DOLLY.field({ label: 'Nota per l\'amministratore', name: 'note', type: 'textarea', value: a.employee_note, optional: true });
+		var f = DOLLY.field({ label: __('Nota per l\'amministratore'), name: 'note', type: 'textarea', value: a.employee_note, optional: true });
 		var form = h('form', { class: 'dolly-form' }, f);
 		DOLLY.dialog({
-			title: 'Nota sull\'anomalia', body: form,
+			title: __('Nota sull\'anomalia'), body: form,
 			actions: [
-				{ label: 'Annulla' },
-				{ label: 'Salva nota', variant: 'primary', icon: 'save', onClick: function (close, btn) {
+				{ label: __('Annulla') },
+				{ label: __('Salva nota'), variant: 'primary', icon: 'save', onClick: function (close, btn) {
 					DOLLY.busy(btn, DOLLY.api('anomalies/' + a.id + '/note', { method: 'POST', body: { note: f.input.value } })).then(function () {
-						close(); DOLLY.toast('Nota salvata.', 'success'); viewDashboard();
+						close(); DOLLY.toast(__('Nota salvata.'), 'success'); viewDashboard();
 					}, function (err) { DOLLY.formError(form, err); });
 				} }
 			]
@@ -266,16 +266,16 @@
 
 	function getPosition() {
 		return new Promise(function (resolve, reject) {
-			if (!window.isSecureContext) { reject(new Error('La posizione è disponibile solo tramite connessione sicura (HTTPS).')); return; }
-			if (!navigator.geolocation) { reject(new Error('Questo browser non supporta la geolocalizzazione. Usa il QR o il PIN.')); return; }
+			if (!window.isSecureContext) { reject(new Error(__('La posizione è disponibile solo tramite connessione sicura (HTTPS).'))); return; }
+			if (!navigator.geolocation) { reject(new Error(__('Questo browser non supporta la geolocalizzazione. Usa il QR o il PIN.'))); return; }
 			navigator.geolocation.getCurrentPosition(function (pos) {
 				resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
 			}, function (e) {
 				var msg = {
-					1: 'Accesso alla posizione negato. Consenti la posizione per questo sito nelle impostazioni del browser (su iPhone: Impostazioni › Privacy › Localizzazione › Safari) oppure usa QR/PIN.',
-					2: 'Posizione non disponibile. Verifica che il GPS sia attivo e riprova, oppure usa QR/PIN.',
-					3: 'Tempo scaduto per rilevare la posizione. Riprova all\'aperto oppure usa QR/PIN.'
-				}[e.code] || 'Impossibile rilevare la posizione.';
+					1: __('Accesso alla posizione negato. Consenti la posizione per questo sito nelle impostazioni del browser (su iPhone: Impostazioni › Privacy › Localizzazione › Safari) oppure usa QR/PIN.'),
+					2: __('Posizione non disponibile. Verifica che il GPS sia attivo e riprova, oppure usa QR/PIN.'),
+					3: __('Tempo scaduto per rilevare la posizione. Riprova all\'aperto oppure usa QR/PIN.')
+				}[e.code] || __('Impossibile rilevare la posizione.');
 				var err = new Error(msg); err.code = 'gps_' + e.code;
 				reject(err);
 			}, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
@@ -287,10 +287,10 @@
 		var stream = null, stopped = false, video, canvas, ctx, raf;
 		var p = new Promise(function (resolve, reject) {
 			if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-				reject(new Error('La fotocamera non è disponibile in questo browser o senza HTTPS. Inserisci il PIN.'));
+				reject(new Error(__('La fotocamera non è disponibile in questo browser o senza HTTPS. Inserisci il PIN.')));
 				return;
 			}
-			video = h('video', { playsinline: true, muted: true, autoplay: true, 'aria-label': 'Anteprima fotocamera' });
+			video = h('video', { playsinline: true, muted: true, autoplay: true, 'aria-label': __('Anteprima fotocamera') });
 			video.setAttribute('playsinline', ''); // iOS Safari
 			canvas = document.createElement('canvas');
 			ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -316,8 +316,8 @@
 					if (code && code.data) { stop(); resolve(code.data); }
 				})(0);
 			}, function (e) {
-				var msg = e && e.name === 'NotAllowedError' ? 'Accesso alla fotocamera negato. Consenti la fotocamera per questo sito nelle impostazioni del browser oppure inserisci il PIN.'
-					: (e && e.name === 'NotFoundError' ? 'Nessuna fotocamera trovata. Inserisci il PIN.' : 'Impossibile avviare la fotocamera. Inserisci il PIN.');
+				var msg = e && e.name === 'NotAllowedError' ? __('Accesso alla fotocamera negato. Consenti la fotocamera per questo sito nelle impostazioni del browser oppure inserisci il PIN.')
+					: (e && e.name === 'NotFoundError' ? __('Nessuna fotocamera trovata. Inserisci il PIN.') : __('Impossibile avviare la fotocamera. Inserisci il PIN.'));
 				reject(new Error(msg));
 			});
 		});
@@ -347,7 +347,7 @@
 		var ctx = { action: action, key: DOLLY.requestKey(), gps: null, ticket: null, workplace: null, scanner: null };
 		var body = h('div', { class: 'dolly-stack' });
 		var dlg = DOLLY.dialog({
-			title: ACTIONS[action].label + (isEarlyExit ? ' anticipata' : ''),
+			title: ACTIONS[action].label + (isEarlyExit ? __(' anticipata') : ''),
 			body: body,
 			onClose: function () { if (ctx.scanner) { ctx.scanner.stop(); } }
 		});
@@ -355,9 +355,9 @@
 		function show(nodes) { DOLLY.render(body, nodes); }
 		function fail(err, retry, alt) {
 			show([DOLLY.alert(err.message, 'error'), h('div', { class: 'dolly-btn-row' }, [
-				retry ? DOLLY.button('Riprova', { icon: 'refresh-cw', variant: 'primary', onClick: retry }) : null,
+				retry ? DOLLY.button(__('Riprova'), { icon: 'refresh-cw', variant: 'primary', onClick: retry }) : null,
 				alt || null,
-				DOLLY.button('Chiudi', { onClick: function () { dlg.close(); } })
+				DOLLY.button(__('Chiudi'), { onClick: function () { dlg.close(); } })
 			])]);
 		}
 
@@ -370,17 +370,17 @@
 				if (allowGps) { return stepGps(stepConfirm); }
 				return allowQr ? stepCodeChoice() : stepBle(stepConfirm);
 			}
-			var gpsBtn = allowGps ? DOLLY.button('Usa la mia posizione', { icon: 'locate-fixed', variant: 'primary', block: true, onClick: function () { stepGps(stepConfirm); } }) : null;
-			var qrBtn = allowQr ? DOLLY.button('Scansiona il QR della sede', { icon: 'scan-line', variant: allowGps ? null : 'primary', block: true, onClick: function () { stepQr(stepConfirm); } }) : null;
+			var gpsBtn = allowGps ? DOLLY.button(__('Usa la mia posizione'), { icon: 'locate-fixed', variant: 'primary', block: true, onClick: function () { stepGps(stepConfirm); } }) : null;
+			var qrBtn = allowQr ? DOLLY.button(__('Scansiona il QR della sede'), { icon: 'scan-line', variant: allowGps ? null : 'primary', block: true, onClick: function () { stepQr(stepConfirm); } }) : null;
 			if (gpsBtn) { gpsBtn.dataset.tour = 'gps'; }
 			if (qrBtn) { qrBtn.dataset.tour = 'qr'; }
 			show([
-				h('p', { text: 'Scegli come verificare la tua presenza in sede.' }),
+				h('p', { text: __('Scegli come verificare la tua presenza in sede.') }),
 				h('div', { class: 'dolly-stack', dataset: { tour: 'methods' } }, [
 					gpsBtn,
 					qrBtn,
-					allowQr ? DOLLY.button('Inserisci il PIN della sede', { icon: 'hash', block: true, onClick: function () { stepPin(stepConfirm); } }) : null,
-					allowBle ? DOLLY.button('Usa il Bluetooth della sede', { icon: 'bluetooth', block: true, onClick: function () { stepBle(stepConfirm); } }) : null
+					allowQr ? DOLLY.button(__('Inserisci il PIN della sede'), { icon: 'hash', block: true, onClick: function () { stepPin(stepConfirm); } }) : null,
+					allowBle ? DOLLY.button(__('Usa il Bluetooth della sede'), { icon: 'bluetooth', block: true, onClick: function () { stepBle(stepConfirm); } }) : null
 				])
 			]);
 		}
@@ -390,25 +390,25 @@
 		function stepCodeChoice() {
 			if (allowBle && !allowQr) { return stepBle(stepConfirm); }
 			show([
-				requireGps && ctx.gps ? DOLLY.alert('Posizione acquisita.', 'success') : null,
-				h('p', { text: allowBle ? 'Verifica con il codice della sede: dallo schermo (QR o PIN) oppure dal dispositivo Bluetooth.' : 'Verifica con il codice mostrato sullo schermo della sede.' }),
+				requireGps && ctx.gps ? DOLLY.alert(__('Posizione acquisita.'), 'success') : null,
+				h('p', { text: allowBle ? __('Verifica con il codice della sede: dallo schermo (QR o PIN) oppure dal dispositivo Bluetooth.') : __('Verifica con il codice mostrato sullo schermo della sede.') }),
 				h('div', { class: 'dolly-stack' }, [
-					DOLLY.button('Scansiona il QR', { icon: 'scan-line', variant: 'primary', block: true, onClick: function () { stepQr(stepConfirm); } }),
-					DOLLY.button('Inserisci il PIN', { icon: 'hash', block: true, onClick: function () { stepPin(stepConfirm); } }),
-					allowBle ? DOLLY.button('Usa il Bluetooth', { icon: 'bluetooth', block: true, onClick: function () { stepBle(stepConfirm); } }) : null
+					DOLLY.button(__('Scansiona il QR'), { icon: 'scan-line', variant: 'primary', block: true, onClick: function () { stepQr(stepConfirm); } }),
+					DOLLY.button(__('Inserisci il PIN'), { icon: 'hash', block: true, onClick: function () { stepPin(stepConfirm); } }),
+					allowBle ? DOLLY.button(__('Usa il Bluetooth'), { icon: 'bluetooth', block: true, onClick: function () { stepBle(stepConfirm); } }) : null
 				])
 			]);
 		}
 
 		/** Bluetooth: the user picks the workplace device in the browser list (it requires a tap). */
 		function stepBle(next) {
-			var otherBtn = allowQr ? DOLLY.button('Usa QR o PIN', { icon: 'scan-line', block: true, onClick: stepCodeChoiceQr }) : null;
+			var otherBtn = allowQr ? DOLLY.button(__('Usa QR o PIN'), { icon: 'scan-line', block: true, onClick: stepCodeChoiceQr }) : null;
 			if (!bleSupported) { return fail(new Error(bleUnsupportedMessage()), null, otherBtn); }
 			show([
-				requireGps && ctx.gps ? DOLLY.alert('Posizione acquisita.', 'success') : null,
-				h('p', { text: 'Avvicinati al dispositivo Bluetooth della sede (a pochi metri), tocca «Cerca il dispositivo» e scegli la sede nell\'elenco.' }),
+				requireGps && ctx.gps ? DOLLY.alert(__('Posizione acquisita.'), 'success') : null,
+				h('p', { text: __('Avvicinati al dispositivo Bluetooth della sede (a pochi metri), tocca «Cerca il dispositivo» e scegli la sede nell\'elenco.') }),
 				h('div', { class: 'dolly-stack' }, [
-					DOLLY.button('Cerca il dispositivo', { icon: 'bluetooth-searching', variant: 'primary', block: true, onClick: function () { readBle(next); } }),
+					DOLLY.button(__('Cerca il dispositivo'), { icon: 'bluetooth-searching', variant: 'primary', block: true, onClick: function () { readBle(next); } }),
 					otherBtn
 				])
 			]);
@@ -421,7 +421,7 @@
 			// requestDevice must run directly in the tap handler: the browser shows its own device list.
 			navigator.bluetooth.requestDevice({ filters: [{ services: [BLE.service] }] }).then(function (d) {
 				device = d;
-				show(DOLLY.loading('Lettura del codice dal dispositivo…'));
+				show(DOLLY.loading(__('Lettura del codice dal dispositivo…')));
 				return d.gatt.connect();
 			}).then(function (server) {
 				return server.getPrimaryService(BLE.service);
@@ -435,71 +435,71 @@
 			}, function (err) {
 				done();
 				var name = err && err.name;
-				var msg = name === 'NotFoundError' ? 'Nessun dispositivo scelto. Avvicinati al dispositivo della sede, controlla che il Bluetooth del telefono sia acceso e riprova.'
-					: (name === 'NotAllowedError' || name === 'SecurityError' ? 'Il Bluetooth non è consentito per questo sito. Attivalo nelle impostazioni del browser e riprova.'
-						: 'Impossibile leggere il dispositivo Bluetooth. Avvicinati e riprova.');
-				fail(new Error(msg), function () { stepBle(next); }, allowQr ? DOLLY.button('Usa QR o PIN', { icon: 'scan-line', onClick: stepCodeChoiceQr }) : null);
+				var msg = name === 'NotFoundError' ? __('Nessun dispositivo scelto. Avvicinati al dispositivo della sede, controlla che il Bluetooth del telefono sia acceso e riprova.')
+					: (name === 'NotAllowedError' || name === 'SecurityError' ? __('Il Bluetooth non è consentito per questo sito. Attivalo nelle impostazioni del browser e riprova.')
+						: __('Impossibile leggere il dispositivo Bluetooth. Avvicinati e riprova.'));
+				fail(new Error(msg), function () { stepBle(next); }, allowQr ? DOLLY.button(__('Usa QR o PIN'), { icon: 'scan-line', onClick: stepCodeChoiceQr }) : null);
 			});
 		}
 
 		function stepGps(next) {
 			if (demo) { ctx.gps = { accuracy: 10 }; next(); return; }
-			show(DOLLY.loading('Rilevamento della posizione in corso… La posizione viene letta solo ora, per questa timbratura.'));
+			show(DOLLY.loading(__('Rilevamento della posizione in corso… La posizione viene letta solo ora, per questa timbratura.')));
 			getPosition().then(function (pos) { ctx.gps = pos; next(); }, function (err) {
-				var alt = !requireGps && (allowQr || allowBle) ? DOLLY.button(allowQr ? 'Usa QR o PIN' : 'Usa il Bluetooth', { icon: allowQr ? 'scan-line' : 'bluetooth', onClick: stepCodeChoice }) : null;
+				var alt = !requireGps && (allowQr || allowBle) ? DOLLY.button(allowQr ? __('Usa QR o PIN') : __('Usa il Bluetooth'), { icon: allowQr ? 'scan-line' : 'bluetooth', onClick: stepCodeChoice }) : null;
 				fail(err, function () { stepGps(next); }, alt);
 			});
 		}
 
 		function stepQr(next) {
 			var box = h('div');
-			show([h('p', { text: 'Inquadra il QR sullo schermo della sede.' }), box, h('div', { class: 'dolly-btn-row' }, [
-				DOLLY.button('Inserisci il PIN', { icon: 'hash', onClick: function () { if (ctx.scanner) { ctx.scanner.stop(); } stepPin(next); } })
+			show([h('p', { text: __('Inquadra il QR sullo schermo della sede.') }), box, h('div', { class: 'dolly-btn-row' }, [
+				DOLLY.button(__('Inserisci il PIN'), { icon: 'hash', onClick: function () { if (ctx.scanner) { ctx.scanner.stop(); } stepPin(next); } })
 			])]);
 			ctx.scanner = scanQr(box);
 			ctx.scanner.then(function (text) { ctx.scanner = null; verifyCode('qr', text, next); }, function (err) {
 				ctx.scanner = null;
-				fail(err, function () { stepQr(next); }, DOLLY.button('Inserisci il PIN', { icon: 'hash', onClick: function () { stepPin(next); } }));
+				fail(err, function () { stepQr(next); }, DOLLY.button(__('Inserisci il PIN'), { icon: 'hash', onClick: function () { stepPin(next); } }));
 			});
 		}
 
 		function stepPin(next) {
-			var f = DOLLY.field({ label: 'PIN della sede (6 cifre)', name: 'pin', attrs: { inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: 6, pattern: '[0-9]{6}', class: 'dolly-input dolly-pin-input' } });
-			var form = h('form', { class: 'dolly-form', novalidate: true }, [f, DOLLY.button('Verifica PIN', { type: 'submit', variant: 'primary', icon: 'shield-check', block: true })]);
+			var f = DOLLY.field({ label: __('PIN della sede (6 cifre)'), name: 'pin', attrs: { inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: 6, pattern: '[0-9]{6}', class: 'dolly-input dolly-pin-input' } });
+			var form = h('form', { class: 'dolly-form', novalidate: true }, [f, DOLLY.button(__('Verifica PIN'), { type: 'submit', variant: 'primary', icon: 'shield-check', block: true })]);
 			form.addEventListener('submit', function (e) {
 				e.preventDefault();
 				var v = f.input.value.replace(/\D/g, '');
-				if (v.length !== 6) { DOLLY.showErrors(form, { pin: 'Inserisci le 6 cifre del PIN.' }); return; }
+				if (v.length !== 6) { DOLLY.showErrors(form, { pin: __('Inserisci le 6 cifre del PIN.') }); return; }
 				verifyCode('pin', v, next, form);
 			});
-			show([h('p', { text: 'Il PIN cambia ogni 15 secondi: inserisci quello mostrato ora.' }), form]);
+			show([h('p', { text: __('Il PIN cambia ogni 15 secondi: inserisci quello mostrato ora.') }), form]);
 		}
 
 		function verifyCode(type, code, next, form) {
 			var btn = form ? form.querySelector('button[type=submit]') : null;
 			var p = DOLLY.api('attendance/verify', { method: 'POST', body: { type: type, code: code } });
-			if (!form) { show(DOLLY.loading('Verifica del codice…')); }
+			if (!form) { show(DOLLY.loading(__('Verifica del codice…'))); }
 			DOLLY.busy(btn, p).then(function (res) {
 				ctx.ticket = res.ticket; ctx.workplace = res.workplace; next();
 			}, function (err) {
 				if (form && err.status === 400 && err.code === 'dolly_pin_invalid') { DOLLY.showErrors(form, { pin: err.message }); return; }
 				var retry = type === 'qr' ? function () { stepQr(next); } : (type === 'ble' ? function () { stepBle(next); } : function () { stepPin(next); });
-				var alt = type === 'qr' ? DOLLY.button('Inserisci il PIN', { icon: 'hash', onClick: function () { stepPin(next); } })
-					: (type === 'ble' && allowQr ? DOLLY.button('Usa QR o PIN', { icon: 'scan-line', onClick: stepCodeChoiceQr }) : null);
+				var alt = type === 'qr' ? DOLLY.button(__('Inserisci il PIN'), { icon: 'hash', onClick: function () { stepPin(next); } })
+					: (type === 'ble' && allowQr ? DOLLY.button(__('Usa QR o PIN'), { icon: 'scan-line', onClick: stepCodeChoiceQr }) : null);
 				fail(err, retry, alt);
 			});
 		}
 
 		function stepConfirm() {
 			var lines = [];
-			if (demo) { lines.push(DOLLY.alert('Esempio del tutorial: nessuna timbratura verrà registrata.', 'info')); }
-			if (exceptionActive) { lines.push(DOLLY.alert('Eccezione dell\'amministratore attiva: verifica non richiesta.', 'info')); }
-			if (ctx.workplace) { lines.push(DOLLY.alert('Sede verificata: ' + ctx.workplace.name, 'success')); }
-			if (ctx.gps) { lines.push(DOLLY.alert('Posizione acquisita (precisione ±' + Math.round(ctx.gps.accuracy) + ' m).', 'success')); }
-			if (isEarlyExit) { lines.push(DOLLY.alert('Stai registrando l\'uscita definitiva: la giornata verrà chiusa e non potrai registrare altre timbrature oggi.', 'warning')); }
-			var confirmBtn = h('button', { type: 'button', class: 'dolly-btn dolly-btn--primary dolly-btn--block', dataset: { tour: 'confirm' } }, [DOLLY.icon(ACTIONS[action].icon), h('span', { text: 'Conferma ' + ACTIONS[action].label.toLowerCase() })]);
+			if (demo) { lines.push(DOLLY.alert(__('Esempio del tutorial: nessuna timbratura verrà registrata.'), 'info')); }
+			if (exceptionActive) { lines.push(DOLLY.alert(__('Eccezione dell\'amministratore attiva: verifica non richiesta.'), 'info')); }
+			if (ctx.workplace) { lines.push(DOLLY.alert(__('Sede verificata: ') + ctx.workplace.name, 'success')); }
+			if (ctx.gps) { lines.push(DOLLY.alert(__('Posizione acquisita (precisione ±') + Math.round(ctx.gps.accuracy) + ' m).', 'success')); }
+			if (isEarlyExit) { lines.push(DOLLY.alert(__('Stai registrando l\'uscita definitiva: la giornata verrà chiusa e non potrai registrare altre timbrature oggi.'), 'warning')); }
+			var confirmBtn = h('button', { type: 'button', class: 'dolly-btn dolly-btn--primary dolly-btn--block', dataset: { tour: 'confirm' } }, [DOLLY.icon(ACTIONS[action].icon), h('span', { text: __('Conferma ') + ACTIONS[action].label.toLowerCase() })]);
 			confirmBtn.addEventListener('click', function () { submit(confirmBtn); });
-			show([h('p', { text: 'L\'orario registrato sarà quello del server al momento della conferma.' }), lines, confirmBtn, DOLLY.button('Annulla', { block: true, onClick: function () { dlg.close(); } })]);
+			show([h('p', { text: __('L\'orario registrato sarà quello del server al momento della conferma.') }), lines, confirmBtn, DOLLY.button(__('Annulla'), { block: true, onClick: function () { dlg.close(); } })]);
 			confirmBtn.focus();
 		}
 
@@ -542,18 +542,18 @@
 		var calEl = h('div', { class: 'dolly-calendar' });
 		var monthBox = h('div', {}, DOLLY.loading());
 		DOLLY.render(main, [
-			pageTitle('Calendario e presenze', [DOLLY.button('Nuova richiesta', { variant: 'primary', icon: 'calendar-plus', onClick: function () { requestDialog({}); } })]),
-			DOLLY.card(null, null, [calEl, legend(), h('p', { class: 'dolly-small dolly-muted', style: 'margin:12px 0 0', text: 'Tocca un giorno per creare una richiesta a partire da quella data.' })]),
-			DOLLY.card('Presenze del mese', 'table', monthBox)
+			pageTitle(__('Calendario e presenze'), [DOLLY.button(__('Nuova richiesta'), { variant: 'primary', icon: 'calendar-plus', onClick: function () { requestDialog({}); } })]),
+			DOLLY.card(null, null, [calEl, legend(), h('p', { class: 'dolly-small dolly-muted', style: 'margin:12px 0 0', text: __('Tocca un giorno per creare una richiesta a partire da quella data.') })]),
+			DOLLY.card(__('Presenze del mese'), 'table', monthBox)
 		]);
-		if (!window.FullCalendar) { DOLLY.render(calEl, DOLLY.alert('Calendario non disponibile.', 'error')); }
+		if (!window.FullCalendar) { DOLLY.render(calEl, DOLLY.alert(__('Calendario non disponibile.'), 'error')); }
 		else {
 			calendar = new window.FullCalendar.Calendar(calEl, {
-				locale: 'it', firstDay: 1, initialView: 'dayGridMonth', height: 'auto', timeZone: 'local',
+				locale: DOLLY.lang, firstDay: 1, initialView: 'dayGridMonth', height: 'auto', timeZone: 'local',
 				headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-				buttonText: { today: 'Oggi' },
+				buttonText: { today: __('Oggi') },
 				dayMaxEvents: 3,
-				eventOrder: 'order,start,-duration,allDay,title',
+				eventOrder: __('order,start,-duration,allDay,title'),
 				events: function (info, ok, ko) {
 					DOLLY.api('calendar', { query: { start: info.startStr.slice(0, 10), end: info.endStr.slice(0, 10) } }).then(ok, function (err) { DOLLY.toast(err.message, 'error'); ko(err); });
 				},
@@ -569,8 +569,8 @@
 	}
 
 	function legend() {
-		var items = [['var(--dolly-blue-bg)', 'Ferie'], ['var(--dolly-cat-permesso-bg)', 'Permesso'], ['var(--dolly-cat-donazione-bg)', 'Donazione sangue'], ['var(--dolly-accent-soft)', 'Straordinario'], ['var(--dolly-red-bg)', 'Malattia / infortunio'], ['var(--dolly-cat-festivo-bg)', 'Festività'], ['var(--dolly-surface-3)', 'Chiusura collettiva'], ['var(--dolly-cat-chiusura-festiva-bg)', 'Chiusura per festività'], ['var(--dolly-green-bg)', 'Giornata lavorata'], ['var(--dolly-amber-bg)', 'Giornata incompleta'], ['var(--dolly-surface)', 'Richiesta in attesa']];
-		return h('div', { class: 'dolly-legend', 'aria-label': 'Legenda' }, items.map(function (i) {
+		var items = [['var(--dolly-blue-bg)', __('Ferie')], ['var(--dolly-cat-permesso-bg)', __('Permesso')], ['var(--dolly-cat-donazione-bg)', __('Donazione sangue')], ['var(--dolly-accent-soft)', __('Straordinario')], ['var(--dolly-red-bg)', __('Malattia / infortunio')], ['var(--dolly-cat-festivo-bg)', __('Festività')], ['var(--dolly-surface-3)', __('Chiusura collettiva')], ['var(--dolly-cat-chiusura-festiva-bg)', __('Chiusura per festività')], ['var(--dolly-green-bg)', __('Giornata lavorata')], ['var(--dolly-amber-bg)', __('Giornata incompleta')], ['var(--dolly-surface)', __('Richiesta in attesa')]];
+		return h('div', { class: 'dolly-legend', 'aria-label': __('Legenda') }, items.map(function (i) {
 			return h('span', {}, [h('i', { style: 'background:' + i[0] + ';border:1px solid var(--dolly-border-strong)', 'aria-hidden': 'true' }), i[1]]);
 		}));
 	}
@@ -578,8 +578,8 @@
 	function monthSelectors(onChange) {
 		var years = [];
 		for (var y = state.year + 1; y >= state.year - 5; y--) { years.push({ value: y, label: String(y) }); }
-		var m = DOLLY.field({ label: 'Mese', type: 'select', value: state.month, options: DOLLY.MONTHS.map(function (n, i) { return { value: i + 1, label: n }; }) });
-		var yy = DOLLY.field({ label: 'Anno', type: 'select', value: state.year, options: years });
+		var m = DOLLY.field({ label: __('Mese'), type: 'select', value: state.month, options: DOLLY.MONTHS.map(function (n, i) { return { value: i + 1, label: n }; }) });
+		var yy = DOLLY.field({ label: __('Anno'), type: 'select', value: state.year, options: years });
 		m.input.addEventListener('change', function () { state.month = +m.input.value; onChange(); });
 		yy.input.addEventListener('change', function () { state.year = +yy.input.value; onChange(); });
 		return h('div', { class: 'dolly-toolbar' }, [m, yy]);
@@ -595,34 +595,34 @@
 	function monthTable(data) {
 		var today = DOLLY.fmt.today();
 		var cols = [
-			{ label: 'Data', render: function (r) { return h('span', {}, [h('strong', { text: r.date_label }), h('br'), h('span', { class: 'dolly-small dolly-muted', text: r.weekday + (r.holiday ? ' · ' + r.holiday : '') + (r.closure ? ' · ' + r.closure + (r.closure_label && r.closure_label !== r.closure ? ' (' + r.closure_label.toLowerCase() + ')' : '') : '') })]); } },
-			{ label: 'Stato', render: function (r) { return DOLLY.dayStatusBadge(r.status); } },
-			{ label: 'Entrata', cls: 'time', render: function (r) { return DOLLY.countedTime(r.entrata, r.entrata_real, r.late_min); } },
-			{ label: 'Inizio pausa', cls: 'time', render: function (r) { return r.inizio_pausa || (r.lunch_auto ? h('span', { class: 'dolly-small dolly-muted', text: 'automatica' }) : '—'); } },
-			{ label: 'Fine pausa', key: 'fine_pausa', cls: 'time' },
-			{ label: 'Uscita', cls: 'time', render: function (r) { return DOLLY.countedTime(r.uscita, r.uscita_real); } },
-			{ label: 'Assenze', render: function (r) {
+			{ label: __('Data'), render: function (r) { return h('span', {}, [h('strong', { text: r.date_label }), h('br'), h('span', { class: 'dolly-small dolly-muted', text: r.weekday + (r.holiday ? ' · ' + r.holiday : '') + (r.closure ? ' · ' + r.closure + (r.closure_label && r.closure_label !== r.closure ? ' (' + r.closure_label.toLowerCase() + ')' : '') : '') })]); } },
+			{ label: __('Stato'), render: function (r) { return DOLLY.dayStatusBadge(r.status); } },
+			{ label: __('Entrata'), cls: 'time', render: function (r) { return DOLLY.countedTime(r.entrata, r.entrata_real, r.late_min); } },
+			{ label: __('Inizio pausa'), cls: 'time', render: function (r) { return r.inizio_pausa || (r.lunch_auto ? h('span', { class: 'dolly-small dolly-muted', text: 'automatica' }) : '—'); } },
+			{ label: __('Fine pausa'), key: 'fine_pausa', cls: 'time' },
+			{ label: __('Uscita'), cls: 'time', render: function (r) { return DOLLY.countedTime(r.uscita, r.uscita_real); } },
+			{ label: __('Assenze'), render: function (r) {
 				var b = [];
-				if (r.ferie) { b.push(DOLLY.badge('Ferie', 'blue', 'sun')); }
-				if (r.donazione) { b.push(DOLLY.badge('Donazione sangue', 'blue', 'droplet')); }
-				if (r.permesso) { b.push(DOLLY.badge('Permesso ' + r.permesso, 'blue', 'timer')); }
-				if (r.malattia) { b.push(DOLLY.badge(r.sick_label || 'Malattia', 'red', r.status === 'infortunio' ? 'bandage' : 'stethoscope')); }
+				if (r.ferie) { b.push(DOLLY.badge(__('Ferie'), 'blue', 'sun')); }
+				if (r.donazione) { b.push(DOLLY.badge(__('Donazione sangue'), 'blue', 'droplet')); }
+				if (r.permesso) { b.push(DOLLY.badge(__('Permesso ') + r.permesso, 'blue', 'timer')); }
+				if (r.malattia) { b.push(DOLLY.badge(r.sick_label || __('Malattia'), 'red', r.status === 'infortunio' ? 'bandage' : 'stethoscope')); }
 				if (r.certificate_status === 'missing' || r.certificate_status === 'overdue') { b.push(DOLLY.certBadge(r.certificate_status, r.certificate)); }
 				return b.length ? h('div', { class: 'dolly-btn-row' }, b) : '—';
 			} },
-			{ label: 'Ore', num: true, render: DOLLY.hoursCell },
-			{ label: 'Straordinario', render: DOLLY.extraCell },
-			{ label: 'Giustificativi', render: function (r) { return DOLLY.hoursCodes(r.hours); } },
-			{ label: 'Anomalie', render: function (r) { return r.anomalies.length ? h('div', { class: 'dolly-btn-row' }, r.anomalies.map(function (a) { return DOLLY.badge(a, 'red', 'triangle-alert'); })) : '—'; } }
+			{ label: __('Ore'), num: true, render: DOLLY.hoursCell },
+			{ label: __('Straordinario'), render: DOLLY.extraCell },
+			{ label: __('Giustificativi'), render: function (r) { return DOLLY.hoursCodes(r.hours); } },
+			{ label: __('Anomalie'), render: function (r) { return r.anomalies.length ? h('div', { class: 'dolly-btn-row' }, r.anomalies.map(function (a) { return DOLLY.badge(a, 'red', 'triangle-alert'); })) : '—'; } }
 		];
 		var foot = h('tfoot', {}, h('tr', {}, [
-			h('td', { colspan: 7, text: 'Totale ' + data.month_label + (data.provisional ? ' (provvisorio)' : '') }),
+			h('td', { colspan: 7, text: __('Totale ') + data.month_label + (data.provisional ? __(' (provvisorio)') : '') }),
 			h('td', { class: 'num', text: data.total }),
 			h('td', { colspan: 3, text: DOLLY.monthTotals(data) })
 		]));
 		return h('div', {}, [
 			DOLLY.table(cols, data.rows, {
-				caption: 'Presenze ' + data.month_label, foot: foot,
+				caption: __('Presenze ') + data.month_label, foot: foot,
 				rowClass: function (r) { return (r.date === today ? 'is-today ' : '') + (r.status === 'riposo' ? 'is-weekend' : ''); }
 			}),
 			DOLLY.hoursSummary(data)
@@ -634,19 +634,19 @@
 	/* ------------------------------------------------------------------ */
 
 	var TYPE_OPTIONS = [
-		{ value: 'ferie', label: 'Ferie (giornate intere)' },
-		{ value: 'permesso', label: 'Permesso orario' },
-		{ value: 'donazione', label: 'Donazione sangue' },
-		{ value: 'correzione', label: 'Correzione timbratura' }
+		{ value: 'ferie', label: __('Ferie (giornate intere)') },
+		{ value: 'permesso', label: __('Permesso orario') },
+		{ value: 'donazione', label: __('Donazione sangue') },
+		{ value: 'correzione', label: __('Correzione timbratura') }
 	];
 
 	/** Shown in red above "Tipo di richiesta" and in the tutorial. */
-	var LEGAL_NOTICE = 'In ogni caso, ogni richiesta è soggetta a verifica da parte del datore di lavoro e può essere revocata, anche dopo essere stata approvata.';
+	var LEGAL_NOTICE = __('In ogni caso, ogni richiesta è soggetta a verifica da parte del datore di lavoro e può essere revocata, anche dopo essere stata approvata.');
 
 	var LEAVE_KINDS = [
-		{ value: 'retribuito', label: 'Permesso ordinario retribuito', description: 'Ore di assenza pagate.', help: 'Ore di assenza pagate, scalate dal tuo monte ore di permessi (permessi, ROL, ex festività). È il permesso da usare per le normali esigenze personali.' },
-		{ value: 'non_retribuito', label: 'Permesso ordinario non retribuito', description: 'Ore di assenza non pagate.', help: 'Ore di assenza concesse dall\'azienda ma non pagate: non vengono scalate dal monte ore e non sono retribuite in busta paga.' },
-		{ value: 'evento', label: 'Congedi e permessi per eventi specifici', description: 'Legge 104, lutto, matrimonio, studio… Nota obbligatoria.', help: 'Permessi previsti dalla legge o dal contratto per situazioni particolari: Legge 104, lutto o grave infermità di un familiare, matrimonio, nascita di un figlio, esami e studio, visite mediche e simili. Nella nota devi indicare l\'evento; può essere richiesta la documentazione.' }
+		{ value: 'retribuito', label: __('Permesso ordinario retribuito'), description: __('Ore di assenza pagate.'), help: __('Ore di assenza pagate, scalate dal tuo monte ore di permessi (permessi, ROL, ex festività). È il permesso da usare per le normali esigenze personali.') },
+		{ value: 'non_retribuito', label: __('Permesso ordinario non retribuito'), description: __('Ore di assenza non pagate.'), help: __('Ore di assenza concesse dall\'azienda ma non pagate: non vengono scalate dal monte ore e non sono retribuite in busta paga.') },
+		{ value: 'evento', label: __('Congedi e permessi per eventi specifici'), description: __('Legge 104, lutto, matrimonio, studio… Nota obbligatoria.'), help: __('Permessi previsti dalla legge o dal contratto per situazioni particolari: Legge 104, lutto o grave infermità di un familiare, matrimonio, nascita di un figlio, esami e studio, visite mediche e simili. Nella nota devi indicare l\'evento; può essere richiesta la documentazione.') }
 	];
 
 	/** Certificate of a blood donation request: state, files and upload. */
@@ -655,7 +655,7 @@
 		var needs = r.certificate_status === 'missing' || r.certificate_status === 'overdue';
 		var tone = { waiting: ['neutral', 'hourglass'], missing: ['red', 'file-text'], overdue: ['red', 'clock-alert'], uploaded: ['green', 'circle-check'], cleared: ['neutral', 'ban'] }[r.certificate_status] || ['neutral', 'info'];
 		var nodes = [h('div', { style: 'margin-top:6px' }, DOLLY.badge(r.certificate_label, tone[0], tone[1]))];
-		if (needs && r.certificate_due) { nodes.push(h('div', { class: 'dolly-small', text: 'Scadenza certificato: ' + DOLLY.fmt.date(r.certificate_due) })); }
+		if (needs && r.certificate_due) { nodes.push(h('div', { class: 'dolly-small', text: __('Scadenza certificato: ') + DOLLY.fmt.date(r.certificate_due) })); }
 		if (r.certificates && r.certificates.length) {
 			nodes.push(h('ul', { class: 'dolly-small', style: 'margin:6px 0 0;padding-left:18px' }, r.certificates.map(function (c) {
 				return h('li', {}, [h('a', { href: DOLLY.downloadUrl('certificates/' + c.id + '/download') }, [DOLLY.icon('download'), ' ' + c.original_name]), ' · ' + DOLLY.fmt.bytes(c.size)]);
@@ -668,27 +668,27 @@
 	function donationUpload(r) {
 		var needs = r.certificate_status === 'missing' || r.certificate_status === 'overdue';
 		var fileInput = h('input', { type: 'file', accept: '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png', class: 'dolly-sr-only', id: DOLLY.uid('file') });
-		var btn = DOLLY.button(needs ? 'Carica certificato' : 'Aggiungi file', { icon: 'file-up', variant: needs ? 'primary' : null, size: 'sm', onClick: function () { fileInput.click(); } });
+		var btn = DOLLY.button(needs ? __('Carica certificato') : __('Aggiungi file'), { icon: 'file-up', variant: needs ? 'primary' : null, size: 'sm', onClick: function () { fileInput.click(); } });
 		fileInput.addEventListener('change', function () {
 			var file = fileInput.files[0];
 			if (!file) { return; }
-			if (file.size > 10 * 1024 * 1024) { DOLLY.toast('Il file supera i 10 MB.', 'error'); fileInput.value = ''; return; }
-			if (!/\.(pdf|jpe?g|png)$/i.test(file.name)) { DOLLY.toast('Formato non consentito: carica PDF, JPG o PNG.', 'error'); fileInput.value = ''; return; }
+			if (file.size > 10 * 1024 * 1024) { DOLLY.toast(__('Il file supera i 10 MB.'), 'error'); fileInput.value = ''; return; }
+			if (!/\.(pdf|jpe?g|png)$/i.test(file.name)) { DOLLY.toast(__('Formato non consentito: carica PDF, JPG o PNG.'), 'error'); fileInput.value = ''; return; }
 			var fd = new FormData(); fd.append('file', file);
 			DOLLY.busy(btn, DOLLY.api('requests/' + r.id + '/certificate', { method: 'POST', form: fd, timeout: 120000 })).then(function () {
-				DOLLY.toast('Certificato di donazione caricato.', 'success');
+				DOLLY.toast(__('Certificato di donazione caricato.'), 'success');
 				if (state.section === 'richieste') { viewRequests(); }
 			}, function (err) { DOLLY.toast(err.message, 'error'); fileInput.value = ''; });
 		});
-		return h('span', {}, [btn, h('label', { for: fileInput.id, class: 'dolly-sr-only', text: 'Scegli il file del certificato di donazione' }), fileInput]);
+		return h('span', {}, [btn, h('label', { for: fileInput.id, class: 'dolly-sr-only', text: __('Scegli il file del certificato di donazione') }), fileInput]);
 	}
 
 	function viewRequests() {
 		var box = h('div', {}, DOLLY.loading());
-		var statusF = DOLLY.field({ label: 'Stato', type: 'select', value: state.reqStatus, options: [{ value: '', label: 'Tutti' }, { value: 'pending', label: 'In attesa' }, { value: 'approved', label: 'Approvate' }, { value: 'rejected', label: 'Respinte' }, { value: 'cancelled', label: 'Annullate' }] });
+		var statusF = DOLLY.field({ label: __('Stato'), type: 'select', value: state.reqStatus, options: [{ value: '', label: __('Tutti') }, { value: 'pending', label: __('In attesa') }, { value: 'approved', label: __('Approvate') }, { value: 'rejected', label: __('Respinte') }, { value: 'cancelled', label: __('Annullate') }] });
 		statusF.input.addEventListener('change', function () { state.reqStatus = statusF.input.value; state.reqPage = 1; load(); });
 		DOLLY.render(main, [
-			pageTitle('Richieste', [tourTag(DOLLY.button('Nuova richiesta', { variant: 'primary', icon: 'plus', onClick: function () { requestDialog({}); } }), 'new-request')]),
+			pageTitle(__('Richieste'), [tourTag(DOLLY.button(__('Nuova richiesta'), { variant: 'primary', icon: 'plus', onClick: function () { requestDialog({}); } }), 'new-request')]),
 			tourTag(DOLLY.card(null, null, [h('div', { class: 'dolly-toolbar' }, statusF), box]), 'requests-list')
 		]);
 		function load() {
@@ -696,12 +696,12 @@
 			DOLLY.api('requests', { query: { page: state.reqPage, status: state.reqStatus } }).then(function (res) {
 				DOLLY.render(box, [
 					DOLLY.table([
-						{ label: 'Richiesta', render: function (r) { return h('div', {}, [h('strong', { text: r.type_label }), h('div', { class: 'dolly-small', text: r.summary }), r.notes ? h('div', { class: 'dolly-small dolly-muted', text: 'Note: ' + r.notes }) : null, donationCertificate(r)]); } },
-						{ label: 'Stato', render: function (r) { return h('div', { class: 'dolly-btn-row' }, [DOLLY.requestBadge(r.status, r.status_label), r.pending_amendment ? DOLLY.badge(r.pending_amendment.amend_action === 'cancel' ? 'Annullamento in attesa' : 'Modifica in attesa', 'amber', 'hourglass') : null]); } },
-						{ label: 'Esito', render: function (r) { return r.decided_at ? h('div', { class: 'dolly-small' }, [DOLLY.fmt.dateTime(r.decided_at) + ' · ' + r.decided_by, r.decision_note ? h('div', { class: 'dolly-muted', text: r.decision_note }) : null]) : '—'; } },
-						{ label: 'Inviata', render: function (r) { return DOLLY.fmt.dateTime(r.created_at); } },
-						{ label: '', srLabel: 'Azioni', render: requestActions }
-					], res.items, { empty: ['Nessuna richiesta', 'Crea una richiesta dal pulsante o dal calendario.', 'inbox'], caption: 'Le tue richieste' }),
+						{ label: __('Richiesta'), render: function (r) { return h('div', {}, [h('strong', { text: r.type_label }), h('div', { class: 'dolly-small', text: r.summary }), r.notes ? h('div', { class: 'dolly-small dolly-muted', text: __('Note: ') + r.notes }) : null, donationCertificate(r)]); } },
+						{ label: __('Stato'), render: function (r) { return h('div', { class: 'dolly-btn-row' }, [DOLLY.requestBadge(r.status, r.status_label), r.pending_amendment ? DOLLY.badge(r.pending_amendment.amend_action === 'cancel' ? __('Annullamento in attesa') : __('Modifica in attesa'), 'amber', 'hourglass') : null]); } },
+						{ label: __('Esito'), render: function (r) { return r.decided_at ? h('div', { class: 'dolly-small' }, [DOLLY.fmt.dateTime(r.decided_at) + ' · ' + r.decided_by, r.decision_note ? h('div', { class: 'dolly-muted', text: r.decision_note }) : null]) : '—'; } },
+						{ label: __('Inviata'), render: function (r) { return DOLLY.fmt.dateTime(r.created_at); } },
+						{ label: '', srLabel: __('Azioni'), render: requestActions }
+					], res.items, { empty: [__('Nessuna richiesta'), __('Crea una richiesta dal pulsante o dal calendario.'), 'inbox'], caption: __('Le tue richieste') }),
 					DOLLY.pagination(res, function (p) { state.reqPage = p; load(); }, 'richieste')
 				]);
 			}, function (err) { DOLLY.render(box, DOLLY.errorState(err, load)); });
@@ -711,27 +711,27 @@
 
 	function requestActions(r) {
 		var btns = [];
-		if (r.type === 'turno' || r.type === 'straordinario') { return h('span', { class: 'dolly-small dolly-muted', text: 'Gestito dall\'amministratore' }); }
+		if (r.type === 'turno' || r.type === 'straordinario') { return h('span', { class: 'dolly-small dolly-muted', text: __('Gestito dall\'amministratore') }); }
 		var editable = (r.status === 'pending' && r.amend_action !== 'cancel') || (r.status === 'approved' && r.type !== 'correzione' && r.amend_action !== 'cancel' && !r.pending_amendment);
 		if (editable) {
-			btns.push(DOLLY.button(r.status === 'approved' ? 'Chiedi modifica' : 'Modifica', { size: 'sm', icon: 'pencil', onClick: function () { requestDialog(r); } }));
+			btns.push(DOLLY.button(r.status === 'approved' ? __('Chiedi modifica') : __('Modifica'), { size: 'sm', icon: 'pencil', onClick: function () { requestDialog(r); } }));
 		}
 		if (r.status === 'pending') {
-			btns.push(DOLLY.button('Elimina', { size: 'sm', icon: 'trash-2', onClick: function () { cancelRequest(r, false); } }));
+			btns.push(DOLLY.button(__('Elimina'), { size: 'sm', icon: 'trash-2', onClick: function () { cancelRequest(r, false); } }));
 		} else if (editable) {
-			btns.push(DOLLY.button('Chiedi annullamento', { size: 'sm', icon: 'ban', onClick: function () { cancelRequest(r, true); } }));
+			btns.push(DOLLY.button(__('Chiedi annullamento'), { size: 'sm', icon: 'ban', onClick: function () { cancelRequest(r, true); } }));
 		}
 		if (r.type === 'donazione' && r.can_upload) { btns.unshift(donationUpload(r)); }
 		return h('div', { class: 'dolly-actions' }, btns);
 	}
 
 	function cancelRequest(r, approved) {
-		DOLLY.confirm(approved ? 'Chiedere l\'annullamento?' : 'Eliminare la richiesta?',
-			approved ? 'La richiesta approvata resta valida finché l\'amministratore non approva l\'annullamento.' : 'La richiesta in attesa verrà annullata e resterà nello storico.',
-			approved ? 'Invia richiesta di annullamento' : 'Elimina', 'danger').then(function (ok) {
+		DOLLY.confirm(approved ? __('Chiedere l\'annullamento?') : __('Eliminare la richiesta?'),
+			approved ? __('La richiesta approvata resta valida finché l\'amministratore non approva l\'annullamento.') : __('La richiesta in attesa verrà annullata e resterà nello storico.'),
+			approved ? __('Invia richiesta di annullamento') : __('Elimina'), 'danger').then(function (ok) {
 			if (!ok) { return; }
 			DOLLY.api('requests/' + r.id, { method: 'DELETE' }).then(function () {
-				DOLLY.toast(approved ? 'Richiesta di annullamento inviata.' : 'Richiesta eliminata.', 'success');
+				DOLLY.toast(approved ? __('Richiesta di annullamento inviata.') : __('Richiesta eliminata.'), 'success');
 				if (state.section === 'richieste') { viewRequests(); }
 			}, function (err) { DOLLY.toast(err.message, 'error'); });
 		});
@@ -745,9 +745,9 @@
 		r = r || {};
 		var isEdit = !!r.id;
 		var alertBox = h('div', { hidden: true });
-		var typeF = DOLLY.field({ label: 'Tipo di richiesta', name: 'type', type: 'select', value: r.type || 'ferie', options: TYPE_OPTIONS, attrs: isEdit ? { disabled: true } : {} });
+		var typeF = DOLLY.field({ label: __('Tipo di richiesta'), name: 'type', type: 'select', value: r.type || 'ferie', options: TYPE_OPTIONS, attrs: isEdit ? { disabled: true } : {} });
 		var dynamic = h('div', { class: 'dolly-form-grid', dataset: { tour: 'request-fields' } });
-		var notesF = DOLLY.field({ label: 'Note', name: 'notes', type: 'textarea', value: r.notes || '', optional: true, full: true });
+		var notesF = DOLLY.field({ label: __('Note'), name: 'notes', type: 'textarea', value: r.notes || '', optional: true, full: true });
 		var legal = h('p', { class: 'dolly-legal', role: 'note', dataset: { tour: 'request-legal' }, text: LEGAL_NOTICE });
 		var form = h('form', { class: 'dolly-form', novalidate: true, dataset: { tour: 'request-form' } }, [alertBox, legal, typeF, dynamic, notesF]);
 		var f = {};
@@ -758,18 +758,18 @@
 			var t = typeF.input.value;
 			var required = t === 'correzione' || (t === 'permesso' && leaveKind === 'evento');
 			notesF.querySelector('.dolly-optional').hidden = required;
-			notesF.querySelector('label').firstChild.textContent = t === 'correzione' ? 'Motivo della correzione' : (required ? 'Evento per cui chiedi il permesso (obbligatorio)' : 'Note');
+			notesF.querySelector('label').firstChild.textContent = t === 'correzione' ? __('Motivo della correzione') : (required ? __('Evento per cui chiedi il permesso (obbligatorio)') : __('Note'));
 		}
 
 		/** Kind of hourly leave, with the help button that explains the three kinds. */
 		function leaveKindField() {
-			var law = DOLLY.switchControl({ label: 'Permesso Legge 104', name: 'law104', checked: !!r.law104, description: 'Attivalo solo se il permesso rientra nella Legge 104.' });
+			var law = DOLLY.switchControl({ label: __('Permesso Legge 104'), name: 'law104', checked: !!r.law104, description: __('Attivalo solo se il permesso rientra nella Legge 104.') });
 			var lawBox = h('div', { class: 'dolly-field--full', hidden: leaveKind !== 'evento' }, law);
-			var radios = DOLLY.radios({ label: 'Tipo di permesso', name: 'leave_kind', value: leaveKind, full: true, options: LEAVE_KINDS, onChange: function (v) { leaveKind = v; lawBox.hidden = v !== 'evento'; notesLabel(); } });
+			var radios = DOLLY.radios({ label: __('Tipo di permesso'), name: 'leave_kind', value: leaveKind, full: true, options: LEAVE_KINDS, onChange: function (v) { leaveKind = v; lawBox.hidden = v !== 'evento'; notesLabel(); } });
 			var helpBox = h('div', { hidden: true, id: DOLLY.uid('help') }, DOLLY.alert(null, 'info', h('ul', { class: 'dolly-help-list' }, LEAVE_KINDS.map(function (k) {
 				return h('li', {}, [h('strong', { text: k.label }), k.help]);
 			}))));
-			var helpBtn = h('button', { type: 'button', class: 'dolly-help-btn', 'aria-label': 'Cosa sono i tipi di permesso?', 'aria-expanded': 'false', 'aria-controls': helpBox.id, title: 'Cosa sono i tipi di permesso?' }, DOLLY.icon('circle-help'));
+			var helpBtn = h('button', { type: 'button', class: 'dolly-help-btn', 'aria-label': __('Cosa sono i tipi di permesso?'), 'aria-expanded': 'false', 'aria-controls': helpBox.id, title: __('Cosa sono i tipi di permesso?') }, DOLLY.icon('circle-help'));
 			helpBtn.addEventListener('click', function () {
 				helpBox.hidden = !helpBox.hidden;
 				helpBtn.setAttribute('aria-expanded', helpBox.hidden ? 'false' : 'true');
@@ -789,25 +789,25 @@
 			var nodes = [];
 			if (t === 'ferie' || t === 'permesso') {
 				if (t === 'permesso') { nodes = nodes.concat(leaveKindField()); }
-				f.start_date = DOLLY.dateField({ label: 'Dal', name: 'start_date', value: r.start_date, required: true });
-				f.end_date = DOLLY.dateField({ label: 'Al', name: 'end_date', value: r.end_date || r.start_date, required: true });
+				f.start_date = DOLLY.dateField({ label: __('Dal'), name: 'start_date', value: r.start_date, required: true });
+				f.end_date = DOLLY.dateField({ label: __('Al'), name: 'end_date', value: r.end_date || r.start_date, required: true });
 				nodes.push(f.start_date, f.end_date);
 				if (t === 'permesso') {
-					f.start_time = DOLLY.timeField({ label: 'Dalle ore', name: 'start_time', value: r.start_time, required: true });
-					f.end_time = DOLLY.timeField({ label: 'Alle ore', name: 'end_time', value: r.end_time, required: true });
+					f.start_time = DOLLY.timeField({ label: __('Dalle ore'), name: 'start_time', value: r.start_time, required: true });
+					f.end_time = DOLLY.timeField({ label: __('Alle ore'), name: 'end_time', value: r.end_time, required: true });
 					nodes.push(f.start_time, f.end_time);
 				}
 			} else if (t === 'donazione') {
 				var ds = state.me ? state.me.settings : {};
-				f.start_date = DOLLY.dateField({ label: 'Giorno della donazione', name: 'start_date', value: r.start_date, required: true });
+				f.start_date = DOLLY.dateField({ label: __('Giorno della donazione'), name: 'start_date', value: r.start_date, required: true });
 				nodes.push(f.start_date, h('div', { class: 'dolly-field--full' }, DOLLY.alert(
-					'Assenza per l\'intera giornata della donazione. ' + (ds.donation_certificate_mode === 'disabled'
-						? 'Il certificato di donazione non è richiesto.'
-						: 'Dal giorno successivo alla donazione dovrai caricare qui in Richieste il certificato di donazione' + (ds.donation_certificate_mode === 'deadline' ? ', entro ' + ds.donation_certificate_days + ' giorni.' : '.')), 'info')));
+					__('Assenza per l\'intera giornata della donazione. ') + (ds.donation_certificate_mode === 'disabled'
+						? __('Il certificato di donazione non è richiesto.')
+						: __('Dal giorno successivo alla donazione dovrai caricare qui in Richieste il certificato di donazione') + (ds.donation_certificate_mode === 'deadline' ? __(', entro ') + ds.donation_certificate_days + __(' giorni.') : '.')), 'info')));
 			} else if (t === 'correzione') {
-				f.start_date = DOLLY.dateField({ label: 'Data', name: 'start_date', value: r.start_date, required: true });
-				f.correction_action = DOLLY.field({ label: 'Timbratura', name: 'correction_action', type: 'select', value: r.correction_action || 'uscita', options: Object.keys(ACTIONS).map(function (k) { return { value: k, label: ACTIONS[k].label }; }) });
-				f.start_time = DOLLY.timeField({ label: 'Orario corretto', name: 'start_time', value: r.start_time, required: true });
+				f.start_date = DOLLY.dateField({ label: __('Data'), name: 'start_date', value: r.start_date, required: true });
+				f.correction_action = DOLLY.field({ label: __('Timbratura'), name: 'correction_action', type: 'select', value: r.correction_action || 'uscita', options: Object.keys(ACTIONS).map(function (k) { return { value: k, label: ACTIONS[k].label }; }) });
+				f.start_time = DOLLY.timeField({ label: __('Orario corretto'), name: 'start_time', value: r.start_time, required: true });
 				nodes.push(f.start_date, f.correction_action, f.start_time);
 			}
 			DOLLY.closePicker();
@@ -818,11 +818,11 @@
 		build();
 
 		DOLLY.dialog({
-			title: isEdit ? (r.status === 'approved' ? 'Chiedi modifica' : 'Modifica richiesta') : 'Nuova richiesta',
-			body: [r.status === 'approved' ? DOLLY.alert('La modifica richiede l\'approvazione dell\'amministratore. Fino ad allora resta valida la richiesta approvata.', 'info') : null, form],
+			title: isEdit ? (r.status === 'approved' ? __('Chiedi modifica') : __('Modifica richiesta')) : __('Nuova richiesta'),
+			body: [r.status === 'approved' ? DOLLY.alert(__('La modifica richiede l\'approvazione dell\'amministratore. Fino ad allora resta valida la richiesta approvata.'), 'info') : null, form],
 			actions: [
-				{ label: 'Annulla' },
-				{ label: isEdit ? 'Invia modifica' : 'Invia richiesta', variant: 'primary', icon: 'send', onClick: function (close, btn) {
+				{ label: __('Annulla') },
+				{ label: isEdit ? __('Invia modifica') : __('Invia richiesta'), variant: 'primary', icon: 'send', onClick: function (close, btn) {
 					DOLLY.clearErrors(form); alertBox.hidden = true;
 					var t = typeF.input.value;
 					var spec = {};
@@ -830,8 +830,8 @@
 					['start_time', 'end_time'].forEach(function (k) { if (f[k]) { spec[k] = [f[k], 'time', true]; } });
 					var read = DOLLY.readDateTimes(spec);
 					if (t === 'permesso') {
-						if (!leaveKind) { read.errors.leave_kind = 'Scegli il tipo di permesso.'; }
-						else if (leaveKind === 'evento' && !notesF.input.value.trim()) { read.errors.notes = 'Indica l\'evento per cui chiedi il permesso.'; }
+						if (!leaveKind) { read.errors.leave_kind = __('Scegli il tipo di permesso.'); }
+						else if (leaveKind === 'evento' && !notesF.input.value.trim()) { read.errors.notes = __('Indica l\'evento per cui chiedi il permesso.'); }
 					}
 					if (Object.keys(read.errors).length) { DOLLY.showErrors(form, read.errors); return; }
 					var body = Object.assign({ type: t, notes: notesF.input.value }, read.values);
@@ -841,7 +841,7 @@
 					var p = isEdit ? DOLLY.api('requests/' + r.id, { method: 'PUT', body: body }) : DOLLY.api('requests', { method: 'POST', body: body });
 					DOLLY.busy(btn, p).then(function () {
 						close();
-						DOLLY.toast(isEdit && r.status === 'approved' ? 'Modifica inviata per approvazione.' : (isEdit ? 'Richiesta aggiornata.' : 'Richiesta inviata.'), 'success');
+						DOLLY.toast(isEdit && r.status === 'approved' ? __('Modifica inviata per approvazione.') : (isEdit ? __('Richiesta aggiornata.') : __('Richiesta inviata.')), 'success');
 						route();
 					}, function (err) { DOLLY.formError(form, err, alertBox); });
 				} }
@@ -856,17 +856,17 @@
 	function viewSickness() {
 		var box = h('div', {}, DOLLY.loading());
 		var s = state.me ? state.me.settings : {};
-		var info = s.certificate_mode === 'disabled' ? 'Il certificato medico non è richiesto.'
-			: (s.certificate_mode === 'deadline' ? 'Il certificato medico è obbligatorio entro ' + s.certificate_days + ' giorni di calendario dalla segnalazione.' : 'Il certificato medico è obbligatorio: caricalo appena disponibile.');
+		var info = s.certificate_mode === 'disabled' ? __('Il certificato medico non è richiesto.')
+			: (s.certificate_mode === 'deadline' ? __('Il certificato medico è obbligatorio entro ') + s.certificate_days + __(' giorni di calendario dalla segnalazione.') : __('Il certificato medico è obbligatorio: caricalo appena disponibile.'));
 		DOLLY.render(main, [
-			pageTitle('Malattia e infortunio', [tourTag(DOLLY.button('Segnala malattia/infortunio', { variant: 'primary', icon: 'stethoscope', onClick: sicknessDialog }), 'new-sickness')]),
-			DOLLY.alert('La malattia o l\'infortunio vengono registrati subito, senza approvazione. ' + info, 'info'),
-			tourTag(DOLLY.card('Le tue segnalazioni', 'file-text', box), 'sick-list')
+			pageTitle(__('Malattia e infortunio'), [tourTag(DOLLY.button(__('Segnala malattia/infortunio'), { variant: 'primary', icon: 'stethoscope', onClick: sicknessDialog }), 'new-sickness')]),
+			DOLLY.alert(__('La malattia o l\'infortunio vengono registrati subito, senza approvazione. ') + info, 'info'),
+			tourTag(DOLLY.card(__('Le tue segnalazioni'), 'file-text', box), 'sick-list')
 		]);
 		function load() {
 			DOLLY.api('sickness', { query: { page: state.sickPage } }).then(function (res) {
 				DOLLY.render(box, [
-					res.items.length ? h('div', { class: 'dolly-stack' }, res.items.map(sicknessItem)) : DOLLY.empty('Nessuna malattia o infortunio segnalato', '', 'stethoscope'),
+					res.items.length ? h('div', { class: 'dolly-stack' }, res.items.map(sicknessItem)) : DOLLY.empty(__('Nessuna malattia o infortunio segnalato'), '', 'stethoscope'),
 					DOLLY.pagination(res, function (p) { state.sickPage = p; load(); }, 'malattie')
 				]);
 			}, function (err) { DOLLY.render(box, DOLLY.errorState(err, load)); });
@@ -877,33 +877,33 @@
 	function sicknessItem(s) {
 		var needs = s.certificate_status === 'missing' || s.certificate_status === 'overdue';
 		var fileInput = h('input', { type: 'file', accept: '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png', class: 'dolly-sr-only', id: DOLLY.uid('file') });
-		var uploadBtn = DOLLY.button(needs ? 'Carica certificato' : 'Aggiungi file', { icon: 'file-up', variant: needs ? 'primary' : null, size: 'sm', onClick: function () { fileInput.click(); } });
+		var uploadBtn = DOLLY.button(needs ? __('Carica certificato') : __('Aggiungi file'), { icon: 'file-up', variant: needs ? 'primary' : null, size: 'sm', onClick: function () { fileInput.click(); } });
 		var status = h('div', { class: 'dolly-small', 'aria-live': 'polite' });
 		fileInput.addEventListener('change', function () {
 			var file = fileInput.files[0];
 			if (!file) { return; }
-			if (file.size > 10 * 1024 * 1024) { DOLLY.render(status, DOLLY.alert('Il file supera i 10 MB.', 'error')); return; }
-			if (!/\.(pdf|jpe?g|png)$/i.test(file.name)) { DOLLY.render(status, DOLLY.alert('Formato non consentito: carica PDF, JPG o PNG.', 'error')); return; }
+			if (file.size > 10 * 1024 * 1024) { DOLLY.render(status, DOLLY.alert(__('Il file supera i 10 MB.'), 'error')); return; }
+			if (!/\.(pdf|jpe?g|png)$/i.test(file.name)) { DOLLY.render(status, DOLLY.alert(__('Formato non consentito: carica PDF, JPG o PNG.'), 'error')); return; }
 			var fd = new FormData(); fd.append('file', file);
-			DOLLY.render(status, DOLLY.loading('Caricamento di ' + file.name + '…'));
+			DOLLY.render(status, DOLLY.loading(__('Caricamento di ') + file.name + '…'));
 			DOLLY.busy(uploadBtn, DOLLY.api('sickness/' + s.id + '/certificate', { method: 'POST', form: fd, timeout: 120000 })).then(function () {
-				DOLLY.toast('Certificato caricato.', 'success');
+				DOLLY.toast(__('Certificato caricato.'), 'success');
 				viewSickness();
 			}, function (err) { DOLLY.render(status, DOLLY.alert(err.message, 'error')); fileInput.value = ''; });
 		});
 		return h('article', { class: 'dolly-card', style: 'box-shadow:none' }, [
 			h('div', { class: 'dolly-card__head' }, [
-				h('h3', { text: (s.kind_label || 'Malattia') + ' dal ' + DOLLY.fmt.date(s.start_date) + ' al ' + DOLLY.fmt.date(s.end_date) }),
+				h('h3', { text: (s.kind_label || __('Malattia')) + __(' dal ') + DOLLY.fmt.date(s.start_date) + __(' al ') + DOLLY.fmt.date(s.end_date) }),
 				DOLLY.certBadge(s.certificate_status, s.certificate_label)
 			]),
-			s.reported_by_admin ? h('p', { class: 'dolly-small dolly-muted', text: 'Inserita dall\'amministratore.' }) : null,
-			s.certificate_due && needs ? h('p', { class: 'dolly-small', text: 'Scadenza certificato: ' + DOLLY.fmt.date(s.certificate_due) }) : null,
-			s.notes ? h('p', { class: 'dolly-small dolly-muted', text: 'Note: ' + s.notes }) : null,
+			s.reported_by_admin ? h('p', { class: 'dolly-small dolly-muted', text: __('Inserita dall\'amministratore.') }) : null,
+			s.certificate_due && needs ? h('p', { class: 'dolly-small', text: __('Scadenza certificato: ') + DOLLY.fmt.date(s.certificate_due) }) : null,
+			s.notes ? h('p', { class: 'dolly-small dolly-muted', text: __('Note: ') + s.notes }) : null,
 			s.certificates.length ? h('ul', { class: 'dolly-small' }, s.certificates.map(function (c) {
 				return h('li', {}, [h('a', { href: DOLLY.downloadUrl('certificates/' + c.id + '/download') }, [DOLLY.icon('download'), ' ' + c.original_name]), ' · ' + DOLLY.fmt.bytes(c.size) + ' · ' + DOLLY.fmt.dateTime(c.uploaded_at)]);
 			})) : null,
-			h('div', { class: 'dolly-btn-row' }, [uploadBtn, h('label', { for: fileInput.id, class: 'dolly-sr-only', text: 'Scegli il file del certificato' }), fileInput]),
-			h('p', { class: 'dolly-help', text: 'PDF, JPG o PNG, massimo 10 MB.' }),
+			h('div', { class: 'dolly-btn-row' }, [uploadBtn, h('label', { for: fileInput.id, class: 'dolly-sr-only', text: __('Scegli il file del certificato') }), fileInput]),
+			h('p', { class: 'dolly-help', text: __('PDF, JPG o PNG, massimo 10 MB.') }),
 			status
 		]);
 	}
@@ -911,27 +911,27 @@
 	function sicknessDialog() {
 		var alertBox = h('div', { hidden: true });
 		var today = DOLLY.fmt.today();
-		var kind = DOLLY.radios({ label: 'Tipo', name: 'kind', value: 'malattia', full: true, options: [
-			{ value: 'malattia', label: 'Malattia' },
-			{ value: 'infortunio', label: 'Infortunio' }
+		var kind = DOLLY.radios({ label: __('Tipo'), name: 'kind', value: 'malattia', full: true, options: [
+			{ value: 'malattia', label: __('Malattia') },
+			{ value: 'infortunio', label: __('Infortunio') }
 		] });
 		kind.dataset.tour = 'sick-kind';
-		var sd = DOLLY.dateField({ label: 'Dal', name: 'start_date', value: today, required: true });
-		var ed = DOLLY.dateField({ label: 'Al', name: 'end_date', value: today, required: true });
-		var notes = DOLLY.field({ label: 'Note', name: 'notes', type: 'textarea', optional: true, full: true, help: 'Visibili solo a te e all\'amministratore. Non inserire diagnosi.' });
+		var sd = DOLLY.dateField({ label: __('Dal'), name: 'start_date', value: today, required: true });
+		var ed = DOLLY.dateField({ label: __('Al'), name: 'end_date', value: today, required: true });
+		var notes = DOLLY.field({ label: __('Note'), name: 'notes', type: 'textarea', optional: true, full: true, help: __('Visibili solo a te e all\'amministratore. Non inserire diagnosi.') });
 		var form = h('form', { class: 'dolly-form', novalidate: true }, [alertBox, h('div', { class: 'dolly-form-grid' }, [kind, sd, ed, notes])]);
 		DOLLY.dialog({
-			title: 'Segnala malattia/infortunio', body: form,
+			title: __('Segnala malattia/infortunio'), body: form,
 			actions: [
-				{ label: 'Annulla' },
-				{ label: 'Segnala', variant: 'primary', icon: 'send', onClick: function (close, btn) {
+				{ label: __('Annulla') },
+				{ label: __('Segnala'), variant: 'primary', icon: 'send', onClick: function (close, btn) {
 					DOLLY.clearErrors(form);
 					var read = DOLLY.readDateTimes({ start_date: [sd, 'date', true], end_date: [ed, 'date', true] });
 					if (Object.keys(read.errors).length) { DOLLY.showErrors(form, read.errors); return; }
 					var k = kind.value() || 'malattia';
 					DOLLY.busy(btn, DOLLY.api('sickness', { method: 'POST', body: Object.assign({ kind: k, notes: notes.input.value }, read.values) })).then(function (s) {
 						close();
-						DOLLY.toast(SICK_KINDS[k] + ' registrat' + (k === 'infortunio' ? 'o' : 'a') + '.' + (s.conflict ? ' Segnalato un conflitto con presenze o ferie: verrà verificato dall\'amministratore.' : ''), 'success');
+						DOLLY.toast((k === 'infortunio' ? __('Infortunio registrato.') : __('Malattia registrata.')) + (s.conflict ? __(' Segnalato un conflitto con presenze o ferie: verrà verificato dall\'amministratore.') : ''), 'success');
 						viewSickness();
 					}, function (err) { DOLLY.formError(form, err, alertBox); });
 				} }
@@ -945,10 +945,10 @@
 
 	function viewNotifications() {
 		var box = h('div', {}, DOLLY.loading());
-		var readAll = DOLLY.button('Segna tutte come lette', { icon: 'check', onClick: function () {
+		var readAll = DOLLY.button(__('Segna tutte come lette'), { icon: 'check', onClick: function () {
 			DOLLY.busy(readAll, DOLLY.api('notifications/read-all', { method: 'POST' })).then(function () { state.me && (state.me.unread = 0); updateBadges(); load(); });
 		} });
-		DOLLY.render(main, [pageTitle('Notifiche', [readAll]), DOLLY.card(null, null, box)]);
+		DOLLY.render(main, [pageTitle(__('Notifiche'), [readAll]), DOLLY.card(null, null, box)]);
 		function load() {
 			DOLLY.api('notifications', { query: { page: state.notifPage } }).then(function (res) {
 				if (state.me) { state.me.unread = res.unread; updateBadges(); }
@@ -957,16 +957,16 @@
 						return h('li', { class: 'dolly-alert dolly-alert--' + (n.read ? 'info' : 'warning') }, [
 							DOLLY.icon(n.read ? 'bell' : 'bell-ring'),
 							h('div', { class: 'dolly-alert__body' }, [
-								h('strong', { text: n.title }), n.read ? null : h('span', { class: 'dolly-sr-only', text: ' (non letta)' }),
+								h('strong', { text: n.title }), n.read ? null : h('span', { class: 'dolly-sr-only', text: __(' (non letta)') }),
 								h('div', { style: 'white-space:pre-line', text: n.body }),
 								h('div', { class: 'dolly-small dolly-muted', text: DOLLY.fmt.dateTime(n.created_at) }),
 								h('div', { class: 'dolly-btn-row', style: 'margin-top:6px' }, [
-									DOLLY.button('Apri', { size: 'sm', icon: 'arrow-right', onClick: function () { showNotification(n, load); } }),
-									n.read ? null : DOLLY.button('Segna come letta', { size: 'sm', icon: 'check', onClick: function () { markRead(n).then(load); } })
+									DOLLY.button(__('Apri'), { size: 'sm', icon: 'arrow-right', onClick: function () { showNotification(n, load); } }),
+									n.read ? null : DOLLY.button(__('Segna come letta'), { size: 'sm', icon: 'check', onClick: function () { markRead(n).then(load); } })
 								])
 							])
 						]);
-					})) : DOLLY.empty('Nessuna notifica', 'Qui trovi esiti delle richieste, certificati e anomalie.', 'bell'),
+					})) : DOLLY.empty(__('Nessuna notifica'), __('Qui trovi esiti delle richieste, certificati e anomalie.'), 'bell'),
 					DOLLY.pagination(res, function (p) { state.notifPage = p; load(); }, 'notifiche')
 				]);
 			}, function (err) { DOLLY.render(box, DOLLY.errorState(err, load)); });
@@ -977,7 +977,7 @@
 		load();
 	}
 
-	var SECTION_LABELS = { dashboard: 'Timbratura', calendario: 'Calendario', richieste: 'Richieste', malattia: 'Malattia', profilo: 'Profilo' };
+	var SECTION_LABELS = { dashboard: __('Timbratura'), calendario: __('Calendario'), richieste: __('Richieste'), malattia: __('Malattia'), profilo: __('Profilo') };
 
 	/**
 	 * Shows one notification in a pop-up (subject, date, message) and marks it as read. When it refers to a
@@ -986,7 +986,7 @@
 	function showNotification(n, onClose) {
 		var section = '';
 		try { section = n.link ? new URL(n.link, window.location.href).hash.slice(1) : ''; } catch (e) { section = ''; }
-		var go = SECTION_LABELS[section] ? { label: 'Vai a ' + SECTION_LABELS[section], icon: 'arrow-right', onClick: function (close) { close(); window.location.hash = '#' + section; } } : null;
+		var go = SECTION_LABELS[section] ? { label: __('Vai a ') + SECTION_LABELS[section], icon: 'arrow-right', onClick: function (close) { close(); window.location.hash = '#' + section; } } : null;
 		DOLLY.dialog({
 			title: n.title,
 			body: [
@@ -994,7 +994,7 @@
 				h('div', { class: 'dolly-notice-body', text: n.body || '' })
 			],
 			onClose: function () { if (onClose) { onClose(); } },
-			actions: [go, { label: 'Chiudi', variant: 'primary' }].filter(Boolean)
+			actions: [go, { label: __('Chiudi'), variant: 'primary' }].filter(Boolean)
 		});
 		if (!n.read) {
 			DOLLY.api('notifications/' + n.id + '/read', { method: 'POST' }).then(function (r) { n.read = true; if (state.me) { state.me.unread = r.unread; updateBadges(); } }, function () {});
@@ -1021,55 +1021,64 @@
 		DOLLY.render(main, DOLLY.loading());
 		loadMe().then(function (me) {
 			var alert1 = h('div', { hidden: true });
-			var fn = DOLLY.field({ label: 'Nome', name: 'first_name', value: me.first_name, required: true, attrs: { autocomplete: 'given-name' } });
-			var ln = DOLLY.field({ label: 'Cognome', name: 'last_name', value: me.last_name, required: true, attrs: { autocomplete: 'family-name' } });
-			var ph = DOLLY.field({ label: 'Telefono', name: 'phone', type: 'tel', value: me.phone, optional: true, attrs: { autocomplete: 'tel' } });
-			var em = DOLLY.field({ label: 'Email', name: 'email', type: 'email', value: me.email, required: true, attrs: { autocomplete: 'email' } });
-			var saveBtn = DOLLY.button('Salva profilo', { type: 'submit', variant: 'primary', icon: 'save' });
+			var fn = DOLLY.field({ label: __('Nome'), name: 'first_name', value: me.first_name, required: true, attrs: { autocomplete: 'given-name' } });
+			var ln = DOLLY.field({ label: __('Cognome'), name: 'last_name', value: me.last_name, required: true, attrs: { autocomplete: 'family-name' } });
+			var ph = DOLLY.field({ label: __('Telefono'), name: 'phone', type: 'tel', value: me.phone, optional: true, attrs: { autocomplete: 'tel' } });
+			var em = DOLLY.field({ label: __('Email'), name: 'email', type: 'email', value: me.email, required: true, attrs: { autocomplete: 'email' } });
+			var saveBtn = DOLLY.button(__('Salva profilo'), { type: 'submit', variant: 'primary', icon: 'save' });
 			var form1 = h('form', { class: 'dolly-form', novalidate: true }, [alert1, h('div', { class: 'dolly-form-grid' }, [fn, ln, ph, em]), h('div', { class: 'dolly-btn-row' }, saveBtn)]);
 			form1.addEventListener('submit', function (e) {
 				e.preventDefault(); DOLLY.clearErrors(form1); alert1.hidden = true;
 				DOLLY.busy(saveBtn, DOLLY.api('me/profile', { method: 'POST', body: { first_name: fn.input.value, last_name: ln.input.value, phone: ph.input.value, email: em.input.value } })).then(function () {
-					DOLLY.toast('Profilo aggiornato.', 'success');
+					DOLLY.toast(__('Profilo aggiornato.'), 'success');
 				}, function (err) { DOLLY.formError(form1, err, alert1); });
 			});
 
 			var alert2 = h('div', { hidden: true });
-			var cur = DOLLY.field({ label: 'Password attuale', name: 'current_password', type: 'password', required: true, attrs: { autocomplete: 'current-password' } });
-			var np = DOLLY.field({ label: 'Nuova password', name: 'new_password', type: 'password', required: true, help: 'Almeno 8 caratteri.', attrs: { autocomplete: 'new-password', minlength: 8 } });
-			var np2 = DOLLY.field({ label: 'Ripeti nuova password', name: 'new_password2', type: 'password', required: true, attrs: { autocomplete: 'new-password' } });
-			var pwBtn = DOLLY.button('Cambia password', { type: 'submit', variant: 'primary', icon: 'key-round' });
+			var cur = DOLLY.field({ label: __('Password attuale'), name: 'current_password', type: 'password', required: true, attrs: { autocomplete: 'current-password' } });
+			var np = DOLLY.field({ label: __('Nuova password'), name: 'new_password', type: 'password', required: true, help: __('Almeno 8 caratteri.'), attrs: { autocomplete: 'new-password', minlength: 8 } });
+			var np2 = DOLLY.field({ label: __('Ripeti nuova password'), name: 'new_password2', type: 'password', required: true, attrs: { autocomplete: 'new-password' } });
+			var pwBtn = DOLLY.button(__('Cambia password'), { type: 'submit', variant: 'primary', icon: 'key-round' });
 			var form2 = h('form', { class: 'dolly-form', novalidate: true }, [alert2, h('div', { class: 'dolly-form-grid' }, [cur, h('span'), np, np2]), h('div', { class: 'dolly-btn-row' }, pwBtn)]);
 			form2.addEventListener('submit', function (e) {
 				e.preventDefault(); DOLLY.clearErrors(form2); alert2.hidden = true;
-				if (np.input.value.length < 8) { DOLLY.showErrors(form2, { new_password: 'Almeno 8 caratteri.' }); return; }
-				if (np.input.value !== np2.input.value) { DOLLY.showErrors(form2, { new_password2: 'Le password non coincidono.' }); return; }
+				if (np.input.value.length < 8) { DOLLY.showErrors(form2, { new_password: __('Almeno 8 caratteri.') }); return; }
+				if (np.input.value !== np2.input.value) { DOLLY.showErrors(form2, { new_password2: __('Le password non coincidono.') }); return; }
 				DOLLY.busy(pwBtn, DOLLY.api('me/password', { method: 'POST', body: { current_password: cur.input.value, new_password: np.input.value } })).then(function () {
-					DOLLY.toast('Password aggiornata. La pagina verrà ricaricata.', 'success');
+					DOLLY.toast(__('Password aggiornata. La pagina verrà ricaricata.'), 'success');
 					setTimeout(function () { window.location.reload(); }, 1500);
 				}, function (err) { DOLLY.formError(form2, err, alert2); });
 			});
 
 			var form3 = bankForm(me);
 
+			// Language of the portal and of the notifications: saved at once, then the page reloads.
+			var lang = me.language || { choice: '', available: {}, default: '' };
+			var langSel = DOLLY.field({ label: __('Lingua del portale'), name: 'locale', type: 'select', value: lang.choice, help: __('Anche le notifiche e le email ti arriveranno in questa lingua.'),
+				options: [{ value: '', label: __('Predefinita') + (lang.default ? ' (' + lang.default + ')' : '') }].concat(Object.keys(lang.available).map(function (k) { return { value: k, label: lang.available[k] }; })) });
+			langSel.input.addEventListener('change', function () {
+				DOLLY.api('me/language', { method: 'POST', body: { locale: langSel.input.value } }).then(function () { window.location.reload(); }, function (err) { DOLLY.toast(err.message, 'error'); });
+			});
+
 			var s = me.schedule;
 			DOLLY.render(main, [
-				pageTitle('Profilo'),
-				DOLLY.card('Dati personali', 'circle-user', [h('p', { class: 'dolly-muted', text: 'Nome utente: ' + me.username + ' (non modificabile)' }), form1]),
-				DOLLY.card('Dati bancari', 'landmark', form3),
-				DOLLY.card('Notifiche sul telefono', 'smartphone', pushCard()),
-				DOLLY.card('Password', 'key-round', form2),
-				DOLLY.card('Tutorial', 'graduation-cap', [
-					h('p', { class: 'dolly-muted', text: 'Rivedi la guida che mostra come timbrare, inviare richieste e segnalare malattie.' }),
-					DOLLY.button('Rivedi il tutorial', { icon: 'play', onClick: function () { startTour(); } })
+				pageTitle(__('Profilo')),
+				DOLLY.card(__('Dati personali'), 'circle-user', [h('p', { class: 'dolly-muted', text: __('Nome utente: ') + me.username + __(' (non modificabile)') }), form1]),
+				DOLLY.card(__('Dati bancari'), 'landmark', form3),
+				DOLLY.card(__('Lingua'), 'languages', langSel),
+				DOLLY.card(__('Notifiche sul telefono'), 'smartphone', pushCard()),
+				DOLLY.card(__('Password'), 'key-round', form2),
+				DOLLY.card(__('Tutorial'), 'graduation-cap', [
+					h('p', { class: 'dolly-muted', text: __('Rivedi la guida che mostra come timbrare, inviare richieste e segnalare malattie.') }),
+					DOLLY.button(__('Rivedi il tutorial'), { icon: 'play', onClick: function () { startTour(); } })
 				]),
-				DOLLY.card('Contratto e orario', 'briefcase', h('dl', { class: 'dolly-dl' }, [
-					h('dt', { text: 'Tipo' }), h('dd', { text: s ? s.employment_label : '—' }),
-					h('dt', { text: 'Orario' }), h('dd', {}, s ? (s.on_call ? 'Nessun orario fisso: turni su chiamata, approvati dall\'amministratore.' : s.weekdays.map(function (d) {
+				DOLLY.card(__('Contratto e orario'), 'briefcase', h('dl', { class: 'dolly-dl' }, [
+					h('dt', { text: __('Tipo') }), h('dd', { text: s ? s.employment_label : '—' }),
+					h('dt', { text: __('Orario') }), h('dd', {}, s ? (s.on_call ? __('Nessun orario fisso: turni su chiamata, approvati dall\'amministratore.') : s.weekdays.map(function (d) {
 						var t = (s.days && s.days[d]) || { start: s.start_time, end: s.end_time, lunch_start: s.lunch_start, lunch_end: s.lunch_end };
-						return h('div', { text: DOLLY.WEEKDAYS[d - 1] + ': ' + t.start + '–' + t.end + (t.lunch_start ? ' · pausa ' + t.lunch_start + '–' + t.lunch_end : '') });
+						return h('div', { text: DOLLY.WEEKDAYS[d - 1] + ': ' + t.start + '–' + t.end + (t.lunch_start ? __(' · pausa ') + t.lunch_start + '–' + t.lunch_end : '') });
 					})) : '—'),
-					h('dt', { text: 'Sedi' }), h('dd', { text: me.workplaces.map(function (w) { return w.name; }).join(', ') || '—' })
+					h('dt', { text: __('Sedi') }), h('dd', { text: me.workplaces.map(function (w) { return w.name; }).join(', ') || '—' })
 				]))
 			]);
 		}, function (err) { DOLLY.render(main, DOLLY.errorState(err, viewProfile)); });
@@ -1079,27 +1088,27 @@
 	function bankForm(me) {
 		var b = me.bank || {};
 		var alertBox = h('div', { hidden: true });
-		var iban = DOLLY.field({ label: 'IBAN', name: 'iban', value: DOLLY.fmt.iban(b.iban), optional: true, full: true, attrs: { autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: 'IT60 X054 2811 1010 0000 0123 456' } });
-		var ben = DOLLY.field({ label: 'Nome beneficiario', name: 'bank_beneficiary', value: b.bank_beneficiary, optional: true, help: 'Intestatario del conto.' });
-		var bank = DOLLY.field({ label: 'Banca', name: 'bank_name', value: b.bank_name, optional: true });
-		var bic = DOLLY.field({ label: 'BIC', name: 'bic', value: b.bic, optional: true, help: 'Codice BIC/SWIFT, 8 o 11 caratteri.', attrs: { autocapitalize: 'characters', spellcheck: 'false', maxlength: 11 } });
-		var btn = DOLLY.button('Salva dati bancari', { type: 'submit', variant: 'primary', icon: 'save' });
+		var iban = DOLLY.field({ label: 'IBAN', name: 'iban', value: DOLLY.fmt.iban(b.iban), optional: true, full: true, attrs: { autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: __('IT60 X054 2811 1010 0000 0123 456') } });
+		var ben = DOLLY.field({ label: __('Nome beneficiario'), name: 'bank_beneficiary', value: b.bank_beneficiary, optional: true, help: __('Intestatario del conto.') });
+		var bank = DOLLY.field({ label: __('Banca'), name: 'bank_name', value: b.bank_name, optional: true });
+		var bic = DOLLY.field({ label: 'BIC', name: 'bic', value: b.bic, optional: true, help: __('Codice BIC/SWIFT, 8 o 11 caratteri.'), attrs: { autocapitalize: 'characters', spellcheck: 'false', maxlength: 11 } });
+		var btn = DOLLY.button(__('Salva dati bancari'), { type: 'submit', variant: 'primary', icon: 'save' });
 		var form = h('form', { class: 'dolly-form', novalidate: true }, [
 			alertBox,
-			h('p', { class: 'dolly-muted', text: 'Usati per l\'accredito dello stipendio. Se modifichi l\'IBAN, l\'amministratore riceve una notifica.' }),
+			h('p', { class: 'dolly-muted', text: __('Usati per l\'accredito dello stipendio. Se modifichi l\'IBAN, l\'amministratore riceve una notifica.') }),
 			h('div', { class: 'dolly-form-grid' }, [iban, ben, bank, bic]),
 			h('div', { class: 'dolly-btn-row' }, btn)
 		]);
 		form.addEventListener('submit', function (e) {
 			e.preventDefault(); DOLLY.clearErrors(form); alertBox.hidden = true;
 			var value = iban.input.value.replace(/[\s-]+/g, '').toUpperCase();
-			if (value && !DOLLY.isIban(value)) { DOLLY.showErrors(form, { iban: 'IBAN non valido: controlla lettere e cifre.' }); return; }
+			if (value && !DOLLY.isIban(value)) { DOLLY.showErrors(form, { iban: __('IBAN non valido: controlla lettere e cifre.') }); return; }
 			var changed = value !== (b.iban || '');
 			DOLLY.busy(btn, DOLLY.api('me/profile', { method: 'POST', body: { iban: value, bank_beneficiary: ben.input.value, bank_name: bank.input.value, bic: bic.input.value } })).then(function (res) {
 				b = res.bank || {}; state.me.bank = b;
 				iban.input.value = DOLLY.fmt.iban(b.iban);
 				bic.input.value = b.bic || '';
-				DOLLY.toast(changed ? 'Dati bancari salvati. L\'amministratore è stato avvisato del nuovo IBAN.' : 'Dati bancari salvati.', 'success');
+				DOLLY.toast(changed ? __('Dati bancari salvati. L\'amministratore è stato avvisato del nuovo IBAN.') : __('Dati bancari salvati.'), 'success');
 			}, function (err) { DOLLY.formError(form, err, alertBox); });
 		});
 		return form;
@@ -1144,10 +1153,10 @@
 		var card = document.querySelector(q('sick-list'));
 		if (!card || card.querySelector('.dolly-tour-demo')) { return; }
 		var today = DOLLY.fmt.today();
-		var item = sicknessItem({ id: 0, kind: 'malattia', kind_label: 'Malattia', start_date: today, end_date: today, certificate_status: 'missing', certificate_label: 'Certificato mancante', certificate_due: null, notes: '', certificates: [], reported_by_admin: false });
+		var item = sicknessItem({ id: 0, kind: 'malattia', kind_label: __('Malattia'), start_date: today, end_date: today, certificate_status: 'missing', certificate_label: __('Certificato mancante'), certificate_due: null, notes: '', certificates: [], reported_by_admin: false });
 		item.classList.add('dolly-tour-demo');
 		item.dataset.tour = 'demo-sickness';
-		item.insertBefore(h('div', { style: 'margin-bottom:8px' }, DOLLY.badge('Esempio del tutorial', 'amber', 'info')), item.firstChild);
+		item.insertBefore(h('div', { style: 'margin-bottom:8px' }, DOLLY.badge(__('Esempio del tutorial'), 'amber', 'info')), item.firstChild);
 		var box = card.lastElementChild;
 		box.insertBefore(item, box.firstChild);
 		DOLLY.icons();
@@ -1160,68 +1169,68 @@
 	function overtimeText() {
 		var min = state.me && state.me.settings ? parseInt(state.me.settings.overtime_auto, 10) || 0 : 0;
 		var hh = Math.floor(min / 60), mm = min % 60;
-		var limit = [hh ? hh + (hh === 1 ? ' ora' : ' ore') : '', mm ? mm + ' minuti' : ''].filter(Boolean).join(' e ');
+		var limit = [hh ? hh + (hh === 1 ? __(' ora') : __(' ore')) : '', mm ? mm + __(' minuti') : ''].filter(Boolean).join(__(' e '));
 		return [
-			h('p', {}, ['Gli straordinari ', strong('non si richiedono'), ': vengono calcolati in automatico dalle tue timbrature.']),
+			h('p', {}, [__('Gli straordinari '), strong(__('non si richiedono')), __(': vengono calcolati in automatico dalle tue timbrature.')]),
 			bullets(min > 0 ? [
-				[strong('Fino a ' + limit + ' al giorno'), ': se esci dopo la fine del turno, il tempo in più è approvato automaticamente.'],
-				[strong('Oltre ' + limit), ': la parte in più resta in attesa dell\'approvazione dell\'amministratore. Ricevi una notifica con l\'esito.'],
-				[strong('Giorni di riposo'), ': puoi lavorare solo se l\'amministratore ti ha autorizzato lo straordinario.']
+				[strong(__('Fino a ') + limit + __(' al giorno')), __(': se esci dopo la fine del turno, il tempo in più è approvato automaticamente.')],
+				[strong(__('Oltre ') + limit), __(': la parte in più resta in attesa dell\'approvazione dell\'amministratore. Ricevi una notifica con l\'esito.')],
+				[strong(__('Giorni di riposo')), __(': puoi lavorare solo se l\'amministratore ti ha autorizzato lo straordinario.')]
 			] : [
-				[strong('Dopo la fine del turno'), ': il tempo in più resta in attesa dell\'approvazione dell\'amministratore. Ricevi una notifica con l\'esito.'],
-				[strong('Giorni di riposo'), ': puoi lavorare solo se l\'amministratore ti ha autorizzato lo straordinario.']
+				[strong(__('Dopo la fine del turno')), __(': il tempo in più resta in attesa dell\'approvazione dell\'amministratore. Ricevi una notifica con l\'esito.')],
+				[strong(__('Giorni di riposo')), __(': puoi lavorare solo se l\'amministratore ti ha autorizzato lo straordinario.')]
 			]),
-			h('p', {}, 'Le ore di straordinario compaiono in «Calendario e presenze», colonna «Straordinario».'),
-			h('p', { class: 'dolly-legal' }, 'Anche le ore di straordinario sono soggette a verifica da parte del datore di lavoro.')
+			h('p', {}, __('Le ore di straordinario compaiono in «Calendario e presenze», colonna «Straordinario».')),
+			h('p', { class: 'dolly-legal' }, __('Anche le ore di straordinario sono soggette a verifica da parte del datore di lavoro.'))
 		];
 	}
 
 	function tourSteps() {
-		var ok = 'Ho capito';
+		var ok = __('Ho capito');
 		var requestType = function (type, title, text) {
-			return { before: setRequestType(type), target: q('request-form'), title: 'Tipi di richiesta · ' + title, text: para(text), padding: 4 };
+			return { before: setRequestType(type), target: q('request-form'), title: __('Tipi di richiesta · ') + title, text: para(text), padding: 4 };
 		};
 		return [
-			{ title: 'Benvenuto nel portale ' + DOLLY.brandName + '!', text: para(['In un paio di minuti ti mostriamo come timbrare, inviare richieste e segnalare una malattia.', 'Durante il tutorial non viene registrato nulla: è solo una prova.']), next: 'Inizia', nextIcon: 'play' },
-			{ before: goTo('dashboard'), target: q('clock-btn'), mode: 'click', tap: true, scroll: true, title: 'Registra entrata', text: para(['Quando arrivi al lavoro tocca questo pulsante. Cambia testo e colore a ogni fase: entrata, pausa, uscita.', 'Provalo ora.']), hint: 'Tocca «Registra entrata»' },
-			{ target: q('methods'), title: 'Come verificare la presenza', text: bullets([
-				[strong('Usa la mia posizione'), ': il telefono verifica con il GPS che sei in sede.'],
-				[strong('Scansiona il QR della sede'), ': inquadra il codice sullo schermo della sede. Usalo se il GPS non funziona.'],
-				[strong('Inserisci il PIN della sede'), ': in alternativa al QR, il codice di 6 cifre mostrato sullo schermo.']
+			{ title: DOLLY.sprintf(__('Benvenuto nel portale %s!'), DOLLY.brandName), text: para([__('In un paio di minuti ti mostriamo come timbrare, inviare richieste e segnalare una malattia.'), __('Durante il tutorial non viene registrato nulla: è solo una prova.')]), next: __('Inizia'), nextIcon: 'play' },
+			{ before: goTo('dashboard'), target: q('clock-btn'), mode: 'click', tap: true, scroll: true, title: __('Registra entrata'), text: para([__('Quando arrivi al lavoro tocca questo pulsante. Cambia testo e colore a ogni fase: entrata, pausa, uscita.'), __('Provalo ora.')]), hint: __('Tocca «Registra entrata»') },
+			{ target: q('methods'), title: __('Come verificare la presenza'), text: bullets([
+				[strong(__('Usa la mia posizione')), __(': il telefono verifica con il GPS che sei in sede.')],
+				[strong(__('Scansiona il QR della sede')), __(': inquadra il codice sullo schermo della sede. Usalo se il GPS non funziona.')],
+				[strong(__('Inserisci il PIN della sede')), __(': in alternativa al QR, il codice di 6 cifre mostrato sullo schermo.')]
 			]) },
-			{ target: q('gps'), mode: 'click', tap: true, title: 'Usa la mia posizione', text: para(['Tocca «Usa la mia posizione».', 'Se il GPS non funziona o la posizione non viene rilevata, scegli «Scansiona il QR della sede».']), hint: 'Tocca «Usa la mia posizione»' },
-			{ target: q('confirm'), mode: 'click', tap: true, title: 'Conferma entrata', text: para(['Controlla i dati e tocca «Conferma entrata». L\'orario registrato è quello del server.']), hint: 'Tocca «Conferma entrata»' },
-			{ target: q('today'), scroll: true, title: 'Oggi', text: bullets([
-				[strong('Orario'), ': il tuo turno di oggi e l\'eventuale pausa.'],
-				[strong('Sedi'), ': dove puoi timbrare.'],
-				[strong('Verifica'), ': come devi confermare la presenza (posizione, QR o PIN).']
+			{ target: q('gps'), mode: 'click', tap: true, title: __('Usa la mia posizione'), text: para([__('Tocca «Usa la mia posizione».'), __('Se il GPS non funziona o la posizione non viene rilevata, scegli «Scansiona il QR della sede».')]), hint: __('Tocca «Usa la mia posizione»') },
+			{ target: q('confirm'), mode: 'click', tap: true, title: __('Conferma entrata'), text: para([__('Controlla i dati e tocca «Conferma entrata». L\'orario registrato è quello del server.')]), hint: __('Tocca «Conferma entrata»') },
+			{ target: q('today'), scroll: true, title: __('Oggi'), text: bullets([
+				[strong(__('Orario')), __(': il tuo turno di oggi e l\'eventuale pausa.')],
+				[strong(__('Sedi')), __(': dove puoi timbrare.')],
+				[strong(__('Verifica')), __(': come devi confermare la presenza (posizione, QR o PIN).')]
 			]), next: ok, nextIcon: 'check' },
-			{ target: '.dolly-nav__link[data-section="richieste"]', mode: 'click', tap: true, title: 'Richieste', text: para(['Qui chiedi ferie, permessi, donazione sangue e correzioni delle timbrature. Tocca «Richieste».']), hint: 'Tocca «Richieste»' },
-			{ target: q('requests-list'), title: 'Le tue richieste', text: para(['Qui trovi tutte le tue richieste con il loro stato: in attesa, approvata o respinta. Per ogni decisione ricevi una notifica.', 'Le richieste in attesa si possono modificare o eliminare; per quelle approvate puoi chiedere una modifica o l\'annullamento.']), next: ok, nextIcon: 'check' },
-			{ target: q('new-request'), mode: 'click', tap: true, title: 'Nuova richiesta', text: para(['Tocca «Nuova richiesta» per vedere i tipi di richiesta.']), hint: 'Tocca «Nuova richiesta»' },
-			requestType('ferie', 'Ferie (1 di 3)', ['Per giornate intere: indica «Dal» e «Al» e, se vuoi, una nota.', 'L\'amministratore approva o respinge la richiesta e ricevi una notifica.']),
-			requestType('permesso', 'Permesso orario (2 di 3)', ['Per assentarti alcune ore: scegli il tipo di permesso (retribuito, non retribuito o per eventi specifici: il pulsante «?» li spiega), poi il giorno e l\'orario «Dalle ore» / «Alle ore».', 'Le ore di permesso approvate vengono tolte dalle ore lavorate.']),
-			requestType('correzione', 'Correzione timbratura (3 di 3)', ['Se hai dimenticato di timbrare o hai sbagliato: scegli giorno e timbratura, indica l\'orario corretto e il motivo.', 'Quando la richiesta è approvata, la timbratura viene corretta.']),
-			{ target: q('request-legal'), scroll: true, title: 'Verifica del datore di lavoro', text: [h('p', { class: 'dolly-legal' }, LEGAL_NOTICE)], next: ok, nextIcon: 'check', padding: 4 },
-			{ target: dialogButton('Annulla'), mode: 'click', tap: true, title: 'Chiudi senza inviare', text: para(['Per ora non inviamo nulla: tocca «Annulla».']), hint: 'Tocca «Annulla»' },
-			{ target: '.dolly-nav__link[data-section="malattia"]', mode: 'click', tap: true, title: 'Malattia', text: para(['Tocca «Malattia».']), hint: 'Tocca «Malattia»' },
-			{ target: '#dolly-main > .dolly-alert', scroll: true, title: 'Malattia e infortunio', text: para(['Qui segnali una malattia o un infortunio: la segnalazione viene registrata subito, senza approvazione.', 'Sotto trovi le tue segnalazioni con lo stato del certificato medico.']) },
-			{ target: q('new-sickness'), mode: 'click', tap: true, title: 'Segnala malattia/infortunio', text: para(['Tocca il pulsante per vedere come si fa una segnalazione.']), hint: 'Tocca «Segnala malattia/infortunio»' },
-			{ target: q('sick-kind'), title: 'Tipo di segnalazione', text: [
-				bullets([[strong('Malattia'), ': quando sei assente dal lavoro per motivi di salute.'], [strong('Infortunio'), ': quando subisci un infortunio sul lavoro o durante il normale tragitto tra casa e lavoro.']]),
-				h('p', {}, 'Se non puoi farlo tu, la segnalazione può essere registrata anche dall\'amministratore per tuo conto.'),
-				h('p', {}, 'Indica le date e, se vuoi, una nota (non inserire diagnosi).'),
-				h('p', {}, ['Dopo la segnalazione devi ', strong('caricare il certificato medico'), ' nella tabella «Le tue segnalazioni».'])
+			{ target: '.dolly-nav__link[data-section="richieste"]', mode: 'click', tap: true, title: __('Richieste'), text: para([__('Qui chiedi ferie, permessi, donazione sangue e correzioni delle timbrature. Tocca «Richieste».')]), hint: __('Tocca «Richieste»') },
+			{ target: q('requests-list'), title: __('Le tue richieste'), text: para([__('Qui trovi tutte le tue richieste con il loro stato: in attesa, approvata o respinta. Per ogni decisione ricevi una notifica.'), __('Le richieste in attesa si possono modificare o eliminare; per quelle approvate puoi chiedere una modifica o l\'annullamento.')]), next: ok, nextIcon: 'check' },
+			{ target: q('new-request'), mode: 'click', tap: true, title: __('Nuova richiesta'), text: para([__('Tocca «Nuova richiesta» per vedere i tipi di richiesta.')]), hint: __('Tocca «Nuova richiesta»') },
+			requestType('ferie', __('Ferie (1 di 3)'), [__('Per giornate intere: indica «Dal» e «Al» e, se vuoi, una nota.'), __('L\'amministratore approva o respinge la richiesta e ricevi una notifica.')]),
+			requestType('permesso', __('Permesso orario (2 di 3)'), [__('Per assentarti alcune ore: scegli il tipo di permesso (retribuito, non retribuito o per eventi specifici: il pulsante «?» li spiega), poi il giorno e l\'orario «Dalle ore» / «Alle ore».'), __('Le ore di permesso approvate vengono tolte dalle ore lavorate.')]),
+			requestType('correzione', __('Correzione timbratura (3 di 3)'), [__('Se hai dimenticato di timbrare o hai sbagliato: scegli giorno e timbratura, indica l\'orario corretto e il motivo.'), __('Quando la richiesta è approvata, la timbratura viene corretta.')]),
+			{ target: q('request-legal'), scroll: true, title: __('Verifica del datore di lavoro'), text: [h('p', { class: 'dolly-legal' }, LEGAL_NOTICE)], next: ok, nextIcon: 'check', padding: 4 },
+			{ target: dialogButton(__('Annulla')), mode: 'click', tap: true, title: __('Chiudi senza inviare'), text: para([__('Per ora non inviamo nulla: tocca «Annulla».')]), hint: __('Tocca «Annulla»') },
+			{ target: '.dolly-nav__link[data-section="malattia"]', mode: 'click', tap: true, title: __('Malattia'), text: para([__('Tocca «Malattia».')]), hint: __('Tocca «Malattia»') },
+			{ target: '#dolly-main > .dolly-alert', scroll: true, title: __('Malattia e infortunio'), text: para([__('Qui segnali una malattia o un infortunio: la segnalazione viene registrata subito, senza approvazione.'), __('Sotto trovi le tue segnalazioni con lo stato del certificato medico.')]) },
+			{ target: q('new-sickness'), mode: 'click', tap: true, title: __('Segnala malattia/infortunio'), text: para([__('Tocca il pulsante per vedere come si fa una segnalazione.')]), hint: __('Tocca «Segnala malattia/infortunio»') },
+			{ target: q('sick-kind'), title: __('Tipo di segnalazione'), text: [
+				bullets([[strong(__('Malattia')), __(': quando sei assente dal lavoro per motivi di salute.')], [strong(__('Infortunio')), __(': quando subisci un infortunio sul lavoro o durante il normale tragitto tra casa e lavoro.')]]),
+				h('p', {}, __('Se non puoi farlo tu, la segnalazione può essere registrata anche dall\'amministratore per tuo conto.')),
+				h('p', {}, __('Indica le date e, se vuoi, una nota (non inserire diagnosi).')),
+				h('p', {}, [__('Dopo la segnalazione devi '), strong(__('caricare il certificato medico')), __(' nella tabella «Le tue segnalazioni».')])
 			] },
-			{ target: dialogButton('Annulla'), mode: 'click', tap: true, title: 'Chiudi', text: para(['Tocca «Annulla»: ti mostriamo un esempio di segnalazione.']), hint: 'Tocca «Annulla»' },
-			{ before: showDemoSickness, target: function () { return document.querySelector(q('demo-sickness') + ' .dolly-btn'); }, tap: true, scroll: true, title: 'Carica il certificato', text: para(['Ogni segnalazione compare in «Le tue segnalazioni» (questa è solo un esempio).', 'Tocca «Carica certificato» e scegli il file: PDF, JPG o PNG fino a 10 MB. Finché il certificato manca, la segnalazione resta in rosso.']), next: ok, nextIcon: 'check', after: removeDemo },
-			{ target: '.dolly-topbar__actions [data-section="profilo"]', mode: 'click', tap: true, title: 'Il tuo profilo', text: para(['In alto trovi le notifiche (campanella) e il tuo profilo. Tocca il profilo.']), hint: 'Tocca l\'icona del profilo' },
-			{ target: 'section[aria-label="Dati personali"]', scroll: true, title: 'Dati personali', text: para(['Aggiorna nome, cognome, telefono ed email e tocca «Salva profilo». Il nome utente non si può cambiare.']) },
-			{ target: 'section[aria-label="Dati bancari"]', scroll: true, title: 'Dati bancari', text: para(['IBAN, intestatario, banca e BIC per l\'accredito dello stipendio: tocca «Salva dati bancari». Se cambi l\'IBAN l\'amministratore viene avvisato.']) },
-			{ target: 'section[aria-label="Notifiche sul telefono"]', scroll: true, title: 'Notifiche sul telefono', text: para(['Attiva le notifiche per ricevere esiti delle richieste, anomalie e messaggi anche con l\'app chiusa.']) },
-			{ target: 'section[aria-label="Password"]', scroll: true, title: 'Cambia password', text: para(['Inserisci la password attuale e quella nuova (almeno 8 caratteri), poi tocca «Cambia password».']), next: ok, nextIcon: 'check' },
-			{ before: goTo('dashboard'), target: q('today'), scroll: true, title: 'Come funzionano gli straordinari', text: overtimeText(), next: ok, nextIcon: 'check' },
-			{ target: q('clock'), scroll: true, title: 'Tutto pronto!', text: para(['Da qui timbri ogni giorno.', 'Puoi rivedere il tutorial quando vuoi da Profilo › Tutorial.']), next: 'Fine', nextIcon: 'check', noSkip: true }
+			{ target: dialogButton(__('Annulla')), mode: 'click', tap: true, title: __('Chiudi'), text: para([__('Tocca «Annulla»: ti mostriamo un esempio di segnalazione.')]), hint: __('Tocca «Annulla»') },
+			{ before: showDemoSickness, target: function () { return document.querySelector(q('demo-sickness') + ' .dolly-btn'); }, tap: true, scroll: true, title: __('Carica il certificato'), text: para([__('Ogni segnalazione compare in «Le tue segnalazioni» (questa è solo un esempio).'), __('Tocca «Carica certificato» e scegli il file: PDF, JPG o PNG fino a 10 MB. Finché il certificato manca, la segnalazione resta in rosso.')]), next: ok, nextIcon: 'check', after: removeDemo },
+			{ target: '.dolly-topbar__actions [data-section="profilo"]', mode: 'click', tap: true, title: __('Il tuo profilo'), text: para([__('In alto trovi le notifiche (campanella) e il tuo profilo. Tocca il profilo.')]), hint: __('Tocca l\'icona del profilo') },
+			{ target: 'section[aria-label="Dati personali"]', scroll: true, title: __('Dati personali'), text: para([__('Aggiorna nome, cognome, telefono ed email e tocca «Salva profilo». Il nome utente non si può cambiare.')]) },
+			{ target: 'section[aria-label="Dati bancari"]', scroll: true, title: __('Dati bancari'), text: para([__('IBAN, intestatario, banca e BIC per l\'accredito dello stipendio: tocca «Salva dati bancari». Se cambi l\'IBAN l\'amministratore viene avvisato.')]) },
+			{ target: 'section[aria-label="Notifiche sul telefono"]', scroll: true, title: __('Notifiche sul telefono'), text: para([__('Attiva le notifiche per ricevere esiti delle richieste, anomalie e messaggi anche con l\'app chiusa.')]) },
+			{ target: 'section[aria-label="Password"]', scroll: true, title: __('Cambia password'), text: para([__('Inserisci la password attuale e quella nuova (almeno 8 caratteri), poi tocca «Cambia password».')]), next: ok, nextIcon: 'check' },
+			{ before: goTo('dashboard'), target: q('today'), scroll: true, title: __('Come funzionano gli straordinari'), text: overtimeText(), next: ok, nextIcon: 'check' },
+			{ target: q('clock'), scroll: true, title: __('Tutto pronto!'), text: para([__('Da qui timbri ogni giorno.'), __('Puoi rivedere il tutorial quando vuoi da Profilo › Tutorial.')]), next: __('Fine'), nextIcon: 'check', noSkip: true }
 		];
 	}
 
@@ -1235,7 +1244,7 @@
 			if (i >= steps.length) { finishTour(); return; }
 			var s = steps[i];
 			Promise.resolve(s.before ? s.before() : null).then(function () {
-				return DOLLY.coach.show(Object.assign({ progress: 'Passo ' + (i + 1) + ' di ' + steps.length }, s));
+				return DOLLY.coach.show(Object.assign({ progress: __('Passo ') + (i + 1) + __(' di ') + steps.length }, s));
 			}).then(function (result) {
 				if (result !== 'next') { finishTour(); return; }
 				if (s.after) { s.after(); }
@@ -1307,7 +1316,7 @@
 	function enablePush() {
 		return Promise.resolve(window.Notification.requestPermission()).then(function (p) {
 			if (p !== 'granted') {
-				throw new Error(p === 'denied' ? 'Le notifiche sono bloccate: riattivale dalle impostazioni del telefono (Notifiche › ' + DOLLY.brandName + ').' : 'Permesso per le notifiche non concesso.');
+				throw new Error(p === 'denied' ? __('Le notifiche sono bloccate: riattivale dalle impostazioni del telefono (Notifiche › ') + DOLLY.brandName + ').' : __('Permesso per le notifiche non concesso.'));
 			}
 			return subscribePush();
 		});
@@ -1328,12 +1337,12 @@
 		try { last = +window.localStorage.getItem('dolly_push_asked') || 0; } catch (e) { /* storage unavailable */ }
 		if (Date.now() - last < 3 * 86400000) { return; }
 		DOLLY.dialog({
-			title: 'Attiva le notifiche',
-			body: [h('p', { text: 'Ricevi sul telefono gli esiti delle richieste, le anomalie da sistemare e i messaggi dell\'amministrazione, anche con l\'app chiusa.' })],
+			title: __('Attiva le notifiche'),
+			body: [h('p', { text: __('Ricevi sul telefono gli esiti delle richieste, le anomalie da sistemare e i messaggi dell\'amministrazione, anche con l\'app chiusa.') })],
 			actions: [
-				{ label: 'Non ora', onClick: function (close) { try { window.localStorage.setItem('dolly_push_asked', String(Date.now())); } catch (e) { /* ignore */ } close(); } },
-				{ label: 'Attiva notifiche', variant: 'primary', icon: 'bell-ring', onClick: function (close, btn) {
-					DOLLY.busy(btn, enablePush()).then(function () { close(); DOLLY.toast('Notifiche attivate su questo telefono.', 'success'); }, function (err) { close(); DOLLY.toast(err.message, 'error'); });
+				{ label: __('Non ora'), onClick: function (close) { try { window.localStorage.setItem('dolly_push_asked', String(Date.now())); } catch (e) { /* ignore */ } close(); } },
+				{ label: __('Attiva notifiche'), variant: 'primary', icon: 'bell-ring', onClick: function (close, btn) {
+					DOLLY.busy(btn, enablePush()).then(function () { close(); DOLLY.toast(__('Notifiche attivate su questo telefono.'), 'success'); }, function (err) { close(); DOLLY.toast(err.message, 'error'); });
 				} }
 			]
 		});
@@ -1342,32 +1351,32 @@
 	function pushCard() {
 		var box = h('div');
 		function render() {
-			if (!PUSH) { DOLLY.render(box, h('p', { class: 'dolly-muted', text: 'Le notifiche sul telefono non sono disponibili. Trovi tutto nella sezione Notifiche.' })); return; }
+			if (!PUSH) { DOLLY.render(box, h('p', { class: 'dolly-muted', text: __('Le notifiche sul telefono non sono disponibili. Trovi tutto nella sezione Notifiche.') })); return; }
 			if (isIos() && !isStandalone()) {
-				DOLLY.render(box, DOLLY.alert('Su iPhone le notifiche funzionano con il portale installato: tocca Condividi › "Aggiungi alla schermata Home", poi apri ' + DOLLY.brandName + ' dall\'icona e attiva le notifiche.', 'info'));
+				DOLLY.render(box, DOLLY.alert(__('Su iPhone le notifiche funzionano con il portale installato: tocca Condividi › "Aggiungi alla schermata Home", poi apri ') + DOLLY.brandName + __(' dall\'icona e attiva le notifiche.'), 'info'));
 				return;
 			}
-			if (!pushSupported()) { DOLLY.render(box, h('p', { class: 'dolly-muted', text: 'Questo browser non supporta le notifiche push.' })); return; }
+			if (!pushSupported()) { DOLLY.render(box, h('p', { class: 'dolly-muted', text: __('Questo browser non supporta le notifiche push.') })); return; }
 			var perm = window.Notification.permission;
-			if (perm === 'denied') { DOLLY.render(box, DOLLY.alert('Le notifiche sono bloccate per questo sito: riattivale dalle impostazioni del telefono o del browser.', 'warning')); return; }
+			if (perm === 'denied') { DOLLY.render(box, DOLLY.alert(__('Le notifiche sono bloccate per questo sito: riattivale dalle impostazioni del telefono o del browser.'), 'warning')); return; }
 			if (perm === 'granted') {
 				var result = h('div', { 'aria-live': 'polite', style: 'margin-top:8px' });
-				var off = DOLLY.button('Disattiva su questo dispositivo', { icon: 'bell-off', onClick: function () { DOLLY.busy(off, disablePush()).then(function () { DOLLY.toast('Notifiche disattivate su questo dispositivo.', 'success'); render(); }, function (err) { DOLLY.toast(err.message, 'error'); }); } });
+				var off = DOLLY.button(__('Disattiva su questo dispositivo'), { icon: 'bell-off', onClick: function () { DOLLY.busy(off, disablePush()).then(function () { DOLLY.toast(__('Notifiche disattivate su questo dispositivo.'), 'success'); render(); }, function (err) { DOLLY.toast(err.message, 'error'); }); } });
 				// Re-registers this phone, then sends a test and shows what the push service answered.
-				var test = DOLLY.button('Invia una notifica di prova', { icon: 'send', onClick: function () {
+				var test = DOLLY.button(__('Invia una notifica di prova'), { icon: 'send', onClick: function () {
 					DOLLY.busy(test, subscribePush().then(function () { return DOLLY.api('me/push/test', { method: 'POST' }); })).then(function (r) {
 						var ok = r.results.filter(function (x) { return x.ok; }).length;
 						var lines = r.results.map(function (x) { return x.device + ': ' + (x.ok ? 'inviata' : x.error); });
 						DOLLY.render(result, DOLLY.alert(ok
-							? 'Notifica di prova inviata: dovrebbe comparire tra pochi secondi.' + (isStandalone() ? ' Chiudi l\'app per vederla come notifica del telefono.' : '')
-							: (r.devices ? 'Invio non riuscito.' : 'Nessun dispositivo registrato: riattiva le notifiche.'), ok ? 'success' : 'error', lines.length ? h('ul', { class: 'dolly-small', style: 'margin:6px 0 0;padding-left:18px' }, lines.map(function (l) { return h('li', { text: l }); })) : null));
+							? __('Notifica di prova inviata: dovrebbe comparire tra pochi secondi.') + (isStandalone() ? __(' Chiudi l\'app per vederla come notifica del telefono.') : '')
+							: (r.devices ? __('Invio non riuscito.') : __('Nessun dispositivo registrato: riattiva le notifiche.')), ok ? 'success' : 'error', lines.length ? h('ul', { class: 'dolly-small', style: 'margin:6px 0 0;padding-left:18px' }, lines.map(function (l) { return h('li', { text: l }); })) : null));
 					}, function (err) { DOLLY.render(result, DOLLY.alert(err.message, 'error')); });
 				} });
-				DOLLY.render(box, [DOLLY.alert('Notifiche attive su questo dispositivo.', 'success'), h('div', { class: 'dolly-btn-row', style: 'margin-top:8px' }, [test, off]), result]);
+				DOLLY.render(box, [DOLLY.alert(__('Notifiche attive su questo dispositivo.'), 'success'), h('div', { class: 'dolly-btn-row', style: 'margin-top:8px' }, [test, off]), result]);
 				return;
 			}
-			var on = DOLLY.button('Attiva notifiche', { variant: 'primary', icon: 'bell-ring', onClick: function () { DOLLY.busy(on, enablePush()).then(function () { DOLLY.toast('Notifiche attivate.', 'success'); render(); }, function (err) { DOLLY.toast(err.message, 'error'); render(); }); } });
-			DOLLY.render(box, [h('p', { class: 'dolly-muted', text: 'Ricevi le notifiche del portale anche con l\'app chiusa.' }), on]);
+			var on = DOLLY.button(__('Attiva notifiche'), { variant: 'primary', icon: 'bell-ring', onClick: function () { DOLLY.busy(on, enablePush()).then(function () { DOLLY.toast(__('Notifiche attivate.'), 'success'); render(); }, function (err) { DOLLY.toast(err.message, 'error'); render(); }); } });
+			DOLLY.render(box, [h('p', { class: 'dolly-muted', text: __('Ricevi le notifiche del portale anche con l\'app chiusa.') }), on]);
 		}
 		render();
 		return box;
@@ -1393,7 +1402,7 @@
 	// Phones must use the installed app (setting "require_install"): in the browser only the procedure is shown.
 	if (DOLLY.needsInstall()) {
 		DOLLY.render(root, [
-			h('header', { class: 'dolly-topbar' }, [brand(), h('div', { class: 'dolly-topbar__actions' }, DOLLY.button('Esci', { href: CFG.logoutUrl, variant: 'ghost', icon: 'log-out', iconOnly: true }))]),
+			h('header', { class: 'dolly-topbar' }, [brand(), h('div', { class: 'dolly-topbar__actions' }, DOLLY.button(__('Esci'), { href: CFG.logoutUrl, variant: 'ghost', icon: 'log-out', iconOnly: true }))]),
 			h('div', { class: 'dolly-auth' }, h('div', { class: 'dolly-card dolly-auth__card' }, DOLLY.installGate()))
 		]);
 		return;

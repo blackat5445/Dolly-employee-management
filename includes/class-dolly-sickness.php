@@ -33,12 +33,12 @@ class Dolly_Sickness {
 
 	/** Label of a report kind ("Malattia" / "Infortunio"). */
 	public static function kind_label( $kind ) {
-		return self::KINDS[ $kind ] ?? self::KINDS['malattia'];
+		return Dolly_I18n::t( self::KINDS[ $kind ] ?? self::KINDS['malattia'] );
 	}
 
 	/** Kind with its article, for sentences: "la malattia" / "l'infortunio". */
 	public static function kind_phrase( $kind ) {
-		return 'infortunio' === $kind ? 'l\'infortunio' : 'la malattia';
+		return 'infortunio' === $kind ? 'l\'infortunio' : __( 'la malattia', 'dolly-employee-management' );
 	}
 
 	/** Kind of a sickness row ("malattia" for rows created before injuries existed). */
@@ -96,7 +96,7 @@ class Dolly_Sickness {
 			'end_date'           => $s->end_date,
 			'notes'              => $with_notes ? (string) $s->notes : '',
 			'certificate_status' => $s->certificate_status,
-			'certificate_label'  => self::CERT_STATUSES[ $s->certificate_status ] ?? $s->certificate_status,
+			'certificate_label'  => Dolly_I18n::t( self::CERT_STATUSES[ $s->certificate_status ] ?? $s->certificate_status ),
 			'certificate_due'    => $s->certificate_due,
 			'conflict'           => (bool) $s->conflict,
 			'conflict_details'   => (string) $s->conflict_details,
@@ -119,21 +119,21 @@ class Dolly_Sickness {
 		$kind   = (string) ( $data['kind'] ?? 'malattia' );
 		$errors = array();
 		if ( ! isset( self::KINDS[ $kind ] ) ) {
-			$errors['kind'] = 'Scegli tra malattia e infortunio.';
+			$errors['kind'] = __( 'Scegli tra malattia e infortunio.', 'dolly-employee-management' );
 		}
 		if ( ! Dolly_Time::is_date( $start ) ) {
-			$errors['start_date'] = 'Data di inizio non valida.';
+			$errors['start_date'] = __( 'Data di inizio non valida.', 'dolly-employee-management' );
 		}
 		if ( ! Dolly_Time::is_date( $end ) ) {
-			$errors['end_date'] = 'Data di fine non valida.';
+			$errors['end_date'] = __( 'Data di fine non valida.', 'dolly-employee-management' );
 		} elseif ( empty( $errors ) && $end < $start ) {
-			$errors['end_date'] = 'La data di fine deve essere uguale o successiva all\'inizio.';
+			$errors['end_date'] = __( 'La data di fine deve essere uguale o successiva all\'inizio.', 'dolly-employee-management' );
 		}
 		if ( empty( $errors ) && ( strtotime( $end ) - strtotime( $start ) ) > 366 * DAY_IN_SECONDS ) {
-			$errors['end_date'] = 'Intervallo troppo lungo.';
+			$errors['end_date'] = __( 'Intervallo troppo lungo.', 'dolly-employee-management' );
 		}
 		if ( $errors ) {
-			return new WP_Error( 'dolly_invalid', 'Controlla i campi evidenziati.', array( 'status' => 400, 'fields' => $errors ) );
+			return new WP_Error( 'dolly_invalid', __( 'Controlla i campi evidenziati.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => $errors ) );
 		}
 
 		$mode   = Dolly_Settings::get( 'certificate_mode' );
@@ -164,25 +164,24 @@ class Dolly_Sickness {
 		$period = Dolly_Time::fmt_date( $start ) . ( $start !== $end ? ' – ' . Dolly_Time::fmt_date( $end ) : '' );
 		$label  = self::kind_label( $kind );
 		$phrase = self::kind_phrase( $kind ) . ' ' . $period;
-		$suffix = 'infortunio' === $kind ? 'o' : 'a';
 
 		if ( $by_admin ) {
 			Dolly_Audit::log( 'sickness_created_admin', 'sickness', $id, $user_id, sanitize_textarea_field( $data['notes'] ?? '' ), null, array( 'kind' => $label, 'period' => $period ) );
-			Dolly_Notifications::notify_user( $user_id, 'sickness_reported', $label . ' registrat' . $suffix . ' dall\'amministratore', 'Periodo: ' . $period, 'malattia' );
+			Dolly_Notifications::notify_user( $user_id, 'sickness_reported', fn () => array( 'infortunio' === $kind ? __( 'Infortunio registrato dall\'amministratore', 'dolly-employee-management' ) : __( 'Malattia registrata dall\'amministratore', 'dolly-employee-management' ), __( 'Periodo: ', 'dolly-employee-management' ) . $period ), null, 'malattia' );
 		} else {
-			Dolly_Notifications::notify_admins( 'sickness_reported', $label . ' segnalat' . $suffix . ' da ' . $name, 'Periodo: ' . $period, 'dolly-requests#malattie', 'sickness-' . $id );
+			Dolly_Notifications::notify_admins( 'sickness_reported', fn () => array( sprintf( 'infortunio' === $kind ? __( 'Infortunio segnalato da %s', 'dolly-employee-management' ) : __( 'Malattia segnalata da %s', 'dolly-employee-management' ), $name ), __( 'Periodo: ', 'dolly-employee-management' ) . $period ), null, 'dolly-requests#malattie', 'sickness-' . $id );
 		}
 
 		if ( 'missing' === $status ) {
-			Dolly_Anomalies::open( $user_id, 'missing_certificate', 'cert-' . $id, $start, 'sickness', $id, 'Certificato medico mancante per ' . $phrase . ( $due ? ' (scadenza ' . Dolly_Time::fmt_date( $due ) . ')' : '' ) );
-			$body = 'Carica il certificato medico per ' . $phrase . ( $due ? ' entro il ' . Dolly_Time::fmt_date( $due ) : '' ) . '.';
-			Dolly_Notifications::notify_user( $user_id, 'certificate_required', 'Certificato medico richiesto', $body, 'malattia' );
-			Dolly_Notifications::notify_admins( 'certificate_required', 'Certificato richiesto: ' . $name, $body, 'dolly-anomalies', 'certreq-' . $id );
+			Dolly_Anomalies::open( $user_id, 'missing_certificate', 'cert-' . $id, $start, 'sickness', $id, __( 'Certificato medico mancante per ', 'dolly-employee-management' ) . $phrase . ( $due ? __( ' (scadenza ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $due ) . ')' : '' ) );
+			$body = __( 'Carica il certificato medico per ', 'dolly-employee-management' ) . $phrase . ( $due ? __( ' entro il ', 'dolly-employee-management' ) . Dolly_Time::fmt_date( $due ) : '' ) . '.';
+			Dolly_Notifications::notify_user( $user_id, 'certificate_required', fn () => array( __( 'Certificato medico richiesto', 'dolly-employee-management' ), $body ), null, 'malattia' );
+			Dolly_Notifications::notify_admins( 'certificate_required', fn () => array( __( 'Certificato richiesto: ', 'dolly-employee-management' ) . $name, $body ), null, 'dolly-anomalies', 'certreq-' . $id );
 		}
 		if ( $conflicts ) {
 			Dolly_Anomalies::open( $user_id, 'sickness_conflict', 'sickconf-' . $id, $start, 'sickness', $id, implode( "\n", $conflicts ) );
 		}
-		Dolly_Anomalies::resolve_absence( $user_id, $start, $end, 'justified', 'Giustificata: ' . $phrase . '.' );
+		Dolly_Anomalies::resolve_absence( $user_id, $start, $end, 'justified', __( 'Giustificata: ', 'dolly-employee-management' ) . $phrase . '.' );
 		Dolly_Hours::touch( $user_id, $start, $end );
 		return self::format( self::get( $id ) );
 	}
@@ -194,17 +193,17 @@ class Dolly_Sickness {
 		$p   = Dolly_Install::t( 'punches' );
 		$dates = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT work_date FROM $p WHERE user_id = %d AND is_active = 1 AND work_date BETWEEN %s AND %s ORDER BY work_date", $user_id, $start, $end ) ); // phpcs:ignore
 		if ( $dates ) {
-			$out[] = 'Timbrature presenti il ' . implode( ', ', array_map( array( 'Dolly_Time', 'fmt_date' ), $dates ) ) . '.';
+			$out[] = __( 'Timbrature presenti il ', 'dolly-employee-management' ) . implode( ', ', array_map( array( 'Dolly_Time', 'fmt_date' ), $dates ) ) . '.';
 		}
 		$r    = Dolly_Install::t( 'requests' );
 		$reqs = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $r WHERE user_id = %d AND type IN ('ferie','permesso','donazione') AND status IN ('pending','approved') AND " . Dolly_Requests::EFFECTIVE_ROW . ' AND start_date <= %s AND end_date >= %s', $user_id, $end, $start ) ); // phpcs:ignore
 		foreach ( $reqs as $q ) {
-			$out[] = ( 'approved' === $q->status ? 'Approvata: ' : 'In attesa: ' ) . Dolly_Requests::summary( $q ) . '.';
+			$out[] = ( 'approved' === $q->status ? __( 'Approvata: ', 'dolly-employee-management' ) : __( 'In attesa: ', 'dolly-employee-management' ) ) . Dolly_Requests::summary( $q ) . '.';
 		}
 		$s    = Dolly_Install::t( 'sickness' );
 		$sick = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $s WHERE user_id = %d AND status = 'active' AND start_date <= %s AND end_date >= %s", $user_id, $end, $start ) ); // phpcs:ignore
 		foreach ( $sick as $x ) {
-			$out[] = 'Altra segnalazione (' . strtolower( self::kind_label( self::kind_of( $x ) ) ) . ') ' . Dolly_Time::fmt_date( $x->start_date ) . ' – ' . Dolly_Time::fmt_date( $x->end_date ) . '.';
+			$out[] = __( 'Altra segnalazione (', 'dolly-employee-management' ) . strtolower( self::kind_label( self::kind_of( $x ) ) ) . ') ' . Dolly_Time::fmt_date( $x->start_date ) . ' – ' . Dolly_Time::fmt_date( $x->end_date ) . '.';
 		}
 		return $out;
 	}
@@ -218,27 +217,27 @@ class Dolly_Sickness {
 	public static function store_upload( $file ) {
 		if ( empty( $file ) || ! isset( $file['tmp_name'] ) || UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
 			$code = (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE );
-			$msg  = in_array( $code, array( UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ), true ) ? 'Il file supera la dimensione massima consentita dal server.' : 'Nessun file ricevuto. Riprova.';
+			$msg  = in_array( $code, array( UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ), true ) ? __( 'Il file supera la dimensione massima consentita dal server.', 'dolly-employee-management' ) : __( 'Nessun file ricevuto. Riprova.', 'dolly-employee-management' );
 			return new WP_Error( 'dolly_upload', $msg, array( 'status' => 400 ) );
 		}
 		if ( (int) $file['size'] > self::MAX_BYTES ) {
-			return new WP_Error( 'dolly_upload', 'Il file supera i 10 MB.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_upload', __( 'Il file supera i 10 MB.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( ! is_uploaded_file( $file['tmp_name'] ) ) {
-			return new WP_Error( 'dolly_upload', 'Caricamento non valido.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_upload', __( 'Caricamento non valido.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		$check = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'], self::ALLOWED );
 		$ext   = $check['ext'] ? strtolower( $check['ext'] ) : '';
 		$mime  = $check['type'];
 		if ( ! $ext || ! isset( self::ALLOWED[ $ext ] ) || ! $mime ) {
-			return new WP_Error( 'dolly_upload', 'Formato non consentito. Carica un file PDF, JPG o PNG.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_upload', __( 'Formato non consentito. Carica un file PDF, JPG o PNG.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'finfo_open' ) ) {
 			$fi   = finfo_open( FILEINFO_MIME_TYPE );
 			$real = finfo_file( $fi, $file['tmp_name'] );
 			finfo_close( $fi );
 			if ( ! in_array( $real, array_values( self::ALLOWED ), true ) ) {
-				return new WP_Error( 'dolly_upload', 'Il contenuto del file non corrisponde a un PDF, JPG o PNG.', array( 'status' => 400 ) );
+				return new WP_Error( 'dolly_upload', __( 'Il contenuto del file non corrisponde a un PDF, JPG o PNG.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 			}
 			$mime = $real;
 		}
@@ -247,7 +246,7 @@ class Dolly_Sickness {
 		$name = bin2hex( random_bytes( 20 ) );
 		$dest = $dir . '/' . $name;
 		if ( ! @move_uploaded_file( $file['tmp_name'], $dest ) ) { // phpcs:ignore
-			return new WP_Error( 'dolly_upload', 'Impossibile salvare il file. Contatta l\'amministratore.', array( 'status' => 500 ) );
+			return new WP_Error( 'dolly_upload', __( 'Impossibile salvare il file. Contatta l\'amministratore.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 		}
 		@chmod( $dest, 0640 ); // phpcs:ignore
 		return array(
@@ -267,10 +266,10 @@ class Dolly_Sickness {
 		global $wpdb;
 		$s = self::get( $sickness_id );
 		if ( ! $s ) {
-			return new WP_Error( 'dolly_not_found', 'Segnalazione di malattia non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Segnalazione di malattia non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( ! $as_admin && (int) $s->user_id !== get_current_user_id() ) {
-			return new WP_Error( 'dolly_forbidden', 'Non autorizzato.', array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_forbidden', __( 'Non autorizzato.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		$stored = self::store_upload( $file );
 		if ( is_wp_error( $stored ) ) {
@@ -294,8 +293,8 @@ class Dolly_Sickness {
 			$wpdb->update( Dolly_Install::t( 'sickness' ), array( 'certificate_status' => 'uploaded' ), array( 'id' => $sickness_id ) );
 		}
 		// Successful upload resolves the missing-certificate anomaly without requiring approval.
-		Dolly_Anomalies::resolve_by_key( 'cert-' . $sickness_id, 'certificate_uploaded', 'Certificato caricato.' );
-		Dolly_Notifications::notify_admins( 'certificate_uploaded', 'Certificato caricato da ' . Dolly_Employees::display_name( (int) $s->user_id ), self::kind_label( self::kind_of( $s ) ) . ' ' . Dolly_Time::fmt_date( $s->start_date ) . ' – ' . Dolly_Time::fmt_date( $s->end_date ), 'dolly-requests#malattie', 'certup-' . $cert_id );
+		Dolly_Anomalies::resolve_by_key( 'cert-' . $sickness_id, 'certificate_uploaded', __( 'Certificato caricato.', 'dolly-employee-management' ) );
+		Dolly_Notifications::notify_admins( 'certificate_uploaded', fn () => array( __( 'Certificato caricato da ', 'dolly-employee-management' ) . Dolly_Employees::display_name( (int) $s->user_id ), self::kind_label( self::kind_of( $s ) ) . ' ' . Dolly_Time::fmt_date( $s->start_date ) . ' – ' . Dolly_Time::fmt_date( $s->end_date ) ), null, 'dolly-requests#malattie', 'certup-' . $cert_id );
 		return self::format( self::get( $sickness_id ) );
 	}
 
@@ -307,16 +306,16 @@ class Dolly_Sickness {
 		$t = Dolly_Install::t( 'certificates' );
 		$c = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $t WHERE id = %d", $cert_id ) ); // phpcs:ignore
 		if ( ! $c ) {
-			return new WP_Error( 'dolly_not_found', 'Certificato non trovato.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Certificato non trovato.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$uid      = get_current_user_id();
 		$is_admin = current_user_can( 'dolly_manage' );
 		if ( ! $is_admin && ( (int) $c->user_id !== $uid || ! Dolly_Employees::is_active( $uid ) ) ) {
-			return new WP_Error( 'dolly_forbidden', 'Non sei autorizzato a scaricare questo certificato.', array( 'status' => 403 ) );
+			return new WP_Error( 'dolly_forbidden', __( 'Non sei autorizzato a scaricare questo certificato.', 'dolly-employee-management' ), array( 'status' => 403 ) );
 		}
 		$path = Dolly_Install::private_dir() . '/certificates/' . $c->file_name;
 		if ( ! is_readable( $path ) || false !== strpos( $c->file_name, '..' ) ) {
-			return new WP_Error( 'dolly_not_found', 'File non disponibile.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'File non disponibile.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		if ( $is_admin && (int) $c->user_id !== $uid ) {
 			Dolly_Audit::log( 'certificate_downloaded', 'certificate', (int) $c->id, (int) $c->user_id );
@@ -340,9 +339,9 @@ class Dolly_Sickness {
 		}
 		$wpdb->query( "UPDATE $t SET certificate_status = 'cleared' WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore
 		foreach ( $ids as $id ) {
-			Dolly_Anomalies::resolve_by_key( 'cert-' . $id, 'certificates_disabled', 'Requisito certificato disattivato dalle impostazioni.' );
+			Dolly_Anomalies::resolve_by_key( 'cert-' . $id, 'certificates_disabled', __( 'Requisito certificato disattivato dalle impostazioni.', 'dolly-employee-management' ) );
 		}
-		Dolly_Audit::log( 'certificates_disabled', 'settings', 0, 0, 'Certificati disattivati: requisiti in sospeso annullati.', array( 'sickness_ids' => $ids ), array( 'certificate_status' => 'cleared' ) );
+		Dolly_Audit::log( 'certificates_disabled', 'settings', 0, 0, __( 'Certificati disattivati: requisiti in sospeso annullati.', 'dolly-employee-management' ), array( 'sickness_ids' => $ids ), array( 'certificate_status' => 'cleared' ) );
 		return count( $ids );
 	}
 
@@ -371,8 +370,8 @@ class Dolly_Sickness {
 			$name   = Dolly_Employees::display_name( (int) $s->user_id );
 			$period = Dolly_Time::fmt_date( $s->start_date ) . ' – ' . Dolly_Time::fmt_date( $s->end_date );
 			$kind   = self::kind_of( $s );
-			Dolly_Notifications::notify_user( (int) $s->user_id, 'certificate_overdue', 'Certificato scaduto', 'Il termine per il certificato del' . ( 'infortunio' === $kind ? 'l\'infortunio ' : 'la malattia ' ) . $period . ' è scaduto. Caricalo appena possibile.', 'malattia', 'certover-' . $s->id );
-			Dolly_Notifications::notify_admins( 'certificate_overdue', 'Certificato scaduto: ' . $name, self::kind_label( $kind ) . ' ' . $period, 'dolly-anomalies', 'certover-' . $s->id );
+			Dolly_Notifications::notify_user( (int) $s->user_id, 'certificate_overdue', fn () => array( __( 'Certificato scaduto', 'dolly-employee-management' ), sprintf( 'infortunio' === $kind ? __( 'Il termine per il certificato dell\'infortunio %s è scaduto. Caricalo appena possibile.', 'dolly-employee-management' ) : __( 'Il termine per il certificato della malattia %s è scaduto. Caricalo appena possibile.', 'dolly-employee-management' ), $period ) ), null, 'malattia', 'certover-' . $s->id );
+			Dolly_Notifications::notify_admins( 'certificate_overdue', fn () => array( __( 'Certificato scaduto: ', 'dolly-employee-management' ) . $name, self::kind_label( $kind ) . ' ' . $period ), null, 'dolly-anomalies', 'certover-' . $s->id );
 		}
 	}
 
@@ -380,11 +379,11 @@ class Dolly_Sickness {
 		global $wpdb;
 		$s = self::get( $id );
 		if ( ! $s ) {
-			return new WP_Error( 'dolly_not_found', 'Segnalazione non trovata.', array( 'status' => 404 ) );
+			return new WP_Error( 'dolly_not_found', __( 'Segnalazione non trovata.', 'dolly-employee-management' ), array( 'status' => 404 ) );
 		}
 		$note = sanitize_textarea_field( $note );
 		if ( '' === $note ) {
-			return new WP_Error( 'dolly_invalid', 'Aggiungi una nota di verifica.', array( 'status' => 400, 'fields' => array( 'note' => 'Aggiungi una nota.' ) ) );
+			return new WP_Error( 'dolly_invalid', __( 'Aggiungi una nota di verifica.', 'dolly-employee-management' ), array( 'status' => 400, 'fields' => array( 'note' => __( 'Aggiungi una nota.', 'dolly-employee-management' ) ) ) );
 		}
 		$wpdb->update( Dolly_Install::t( 'sickness' ), array( 'reviewed_by' => get_current_user_id(), 'reviewed_at' => Dolly_Time::now_utc(), 'review_note' => $note ), array( 'id' => $id ) );
 		Dolly_Anomalies::resolve_by_key( 'sickconf-' . $id, 'reviewed', $note );

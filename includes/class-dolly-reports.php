@@ -105,7 +105,7 @@ class Dolly_Reports {
 		return array(
 			'year'        => (int) $year,
 			'month'       => (int) $month,
-			'month_label' => Dolly_Time::MONTHS[ (int) $month ] . ' ' . (int) $year,
+			'month_label' => Dolly_I18n::t( Dolly_Time::MONTHS[ (int) $month ] ) . ' ' . (int) $year,
 		) + $data;
 	}
 
@@ -218,11 +218,11 @@ class Dolly_Reports {
 
 			$sched_label = '';
 			if ( $plan['on_call'] ) {
-				$sched_label = 'A chiamata';
+				$sched_label = __( 'A chiamata', 'dolly-employee-management' );
 			} elseif ( $plan['eligible'] ) {
 				$sched_label = $plan['start'] . '–' . $plan['end'];
 				if ( $plan['has_lunch'] ) {
-					$sched_label .= ' (pausa ' . $plan['lunch_start'] . '–' . $plan['lunch_end'] . ( $plan['lunch_auto'] ? ', automatica' : '' ) . ')';
+					$sched_label .= __( ' (pausa ', 'dolly-employee-management' ) . $plan['lunch_start'] . '–' . $plan['lunch_end'] . ( $plan['lunch_auto'] ? __( ', automatica', 'dolly-employee-management' ) : '' ) . ')';
 				}
 			}
 			$pending_labels = array();
@@ -241,17 +241,17 @@ class Dolly_Reports {
 			$in_counted  = isset( $p['entrata'] ) ? Dolly_Time::ts_to_hm( $calc['entrata'] ) : '';
 			$out_counted = isset( $p['uscita'] ) ? Dolly_Time::ts_to_hm( $calc['uscita'] ) : '';
 			if ( $extra ) {
-				$extra_label = 'rest_day' === $extra->extra_kind ? Dolly_Time::hm( $extra->start_time ) . '–' . Dolly_Time::hm( $extra->end_time ) : 'approvato fino alle ' . Dolly_Time::hm( $extra->end_time );
+				$extra_label = 'rest_day' === $extra->extra_kind ? Dolly_Time::hm( $extra->start_time ) . '–' . Dolly_Time::hm( $extra->end_time ) : __( 'approvato fino alle ', 'dolly-employee-management' ) . Dolly_Time::hm( $extra->end_time );
 			} else {
 				$extra_label = $calc['extra_auto'] ? 'automatico' : '';
 			}
-			$day_type = $plan['on_call'] ? 'A chiamata' : ( $plan['scheduled'] ? 'Lavorativo' : ( $plan['rest_day_extra'] ? 'Riposo con straordinario' : 'Riposo' ) );
+			$day_type = $plan['on_call'] ? __( 'A chiamata', 'dolly-employee-management' ) : ( $plan['scheduled'] ? __( 'Lavorativo', 'dolly-employee-management' ) : ( $plan['rest_day_extra'] ? __( 'Riposo con straordinario', 'dolly-employee-management' ) : __( 'Riposo', 'dolly-employee-management' ) ) );
 
 			$rows[] = array(
 				'date'        => $d,
 				'date_label'  => Dolly_Time::fmt_date( $d ),
-				'weekday'     => Dolly_Time::WEEKDAYS[ Dolly_Time::weekday( $d ) ],
-				'day_type'    => $day_type . ( $plan['holiday'] ? ' · Festivo (' . $plan['holiday'] . ')' : '' ) . ( $plan['closure'] ? ' · ' . $plan['closure'] : '' ),
+				'weekday'     => Dolly_I18n::t( Dolly_Time::WEEKDAYS[ Dolly_Time::weekday( $d ) ] ),
+				'day_type'    => $day_type . ( $plan['holiday'] ? __( ' · Festivo (', 'dolly-employee-management' ) . $plan['holiday'] . ')' : '' ) . ( $plan['closure'] ? ' · ' . $plan['closure'] : '' ),
 				'holiday'     => (string) $plan['holiday'],
 				'closure'     => (string) $plan['closure'],
 				'closure_type'=> (string) $plan['closure_type'],
@@ -260,7 +260,7 @@ class Dolly_Reports {
 				'festive_min' => $calc['festive'],
 				'festive'     => $calc['festive'] ? Dolly_Time::min_to_hm( $calc['festive'] ) : '',
 				'holiday_increase' => $increase,
-				'hours_note'  => $calc['worked'] ? ( $calc['festive'] ? 'Ore festive, maggiorazione ' . $increase . '%' : ( 'collective' === $plan['closure_type'] ? 'Ore ordinarie (chiusura collettiva)' : '' ) ) : '',
+				'hours_note'  => $calc['worked'] ? ( $calc['festive'] ? __( 'Ore festive, maggiorazione ', 'dolly-employee-management' ) . $increase . '%' : ( 'collective' === $plan['closure_type'] ? __( 'Ore ordinarie (chiusura collettiva)', 'dolly-employee-management' ) : '' ) ) : '',
 				'oncall_status' => $oncall,
 				'schedule'    => $sched_label,
 				'entrata'     => $in_counted,
@@ -281,7 +281,7 @@ class Dolly_Reports {
 				}, $hourly ) ),
 				'malattia'    => (bool) $sickness,
 				'sick_label'  => $sickness ? Dolly_Sickness::kind_label( Dolly_Sickness::kind_of( $sickness ) ) : '',
-				'certificate' => $sickness ? ( Dolly_Sickness::CERT_STATUSES[ $sickness->certificate_status ] ?? '' ) : '',
+				'certificate' => $sickness ? ( Dolly_I18n::t( Dolly_Sickness::CERT_STATUSES[ $sickness->certificate_status ] ?? '' ) ) : '',
 				'certificate_status' => $sickness ? $sickness->certificate_status : '',
 				'worked_min'  => $calc['worked'],
 				'worked'      => $calc['worked'] ? Dolly_Time::min_to_hm( $calc['worked'] ) : '',
@@ -349,23 +349,23 @@ class Dolly_Reports {
 			}
 			$started = $m['start'] && $now >= Dolly_Time::hm_to_min( $m['start'] );
 			if ( isset( $p['uscita'] ) ) {
-				$st = array( 'uscito', 'Uscito' );
+				$st = array( 'uscito', __( 'Uscito', 'dolly-employee-management' ) );
 			} elseif ( isset( $p['inizio_pausa'] ) && ! isset( $p['fine_pausa'] ) ) {
-				$st = array( 'pausa', 'In pausa' );
+				$st = array( 'pausa', __( 'In pausa', 'dolly-employee-management' ) );
 			} elseif ( isset( $p['entrata'] ) ) {
-				$st = array( 'presente', 'In servizio' );
+				$st = array( 'presente', __( 'In servizio', 'dolly-employee-management' ) );
 			} elseif ( $m['sick'] ) {
 				$st = array( $m['sick_kind'], Dolly_Sickness::kind_label( $m['sick_kind'] ) );
 			} elseif ( $m['leave'] ) {
-				$st = Dolly_Donations::TYPE === $m['leave'] ? array( 'donazione', 'Donazione sangue' ) : array( 'ferie', 'Ferie' );
+				$st = Dolly_Donations::TYPE === $m['leave'] ? array( 'donazione', __( 'Donazione sangue', 'dolly-employee-management' ) ) : array( 'ferie', __( 'Ferie', 'dolly-employee-management' ) );
 			} elseif ( $m['closure'] ) {
 				$st = array( 'holiday' === $m['closure'] ? 'chiusura_festiva' : 'chiusura', Dolly_Closures::type_label( $m['closure'] ) );
 			} elseif ( $m['holiday'] ) {
-				$st = array( 'festivo', 'Festivo' );
+				$st = array( 'festivo', __( 'Festivo', 'dolly-employee-management' ) );
 			} elseif ( ! $started ) {
-				$st = array( 'atteso', 'Non ancora iniziato' );
+				$st = array( 'atteso', __( 'Non ancora iniziato', 'dolly-employee-management' ) );
 			} else {
-				$st = array( 'assente', 'Assente' );
+				$st = array( 'assente', __( 'Assente', 'dolly-employee-management' ) );
 			}
 			if ( ! isset( $p['entrata'] ) && $started && ! $m['holiday'] && ! $m['closure'] && ( $m['scheduled'] || $m['rest_extra'] ) ) {
 				$absent['total']++;
@@ -404,7 +404,7 @@ class Dolly_Reports {
 		$filter_users = $workplace_id ? $users : null;
 		return array(
 			'date'       => $today,
-			'date_label' => Dolly_Time::WEEKDAYS[ Dolly_Time::weekday( $today ) ] . ' ' . Dolly_Time::fmt_date( $today ),
+			'date_label' => Dolly_I18n::t( Dolly_Time::WEEKDAYS[ Dolly_Time::weekday( $today ) ] ) . ' ' . Dolly_Time::fmt_date( $today ),
 			'time'       => Dolly_Time::now_hm(),
 			'kpi'        => array(
 				'present'   => count( $present ),
@@ -471,7 +471,7 @@ class Dolly_Reports {
 			$who      = $own ? '' : Dolly_Employees::sort_name( (int) $r->user_id ) . ' · ';
 			$events[] = array(
 				'id'        => 'req-' . $r->id,
-				'title'     => $who . ( 'ferie' === $r->type ? 'Ferie' : ( Dolly_Donations::TYPE === $r->type ? 'Donazione sangue' : ( 'permesso' === $r->type ? 'Permesso ' . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time ) : 'Straordinario' ) ) ),
+				'title'     => $who . ( 'ferie' === $r->type ? __( 'Ferie', 'dolly-employee-management' ) : ( Dolly_Donations::TYPE === $r->type ? __( 'Donazione sangue', 'dolly-employee-management' ) : ( 'permesso' === $r->type ? __( 'Permesso ', 'dolly-employee-management' ) . Dolly_Time::hm( $r->start_time ) . '–' . Dolly_Time::hm( $r->end_time ) : __( 'Straordinario', 'dolly-employee-management' ) ) ) ),
 				'start'     => $r->start_date,
 				'end'       => Dolly_Time::add_days( $r->end_date, 1 ),
 				'allDay'    => true,
@@ -515,7 +515,7 @@ class Dolly_Reports {
 			$who      = $own ? '' : Dolly_Employees::sort_name( (int) $s->user_id ) . ' · ';
 			$events[] = array(
 				'id'        => 'sick-' . $s->id,
-				'title'     => $who . Dolly_Sickness::kind_label( Dolly_Sickness::kind_of( $s ) ) . ( in_array( $s->certificate_status, array( 'missing', 'overdue' ), true ) ? ' · certificato mancante' : '' ),
+				'title'     => $who . Dolly_Sickness::kind_label( Dolly_Sickness::kind_of( $s ) ) . ( in_array( $s->certificate_status, array( 'missing', 'overdue' ), true ) ? __( ' · certificato mancante', 'dolly-employee-management' ) : '' ),
 				'start'     => $s->start_date,
 				'end'       => Dolly_Time::add_days( $s->end_date, 1 ),
 				'allDay'    => true,
@@ -530,7 +530,7 @@ class Dolly_Reports {
 				}
 				$events[] = array(
 					'id'        => 'pend-' . $q['id'],
-					'title'     => 'In attesa · ' . $q['type_label'],
+					'title'     => __( 'In attesa · ', 'dolly-employee-management' ) . $q['type_label'],
 					'start'     => $q['start_date'],
 					'end'       => Dolly_Time::add_days( $q['end_date'], 1 ),
 					'allDay'    => true,
@@ -591,14 +591,14 @@ class Dolly_Reports {
 				$e['last_name'],
 				$e['email'],
 				$e['phone'],
-				$e['active'] ? 'Attivo' : 'Disattivato',
+				$e['active'] ? __( 'Attivo', 'dolly-employee-management' ) : __( 'Disattivato', 'dolly-employee-management' ),
 				$s ? $s['employment_label'] : '',
 				$s ? implode( ', ', array_map( function ( $d ) {
-					return Dolly_Time::WEEKDAYS[ $d ];
+					return Dolly_I18n::t( Dolly_Time::WEEKDAYS[ $d ] );
 				}, $s['weekdays'] ) ) : '',
 				// Per-day hours or on-call: the full description; otherwise the single timetable.
 				$s ? ( $s['per_day'] || $s['on_call'] ? $s['summary'] : $s['start_time'] . '–' . $s['end_time'] ) : '',
-				$s && ! $s['per_day'] && $s['has_lunch'] ? $s['lunch_start'] . '–' . $s['lunch_end'] : ( $s && $s['per_day'] ? 'Vedi orario' : 'Nessuna' ),
+				$s && ! $s['per_day'] && $s['has_lunch'] ? $s['lunch_start'] . '–' . $s['lunch_end'] : ( $s && $s['per_day'] ? __( 'Vedi orario', 'dolly-employee-management' ) : __( 'Nessuna', 'dolly-employee-management' ) ),
 				implode( ', ', wp_list_pluck( $e['workplaces'], 'name' ) ),
 				Dolly_Time::utc_to_local( $u->user_registered, 'd/m/Y' ),
 				$e['bank']['iban'],
@@ -608,7 +608,7 @@ class Dolly_Reports {
 			);
 		}
 		return self::csv_string(
-			array( 'Nome utente', 'Nome', 'Cognome', 'Email', 'Telefono', 'Stato', 'Tipo contratto', 'Giorni lavorativi', 'Orario', 'Pausa pranzo', 'Sedi', 'Data creazione', 'IBAN', 'Nome beneficiario', 'Banca', 'BIC' ),
+			array( __( 'Nome utente', 'dolly-employee-management' ), __( 'Nome', 'dolly-employee-management' ), __( 'Cognome', 'dolly-employee-management' ), __( 'Email', 'dolly-employee-management' ), __( 'Telefono', 'dolly-employee-management' ), __( 'Stato', 'dolly-employee-management' ), __( 'Tipo contratto', 'dolly-employee-management' ), __( 'Giorni lavorativi', 'dolly-employee-management' ), __( 'Orario', 'dolly-employee-management' ), __( 'Pausa pranzo', 'dolly-employee-management' ), __( 'Sedi', 'dolly-employee-management' ), __( 'Data creazione', 'dolly-employee-management' ), 'IBAN', __( 'Nome beneficiario', 'dolly-employee-management' ), __( 'Banca', 'dolly-employee-management' ), 'BIC' ),
 			$rows
 		);
 	}
@@ -626,32 +626,32 @@ class Dolly_Reports {
 				$r['inizio_pausa'],
 				$r['fine_pausa'],
 				$r['uscita'],
-				$r['ferie'] ? 'Sì' : '',
+				$r['ferie'] ? __( 'Sì', 'dolly-employee-management' ) : '',
 				$r['permesso'],
 				$r['sick_label'],
 				$r['worked'],
 				$r['extra_label'],
 				$r['extra'],
-				$r['extra_over'] ? $r['extra_over'] . ( 'pending' === $r['extra_over_status'] ? ' (da approvare)' : ' (non approvato)' ) : '',
+				$r['extra_over'] ? $r['extra_over'] . ( 'pending' === $r['extra_over_status'] ? __( ' (da approvare)', 'dolly-employee-management' ) : __( ' (non approvato)', 'dolly-employee-management' ) ) : '',
 				implode( ', ', $r['anomalies'] ),
-				$r['provisional'] ? 'Provvisorio' : '',
+				$r['provisional'] ? __( 'Provvisorio', 'dolly-employee-management' ) : '',
 				$r['entrata_real'],
 				$r['uscita_real'],
-				$r['late_min'] ? $r['late_min'] . ' min' : '',
+				$r['late_min'] ? $r['late_min'] . __( ' min', 'dolly-employee-management' ) : '',
 				$r['festive'],
 				$r['hours_note'],
-				$r['donazione'] ? 'Sì' : '',
+				$r['donazione'] ? __( 'Sì', 'dolly-employee-management' ) : '',
 				Dolly_Hours::codes_text( $r['hours_codes'] ),
 			);
 		}
-		$rows[] = array( 'TOTALE', '', '', '', '', '', '', '', '', '', '', $data['total'], '', $data['total_extra'], '0:00' !== $data['total_over'] ? $data['total_over'] : '', '', $data['provisional'] ? 'Provvisorio' : '', '', '', '', $data['total_festive'], $data['total_festive'] ? 'Maggiorazione festiva ' . $data['holiday_increase'] . '%' : '', '', implode( '; ', array_map( function ( $c ) {
+		$rows[] = array( 'TOTALE', '', '', '', '', '', '', '', '', '', '', $data['total'], '', $data['total_extra'], '0:00' !== $data['total_over'] ? $data['total_over'] : '', '', $data['provisional'] ? __( 'Provvisorio', 'dolly-employee-management' ) : '', '', '', '', $data['total_festive'], $data['total_festive'] ? __( 'Maggiorazione festiva ', 'dolly-employee-management' ) . $data['holiday_increase'] . '%' : '', '', implode( '; ', array_map( function ( $c ) {
 			return $c['code'] . ' ' . $c['hm'];
 		}, $data['hours_totals'] ) ) );
 		foreach ( $data['hours_totals'] as $c ) {
-			$rows[] = array( 'Giustificativo ' . $c['code'], $c['label'], $c['hm'] );
+			$rows[] = array( __( 'Giustificativo ', 'dolly-employee-management' ) . $c['code'], $c['label'], $c['hm'] );
 		}
 		return self::csv_string(
-			array( 'Data', 'Giorno', 'Tipo giorno', 'Orario previsto', 'Entrata', 'Inizio pausa', 'Fine pausa', 'Uscita', 'Ferie', 'Permesso orario', 'Malattia/Infortunio', 'Ore calcolate', 'Straordinario', 'Ore straordinario approvate', 'Straordinario oltre il limite', 'Anomalie non risolte', 'Stato totale', 'Entrata timbrata', 'Uscita timbrata', 'Ritardo', 'Ore festive', 'Note ore', 'Donazione sangue', 'Giustificativi (ore)' ),
+			array( __( 'Data', 'dolly-employee-management' ), __( 'Giorno', 'dolly-employee-management' ), __( 'Tipo giorno', 'dolly-employee-management' ), __( 'Orario previsto', 'dolly-employee-management' ), __( 'Entrata', 'dolly-employee-management' ), __( 'Inizio pausa', 'dolly-employee-management' ), __( 'Fine pausa', 'dolly-employee-management' ), __( 'Uscita', 'dolly-employee-management' ), __( 'Ferie', 'dolly-employee-management' ), __( 'Permesso orario', 'dolly-employee-management' ), __( 'Malattia/Infortunio', 'dolly-employee-management' ), __( 'Ore calcolate', 'dolly-employee-management' ), __( 'Straordinario', 'dolly-employee-management' ), __( 'Ore straordinario approvate', 'dolly-employee-management' ), __( 'Straordinario oltre il limite', 'dolly-employee-management' ), __( 'Anomalie non risolte', 'dolly-employee-management' ), __( 'Stato totale', 'dolly-employee-management' ), __( 'Entrata timbrata', 'dolly-employee-management' ), __( 'Uscita timbrata', 'dolly-employee-management' ), __( 'Ritardo', 'dolly-employee-management' ), __( 'Ore festive', 'dolly-employee-management' ), __( 'Note ore', 'dolly-employee-management' ), __( 'Donazione sangue', 'dolly-employee-management' ), __( 'Giustificativi (ore)', 'dolly-employee-management' ) ),
 			$rows
 		);
 	}
@@ -673,7 +673,7 @@ class Dolly_Reports {
 			}
 		}
 		$counts = array_count_values( array_map( 'strtolower', $base ) );
-		$suffix = '_' . Dolly_Time::MONTHS[ (int) $month ] . '_' . (int) $year . '.csv';
+		$suffix = '_' . Dolly_I18n::t( Dolly_Time::MONTHS[ (int) $month ] ) . '_' . (int) $year . '.csv';
 		$out    = array();
 		$used   = array();
 		foreach ( $base as $uid => $b ) {
@@ -698,7 +698,7 @@ class Dolly_Reports {
 	public static function attendance_zip( array $user_ids, $year, $month ) {
 		$user_ids = array_values( array_filter( array_map( 'intval', $user_ids ), array( 'Dolly_Employees', 'is_employee' ) ) );
 		if ( ! $user_ids ) {
-			return new WP_Error( 'dolly_invalid', 'Seleziona almeno un dipendente.', array( 'status' => 400 ) );
+			return new WP_Error( 'dolly_invalid', __( 'Seleziona almeno un dipendente.', 'dolly-employee-management' ), array( 'status' => 400 ) );
 		}
 		if ( function_exists( 'set_time_limit' ) ) {
 			@set_time_limit( 300 ); // phpcs:ignore
@@ -709,7 +709,7 @@ class Dolly_Reports {
 		if ( class_exists( 'ZipArchive' ) ) {
 			$zip = new ZipArchive();
 			if ( true !== $zip->open( $tmp, ZipArchive::CREATE | ZipArchive::OVERWRITE ) ) {
-				return new WP_Error( 'dolly_zip', 'Impossibile creare il file ZIP.', array( 'status' => 500 ) );
+				return new WP_Error( 'dolly_zip', __( 'Impossibile creare il file ZIP.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 			}
 			foreach ( $user_ids as $uid ) {
 				$zip->addFromString( $names[ $uid ], self::attendance_csv( $uid, $year, $month ) );
@@ -728,7 +728,7 @@ class Dolly_Reports {
 			@unlink( $tmp ); // phpcs:ignore
 			$zip = new PclZip( $tmp );
 			if ( 0 === $zip->create( $files, PCLZIP_OPT_REMOVE_PATH, $dir ) ) {
-				return new WP_Error( 'dolly_zip', 'Impossibile creare il file ZIP.', array( 'status' => 500 ) );
+				return new WP_Error( 'dolly_zip', __( 'Impossibile creare il file ZIP.', 'dolly-employee-management' ), array( 'status' => 500 ) );
 			}
 			foreach ( $files as $f ) {
 				@unlink( $f ); // phpcs:ignore
