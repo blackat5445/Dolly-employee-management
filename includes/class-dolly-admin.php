@@ -59,7 +59,7 @@ class Dolly_Admin {
 		$pending = Dolly_Requests::count_pending() + Dolly_Anomalies::count_open();
 		$badge   = $pending ? ' <span class="awaiting-mod count-' . (int) $pending . '"><span class="pending-count">' . (int) $pending . '</span></span>' : '';
 		$title         = Dolly_Appearance::get( 'admin_title' );
-		self::$hooks[] = add_menu_page( $title, esc_html( $title ) . $badge, 'dolly_manage', 'dolly-dashboard', array( __CLASS__, 'render' ), 'dashicons-groups', 3 );
+		self::$hooks[] = add_menu_page( $title, esc_html( $title ) . $badge, 'dolly_manage', 'dolly-dashboard', array( __CLASS__, 'render' ), self::menu_icon(), 3 );
 		foreach ( self::PAGES as $slug => $p ) {
 			self::$hooks[] = add_submenu_page( 'dolly-dashboard', Dolly_I18n::t( $p[0] ) . ' · ' . $title, Dolly_I18n::t( $p[0] ), 'dolly_manage', $slug, array( __CLASS__, 'render' ) );
 		}
@@ -128,9 +128,16 @@ class Dolly_Admin {
 					'holidayIncrease' => (int) Dolly_Settings::get( 'holiday_increase' ),
 					'firmwareUrl'     => 'https://github.com/blackat5445/Dolly-employee-management/tree/main/firmware',
 					'map'             => self::map_config(),
+					'dollyIcon'       => DOLLY_URL . 'assets/img/dolly-logo.svg',
 				)
 			)
 		);
+	}
+
+	/** The Dolly icon in one color, recolored by WordPress like the other menu icons. */
+	private static function menu_icon() {
+		$svg = (string) file_get_contents( DOLLY_DIR . 'assets/img/dolly-menu.svg' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local file.
+		return 'data:image/svg+xml;base64,' . base64_encode( $svg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- WordPress expects a base64 data URI for menu icons.
 	}
 
 	/**

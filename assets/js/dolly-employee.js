@@ -59,10 +59,7 @@
 	}
 
 	function brand() {
-		return h('div', { class: 'dolly-brand' }, [
-			DOLLY.brandMark(true),
-			h('span', { class: 'dolly-brand__sub', text: state.me ? state.me.first_name || CFG.userName : CFG.userName })
-		]);
+		return DOLLY.brand(true, state.me ? state.me.first_name || CFG.userName : CFG.userName);
 	}
 
 	function updateBadges() {

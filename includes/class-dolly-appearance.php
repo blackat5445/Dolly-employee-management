@@ -76,6 +76,7 @@ class Dolly_Appearance {
 			'portal_subtitle'     => 'Employee portal',
 			'display_subtitle'    => 'Attendance code',
 			'wordmark_mark'       => false,
+			'brand_icon'          => true,
 			// Logos and icons.
 			'logo_id'             => 0,
 			'logo_header_id'      => 0,
@@ -236,6 +237,9 @@ class Dolly_Appearance {
 		if ( isset( $input['wordmark_mark'] ) ) {
 			$new['wordmark_mark'] = (bool) $input['wordmark_mark'];
 		}
+		if ( isset( $input['brand_icon'] ) ) {
+			$new['brand_icon'] = (bool) $input['brand_icon'];
+		}
 		foreach ( array( 'logo_id', 'logo_header_id', 'app_icon_id', 'login_bg_id' ) as $k ) {
 			if ( ! isset( $input[ $k ] ) ) {
 				continue;
@@ -382,6 +386,11 @@ class Dolly_Appearance {
 		return $url ? $url : '';
 	}
 
+	/** The Dolly icon shown next to the name while no logo is uploaded, or '' when turned off. */
+	public static function brand_icon_url() {
+		return self::get( 'brand_icon' ) ? DOLLY_URL . 'assets/img/dolly-logo.svg' : '';
+	}
+
 	public static function login_bg_url() {
 		return self::image_url( 'login_bg_id', 'full' );
 	}
@@ -394,6 +403,7 @@ class Dolly_Appearance {
 			'logo'         => self::logo_url(),
 			'logoHeader'   => self::header_logo_url(),
 			'wordmarkMark' => (bool) self::get( 'wordmark_mark' ),
+			'brandIcon'    => self::brand_icon_url(),
 		);
 	}
 

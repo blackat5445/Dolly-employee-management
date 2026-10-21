@@ -21,10 +21,15 @@ class Dolly_Login_Screen {
 		wp_enqueue_style( 'dolly-login', DOLLY_URL . 'assets/css/dolly-login.css', array(), DOLLY_VERSION );
 		$css  = Dolly_Appearance::css( null, 'admin' );
 		$logo = Dolly_Appearance::logo_url();
+		$icon = Dolly_Appearance::brand_icon_url();
 		if ( $logo ) {
 			// With a logo the link shows the image instead of the brand name.
 			$css .= 'body.login h1 a{background-image:url("' . esc_url_raw( $logo ) . '");text-indent:-9999px;width:240px;height:72px;'
 				. 'background-size:contain;background-repeat:no-repeat;background-position:center;}body.login h1 a::after{display:none;}';
+		} elseif ( $icon ) {
+			// The Dolly icon before the brand name.
+			$css .= 'body.login h1 a::before{content:"";display:inline-block;width:40px;height:32px;margin-right:10px;vertical-align:-5px;'
+				. 'background:url("' . esc_url_raw( $icon ) . '") center/contain no-repeat;}';
 		}
 		wp_add_inline_style( 'dolly-login', $css );
 	}

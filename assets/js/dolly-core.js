@@ -386,6 +386,15 @@
 		return src ? h('img', { class: 'dolly-brand__logo', src: src, alt: BRAND }) : h('span', { class: 'dolly-brand__wordmark', text: BRAND });
 	};
 
+	/** Brand block: the Dolly icon (without a logo, unless turned off), the logo or wordmark, and the subtitle under it. */
+	DOLLY.brand = function (onHeader, sub) {
+		var logo = onHeader ? (CFG.logoHeader || CFG.logo) : CFG.logo;
+		return h('div', { class: 'dolly-brand' }, [
+			!logo && CFG.brandIcon ? h('span', { class: 'dolly-brand__icon' }, h('img', { src: CFG.brandIcon, alt: '' })) : null,
+			h('div', { class: 'dolly-brand__text' }, [DOLLY.brandMark(onHeader), sub ? h('span', { class: 'dolly-brand__sub', text: sub }) : null])
+		]);
+	};
+
 	/** Current value of a --dolly-* theme token (for drawings that cannot use CSS, such as charts). */
 	DOLLY.token = function (name, fallback) {
 		var v = window.getComputedStyle(document.documentElement).getPropertyValue('--dolly-' + name).trim();

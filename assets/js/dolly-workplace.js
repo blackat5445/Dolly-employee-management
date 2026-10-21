@@ -45,10 +45,7 @@
 		]));
 		DOLLY.render(root, [
 			h('header', { class: 'dolly-wp__bar' }, [
-				h('div', { class: 'dolly-brand' }, [
-					DOLLY.brandMark(true),
-					CFG.displaySub ? h('span', { class: 'dolly-brand__sub', text: CFG.displaySub }) : null
-				]),
+				DOLLY.brand(true, CFG.displaySub),
 				h('div', { class: 'dolly-btn-row' }, [el.ble, el.status, DOLLY.button(__('Sign out'), { href: CFG.logoutUrl, icon: 'log-out' })])
 			]),
 			h('main', { class: 'dolly-wp__main' }, [el.panel, el.unavailable])
